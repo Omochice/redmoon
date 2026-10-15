@@ -157,20 +157,17 @@ async fn attach_file(
   }
   defer (content.close)()
   let name = filename.unwrap_or(content.filename)
-  let attached = try {
-    let token = port.upload_file(content.reader, content.size, name)
-    port.attach_uploads(
-      issue_id,
-      @redmine.IssueUpdate::new(notes?, uploads=[
-        @redmine.UploadToken::new(token, filename=name, description?),
-      ]),
-    )
-  } catch {
+  let token = port.upload_file(content.reader, content.size, name) catch {
     error => return failure_of(error)
-  } noraise {
-    _ => ()
   }
-  ignore(attached)
+  port.attach_uploads(
+    issue_id,
+    @redmine.IssueUpdate::new(notes?, uploads=[
+      @redmine.UploadToken::new(token, filename=name, description?),
+    ]),
+  ) catch {
+    error => return failure_of(error)
+  }
   let answer : Json = {
     "issue_id": issue_id,
     "filename": name,
