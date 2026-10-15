@@ -30,12 +30,21 @@ jobs:
 
   # Only the merge of a release pull request gets this far; every other push to
   # main stops at the job above, which just refreshes the pending release PR.
-  build:
+  toolchain:
     needs: release-please
     if: needs.release-please.outputs.released == 'true'
     permissions:
       contents: read
+    uses: ./.github/workflows/toolchain.yaml
+
+  build:
+    needs: [release-please, toolchain]
+    if: needs.release-please.outputs.released == 'true'
+    permissions:
+      contents: read
     uses: ./.github/workflows/build.yaml
+    with:
+      version: ${{ needs.toolchain.outputs.version }}
 
   publish:
     needs: [release-please, build]

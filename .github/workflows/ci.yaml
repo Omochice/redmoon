@@ -176,9 +176,12 @@ jobs:
   # The release matrix also runs here so a broken platform surfaces on the pull
   # request rather than at tag time, when the tag is already pushed.
   build:
+    needs: toolchain
     permissions:
       contents: read
     uses: ./.github/workflows/build.yaml
+    with:
+      version: ${{ needs.toolchain.outputs.version }}
 
   status-check:
     timeout-minutes: 5

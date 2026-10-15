@@ -4,22 +4,23 @@ name: build
 # tag can never build a set the pull requests did not already exercise.
 on:
   workflow_call:
+    inputs:
+      # Resolved by the caller so `ci` and `release` each run the lookup once
+      # instead of this workflow repeating it on every pull request.
+      version:
+        description: The MoonBit release name the installer accepts
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  toolchain:
-    permissions:
-      contents: read
-    uses: ./.github/workflows/toolchain.yaml
-
   build:
-    needs: toolchain
     # MoonBit does not cross-compile, so every asset is built on a runner of its
-    # own OS and architecture (ADR-002). `toolchain` says where the compiler
-    # comes from: nix where moonbit-overlay has a build, the official installer
-    # pinned to the same version elsewhere.
+    # own OS and architecture (ADR-002). The `toolchain` workflow says where the
+    # compiler comes from: nix where moonbit-overlay has a build, the official
+    # installer pinned to the same version elsewhere.
     strategy:
       fail-fast: false
       matrix:
@@ -50,7 +51,7 @@ jobs:
       run:
         shell: bash
     env:
-      MOONBIT_INSTALL_VERSION: ${{ needs.toolchain.outputs.version }}
+      MOONBIT_INSTALL_VERSION: ${{ inputs.version }}
     steps:
       # A checkout with CRLF endings would make the generated build-info file
       # differ from the committed one on Windows.
