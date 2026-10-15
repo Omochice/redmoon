@@ -1,0 +1,197 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: nix flake check
+
+      # ADR-010: the generated build-info file must never be committed stamped.
+      - name: Verify the build-info source is committed in its None form
+        run: .github/scripts/build-info.sh verify
+
+      - run: nix develop --command moon check --deny-warn
+
+      - run: nix develop --command moon test
+
+  toolchain:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/toolchain.yaml
+
+  # ADR-002 promises the unit tests on every pull request for the platforms
+  # whose toolchain is not the nix one, and ADR-009 wants the keyring tests on
+  # a real store; macOS is here for the latter and the `check` job covers Linux.
+  test-native:
+    needs: toolchain
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            toolchain: nix
+          - runner: ubuntu-24.04-arm
+            toolchain: installer
+          - runner: windows-latest
+            toolchain: installer
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      MOONBIT_INSTALL_VERSION: ${{ needs.toolchain.outputs.version }}
+    steps:
+      - name: Disable auto CRLF
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-nix
+        if: matrix.toolchain == 'nix'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Install MoonBit (Unix installer)
+        if: matrix.toolchain == 'installer' && runner.os != 'Windows'
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Install MoonBit (Windows installer)
+        if: matrix.toolchain == 'installer' && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      # ADR-002: a version mismatch between the nix pin and the installer is
+      # visible in this log.
+      - name: Print the toolchain version
+        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
+
+      - run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon test
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: docker compose up -d
+
+      - name: Wait for Redmine to answer
+        run: |
+          for _ in $(seq 1 120); do
+            if curl -sf -o /dev/null http://localhost:3000/login; then
+              exit 0
+            fi
+            if [ -n "$(docker compose ps --status exited -q)" ]; then
+              break
+            fi
+            sleep 5
+          done
+          echo "Redmine never answered on http://localhost:3000" >&2
+          docker compose logs
+          exit 1
+
+      # `docker compose exec` runs outside the entrypoint that exports SECRET_KEY_BASE.
+      - name: Enable the REST API and capture the admin API key
+        run: |
+          key=$(docker compose exec -T redmine sh -c \
+            'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner \
+             "Setting.rest_api_enabled = %q(1); puts User.find_by_login(%q(admin)).api_key"' \
+            | tail -n 1)
+          if [ -z "$key" ]; then
+            echo "rails runner produced no API key" >&2
+            docker compose logs redmine
+            exit 1
+          fi
+          echo "::add-mask::$key"
+          echo "REDMOON_TEST_API_KEY=$key" >> "$GITHUB_ENV"
+
+      - name: Seed the default data and the project under test
+        run: |
+          docker compose exec -T redmine sh -c \
+            'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" REDMINE_LANG=en bundle exec rake redmine:load_default_data'
+          id=$(curl -sS --fail-with-body -X POST \
+            -H "X-Redmine-API-Key: $REDMOON_TEST_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"project":{"name":"Demo","identifier":"demo"}}' \
+            http://localhost:3000/projects.json | jq -r .project.id)
+          if ! [ "$id" -gt 0 ] 2>/dev/null; then
+            echo "project creation returned no id" >&2
+            exit 1
+          fi
+
+      - name: Run the integration tests
+        env:
+          REDMOON_TEST_ENDPOINT: http://localhost:3000
+        run: nix develop --command moon test
+
+      - name: Dump the Redmine logs
+        if: failure()
+        run: docker compose logs
+
+  # The release matrix also runs here so a broken platform surfaces on the pull
+  # request rather than at tag time, when the tag is already pushed.
+  build:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yaml
+
+  status-check:
+    timeout-minutes: 5
+    name: Status Check
+    runs-on: ubuntu-latest
+    needs:
+      # keep-sorted start
+      - build
+      - check
+      - integration
+      - test-native
+      # keep-sorted end
+    permissions: {}
+    if: failure() || cancelled()
+    steps:
+      - run: exit 1
