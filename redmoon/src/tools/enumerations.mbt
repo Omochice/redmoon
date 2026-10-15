@@ -7,18 +7,9 @@ priv enum EnumerationAction {
 
 ///|
 let enumeration_input : @schema.Schema[EnumerationAction] = @schema.keyed([
-  (
-    "list_time_entry_activities",
-    @schema.object(TimeEntryActivities) |> @schema.Obj::done,
-  ),
-  (
-    "list_issue_priorities",
-    @schema.object(IssuePriorities) |> @schema.Obj::done,
-  ),
-  (
-    "list_document_categories",
-    @schema.object(DocumentCategories) |> @schema.Obj::done,
-  ),
+  ("list_time_entry_activities", @schema.record([], _ => TimeEntryActivities)),
+  ("list_issue_priorities", @schema.record([], _ => IssuePriorities)),
+  ("list_document_categories", @schema.record([], _ => DocumentCategories)),
 ])
 
 ///|
