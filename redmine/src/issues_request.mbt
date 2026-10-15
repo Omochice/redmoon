@@ -168,18 +168,6 @@ pub fn IssueUpdate::new(
 }
 
 ///|
-/// Builds a JSON object from the members that are present, in the given order.
-fn present_members(members : Array[(String, Json?)]) -> Json {
-  let object : Map[String, Json] = Map([])
-  for entry in members {
-    if entry.1 is Some(value) {
-      object[entry.0] = value
-    }
-  }
-  Json::object(object)
-}
-
-///|
 fn[T] Clearable::to_member(
   clearable : Clearable[T]?,
   clear~ : Json = Json::null(),

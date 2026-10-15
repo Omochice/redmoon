@@ -157,12 +157,10 @@ fn relation_body(
   relation_type : RelationType,
   delay : Int32?,
 ) -> Json {
-  let fields : Map[String, Json] = {
-    "issue_to_id": ToJson::to_json(issue_to_id),
-    "relation_type": ToJson::to_json(relation_type),
-  }
-  if delay is Some(days) {
-    fields["delay"] = ToJson::to_json(days)
-  }
-  Json::object({ "relation": Json::object(fields) })
+  let relation = present_members([
+    ("issue_to_id", Some(ToJson::to_json(issue_to_id))),
+    ("relation_type", Some(ToJson::to_json(relation_type))),
+    ("delay", delay.map(ToJson::to_json)),
+  ])
+  Json::object({ "relation": relation })
 }

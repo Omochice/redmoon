@@ -229,24 +229,13 @@ fn version_body(
   sharing : VersionSharing?,
   wiki_page_title : String?,
 ) -> Json {
-  let version : Map[String, Json] = Map([])
-  if name is Some(name) {
-    version["name"] = Json(name)
-  }
-  if description is Some(description) {
-    version["description"] = Json(description)
-  }
-  if status is Some(status) {
-    version["status"] = Json(status)
-  }
-  if due_date is Some(due_date) {
-    version["due_date"] = Json(due_date)
-  }
-  if sharing is Some(sharing) {
-    version["sharing"] = Json(sharing)
-  }
-  if wiki_page_title is Some(wiki_page_title) {
-    version["wiki_page_title"] = Json(wiki_page_title)
-  }
-  Json::object({ "version": Json::object(version) })
+  let version = present_members([
+    ("name", name.map(ToJson::to_json)),
+    ("description", description.map(ToJson::to_json)),
+    ("status", status.map(ToJson::to_json)),
+    ("due_date", due_date.map(ToJson::to_json)),
+    ("sharing", sharing.map(ToJson::to_json)),
+    ("wiki_page_title", wiki_page_title.map(ToJson::to_json)),
+  ])
+  Json::object({ "version": version })
 }
