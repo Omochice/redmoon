@@ -63,6 +63,44 @@ pub extend SearchResult with Eq::{equal, not_equal}
 pub extend SearchResult with @debug.Debug::{to_repr}
 
 ///|
+pub extend SearchResult with @json.FromJson::{from_json}
+
+///|
+pub impl @json.FromJson for SearchResult with fn from_json(json, path) {
+  guard json is Object(members) else {
+    raise @json.JsonDecodeError(
+      (path, "SearchResult::from_json: expected object"),
+    )
+  }
+  {
+    id: json_member(members, "id", path),
+    title: json_member(members, "title", path),
+    kind: json_member(members, "type", path),
+    url: json_member(members, "url", path),
+    description: json_member(members, "description", path),
+    datetime: json_member(members, "datetime", path),
+  }
+}
+
+///|
+pub extend SearchResult with ToJson::{to_json}
+
+///|
+/// `description` is written as `null` when absent, as the tool output has always carried it.
+pub impl ToJson for SearchResult with fn to_json(self) {
+  {
+    "id": self.id,
+    "title": self.title,
+    "type": self.kind,
+    "url": self.url,
+    "description": self.description
+    .map(fn(text) { Json(text) })
+    .unwrap_or(Json::null()),
+    "datetime": self.datetime,
+  }
+}
+
+///|
 /// Searches the resources Redmine indexes and returns the matches, up to `limit` when given.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 pub async fn Redmine::search(

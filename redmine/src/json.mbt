@@ -14,3 +14,16 @@ pub fn strip_nulls(json : Json) -> Json {
     other => other
   }
 }
+
+///|
+/// Decodes `members[key]`, treating an absent key as `null` so that optional fields decode to `None`.
+fn[T : @json.FromJson] json_member(
+  members : Map[String, Json],
+  key : String,
+  path : @json.JsonPath,
+) -> T raise @json.JsonDecodeError {
+  @json.from_json(
+    members.get(key).unwrap_or(Json::null()),
+    path=path.add_key(key),
+  )
+}
