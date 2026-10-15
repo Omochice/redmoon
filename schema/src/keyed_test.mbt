@@ -7,28 +7,47 @@ enum Input {
 } derive(Debug)
 
 ///|
-let list_input : Schema[Input] = object(limit => Input::List(limit))
-  |> optional("limit", integer(min=1))
-  |> Obj::done
+let limit : @schema.Field[Int32?] = @schema.optional_field(
+  "limit",
+  integer(min=1),
+)
 
 ///|
-let show_input : Schema[Input] = object(id => Input::Show(id))
-  |> field("id", integer(min=1))
-  |> Obj::done
+let list_input : Schema[Input] = @schema.record([limit.as_member()], v => {
+  Input::List(v.get(limit))
+})
 
 ///|
-let note_input : Schema[Input] = object(id => text => Input::Note(id, text))
-  |> field("id", integer())
-  |> field("text", not_blank())
-  |> Obj::done
+let show_id : @schema.Field[Int32] = @schema.required("id", integer(min=1))
 
 ///|
-let note_by_journal : Schema[Input] = object(id => {
-    journal => Input::NoteDelete(id, journal)
-  })
-  |> field("id", integer())
-  |> field("journal_id", integer())
-  |> Obj::done
+let show_input : Schema[Input] = @schema.record([show_id.as_member()], v => {
+  Input::Show(v.get(show_id))
+})
+
+///|
+let note_id : @schema.Field[Int32] = @schema.required("id", integer())
+
+///|
+let text : @schema.Field[String] = @schema.required("text", not_blank())
+
+///|
+let journal_id : @schema.Field[Int32] = @schema.required(
+  "journal_id",
+  integer(),
+)
+
+///|
+let note_input : Schema[Input] = @schema.record(
+  [note_id.as_member(), text.as_member()],
+  v => Input::Note(v.get(note_id), v.get(text)),
+)
+
+///|
+let note_by_journal : Schema[Input] = @schema.record(
+  [note_id.as_member(), journal_id.as_member()],
+  v => Input::NoteDelete(v.get(note_id), v.get(journal_id)),
+)
 
 ///|
 let tool : Schema[Input] = keyed([
