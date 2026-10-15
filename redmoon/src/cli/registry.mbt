@@ -6,6 +6,7 @@ pub fn registered_tools(
 ) -> Array[@mcp.Tool] {
   @tools.build_tools(
     [
+      mode => @tools.issues_tool(redmine, mode),
       mode => @tools.wiki_pages_tool(redmine, mode),
       mode => @tools.versions_tool(redmine, mode),
       mode => @tools.relations_tool(redmine, mode),
