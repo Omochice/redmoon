@@ -30,7 +30,7 @@ pub fn build_server(
   let mode : @tools.Mode = if read_only { Readonly } else { Full }
   @mcp.Server::new(
     name="redmoon",
-    version=@build.VERSION,
+    version=@build.version,
     tools=registered_tools(redmine, mode),
     on_invalid=@tools.on_invalid,
   )
