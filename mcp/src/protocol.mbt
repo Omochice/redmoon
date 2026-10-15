@@ -3,6 +3,7 @@
 priv enum Action {
   Reply(Json)
   Call(id~ : Json, tool~ : Tool, arguments~ : Json, era~ : Era)
+  Cancel(request_id~ : Json)
   Nothing
 }
 
@@ -23,7 +24,16 @@ fn Server::dispatch(self : Server, line : String) -> Action {
           RpcError::new(invalid_request_code, "Invalid Request: \{reason}"),
         ),
       )
-    Response | Notification(_) => Nothing
+    Response => Nothing
+    Notification(name~, params~) =>
+      match (name, params.get("requestId")) {
+        (
+          "notifications/cancelled",
+          Some(String(_) as id)
+          | Some(Number(_) as id),
+        ) => Cancel(request_id=id)
+        _ => Nothing
+      }
     Request(id~, name~, params~) => self.route(id, name, params)
   }
 }
@@ -59,7 +69,7 @@ fn Server::route(
 async fn Server::respond(self : Server, action : Action) -> Json? {
   match action {
     Reply(json) => Some(json)
-    Nothing => None
+    Nothing | Cancel(_) => None
     Call(id~, tool~, arguments~, era~) => {
       let result = (tool.invoke)(arguments, self.on_invalid)
       Some(result_response(id, self.result_for(era, result.to_fields())))
