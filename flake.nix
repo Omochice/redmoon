@@ -77,7 +77,11 @@
                   '';
                 }
               );
-              includes = [ "*.mbt" ];
+              includes = [
+                "*.mbt"
+                "moon.mod"
+                "moon.pkg"
+              ];
             };
             settings.formatter.rumdl-format.options = [
               "--config"
