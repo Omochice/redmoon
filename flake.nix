@@ -16,6 +16,10 @@
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    moonbit-overlay = {
+      url = "github:moonbit-community/moonbit-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -26,6 +30,7 @@
       flake-utils,
       nur-packages,
       git-hooks,
+      moonbit-overlay,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -34,8 +39,11 @@
           inherit system;
           overlays = [
             nur-packages.overlays.default
+            moonbit-overlay.overlays.default
           ];
         };
+        # moonbit-overlay publishes toolchains only for aarch64-darwin and x86_64-linux.
+        moonbitToolchain = pkgs.lib.optional (pkgs.moonbit-bin ? latest) pkgs.moonbit-bin.latest;
         treefmt = treefmt-nix.lib.evalModule pkgs (
           { ... }:
           let
@@ -57,6 +65,20 @@
           in
           {
             settings.global.excludes = [ ];
+            settings.formatter.moonfmt = pkgs.lib.mkIf (moonbitToolchain != [ ]) {
+              command = pkgs.lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "moonfmt-each";
+                  runtimeInputs = moonbitToolchain;
+                  text = ''
+                    for file in "$@"; do
+                      moonfmt -w "$file"
+                    done
+                  '';
+                }
+              );
+              includes = [ "*.mbt" ];
+            };
             settings.formatter.rumdl-format.options = [
               "--config"
               (toString rumdlConfig)
@@ -124,11 +146,13 @@
             ghalint
             zizmor
           ];
+          moonbit = moonbitToolchain;
           # keep-sorted end
           default = [
             treefmt.config.build.wrapper
           ]
-          ++ actions;
+          ++ actions
+          ++ moonbit;
         };
       in
       {
