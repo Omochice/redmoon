@@ -6,7 +6,7 @@ fn sleepy_tool() -> Tool {
   tool(
     name="sleepy",
     description="Waits, then answers",
-    input=@schema.object(0) |> @schema.Obj::done,
+    input=@schema.record([], _ => 0),
     handler=async fn(_) {
       @async.sleep(slow_ms)
       ToolResult::text("done")
@@ -19,7 +19,7 @@ fn forever_tool(started : Ref[Bool], finished : Ref[Bool]) -> Tool {
   tool(
     name="forever",
     description="Waits until cancelled",
-    input=@schema.object(0) |> @schema.Obj::done,
+    input=@schema.record([], _ => 0),
     handler=async fn(_) {
       started.val = true
       @async.sleep(60000)

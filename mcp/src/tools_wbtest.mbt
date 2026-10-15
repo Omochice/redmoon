@@ -5,12 +5,14 @@ struct Greeting {
 }
 
 ///|
-let greeting_schema : @schema.Schema[Greeting] = @schema.object(who => {
-    times => { who, times, }
+let greeting_schema : @schema.Schema[Greeting] = {
+  let who = @schema.required("who", @schema.not_blank())
+  let times = @schema.optional_or_field("times", @schema.integer(min=1), 1)
+  @schema.record([who.as_member(), times.as_member()], v => {
+    who: v.get(who),
+    times: v.get(times),
   })
-  |> @schema.field("who", @schema.not_blank())
-  |> @schema.optional_or("times", @schema.integer(min=1), 1)
-  |> @schema.Obj::done
+}
 
 ///|
 fn greet_tool(handler? : async (Greeting) -> ToolResult) -> Tool {
@@ -81,7 +83,7 @@ test "tools/list keeps registration order" {
   let other = tool(
     name="alpha",
     description="",
-    input=@schema.object(0) |> @schema.Obj::done,
+    input=@schema.record([], _ => 0),
     handler=fn(_) { ToolResult::text("") },
   )
   let text = send(
@@ -202,7 +204,7 @@ async test "missing arguments are treated as an empty object" {
   let noargs = tool(
     name="now",
     description="",
-    input=@schema.object(0) |> @schema.Obj::done,
+    input=@schema.record([], _ => 0),
     handler=fn(_) { ToolResult::text("ok") },
   )
   let request : Json = {
