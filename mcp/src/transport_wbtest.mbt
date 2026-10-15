@@ -53,12 +53,12 @@ async fn run_session(
 ) -> String {
   let (in_read, in_write) = @io.pipe()
   let (out_read, out_write) = @io.pipe()
-  @async.with_task_group(fn(group) {
-    group.spawn_bg(fn() {
+  @async.with_task_group(async fn(group) {
+    group.spawn_bg(async fn() {
       defer out_write.close()
       server.serve(in_read, out_write)
     })
-    let collected = group.spawn(fn() { out_read.read_all().text() })
+    let collected = group.spawn(async fn() { out_read.read_all().text() })
     {
       defer in_write.close()
       client(in_write)

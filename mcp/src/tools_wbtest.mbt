@@ -18,7 +18,7 @@ fn greet_tool(handler? : async (Greeting) -> ToolResult) -> Tool {
     name="greet",
     description="Greets someone",
     input=greeting_schema,
-    handler=handler.or(async fn(g) {
+    handler=handler.unwrap_or(fn(g) {
       ToolResult::text(String::make(g.times, 'x') + " " + g.who)
     }),
   )
@@ -82,7 +82,7 @@ test "tools/list keeps registration order" {
     name="alpha",
     description="",
     input=@schema.object(0) |> @schema.Obj::done,
-    handler=async fn(_) { ToolResult::text("") },
+    handler=fn(_) { ToolResult::text("") },
   )
   let text = send(
     tools_server([greet_tool(), other]),
@@ -158,7 +158,7 @@ async test "the caller controls the text of an invalid-arguments result" {
 
 ///|
 async test "a handler failure becomes an error result" {
-  let failing = greet_tool(handler=async fn(_) { fail("backend down") })
+  let failing = greet_tool(handler=fn(_) raise { fail("backend down") })
   let server = tools_server([failing])
   let text = call(
     server,
@@ -203,7 +203,7 @@ async test "missing arguments are treated as an empty object" {
     name="now",
     description="",
     input=@schema.object(0) |> @schema.Obj::done,
-    handler=async fn(_) { ToolResult::text("ok") },
+    handler=fn(_) { ToolResult::text("ok") },
   )
   let request : Json = {
     "jsonrpc": "2.0",

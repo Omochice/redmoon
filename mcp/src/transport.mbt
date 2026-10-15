@@ -23,7 +23,7 @@ pub async fn Server::serve(
       if line.is_empty() {
         continue
       }
-      match self.dispatch(line.to_string()) {
+      match self.dispatch(line.to_owned()) {
         Reply(message) => send(message)
         Nothing => ()
         Cancel(request_id~) =>
