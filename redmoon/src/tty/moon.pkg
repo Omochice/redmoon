@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/async/stdio",
+  "moonbitlang/core/encoding/utf8",
+}
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [ "tty.c" ],
+)
