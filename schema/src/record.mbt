@@ -49,9 +49,11 @@ pub fn[T] optional_field(name : String, schema : Schema[T]) -> Field[T?] {
     name,
     json: schema.json,
     required: false,
-    read: (value, path) => match value {
-      None => None
-      Some(value) => Some((schema.decode)(value, [..path, name]))
+    read: (value, path) => {
+      match value {
+        None => None
+        Some(value) => Some((schema.decode)(value, [..path, name]))
+      }
     },
   }
 }
@@ -68,9 +70,11 @@ pub fn[T : ToJson] optional_or_field(
     name,
     json: () => with_keywords((schema.json)(), [("default", Json(default))]),
     required: false,
-    read: (value, path) => match value {
-      None => default
-      Some(value) => (schema.decode)(value, [..path, name])
+    read: (value, path) => {
+      match value {
+        None => default
+        Some(value) => (schema.decode)(value, [..path, name])
+      }
     },
   }
 }
@@ -129,8 +133,11 @@ pub fn[T] record(
           )
         }
       }
+      if !errors.is_empty() {
+        raise if errors.length() == 1 { errors[0] } else { Many(errors) }
+      }
       for m in members {
-        (m.check)(fields, path) catch {
+        try (m.check)(fields, path) catch {
           e => errors.push(e)
         } noraise {
           _ => ()
@@ -142,7 +149,7 @@ pub fn[T] record(
       if !errors.is_empty() {
         raise SchemaError::Many(errors)
       }
-      build({ fields, names, path })
+      build({ fields, names, path, })
     },
   }
 }

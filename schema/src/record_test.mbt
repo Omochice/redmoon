@@ -137,7 +137,7 @@ test "record errors name the member" {
 }
 
 ///|
-test "record reports every failing member and unknown keys together" {
+test "record reports every failing member, but unknown keys alone" {
   assert_eq(
     outcome(
       version_record, "{\"project_id\":0,\"name\":\"\",\"description\":\"\"}",
@@ -151,7 +151,7 @@ test "record reports every failing member and unknown keys together" {
   )
   assert_eq(
     outcome(version_record, "{\"project_id\":0,\"name\":\"n\",\"extra\":1}"),
-    "error: extra: unknown field; project_id: must be at least 1; description: is required",
+    "error: extra: unknown field",
   )
 }
 
@@ -164,9 +164,7 @@ test "record errors are prefixed by the caller's path" {
   } noraise {
     _ => "ok"
   }
-  assert_eq(
-    result, "create.extra: unknown field; create.project_id: is required; create.name: is required; create.description: is required",
-  )
+  assert_eq(result, "create.extra: unknown field")
 }
 
 ///|
