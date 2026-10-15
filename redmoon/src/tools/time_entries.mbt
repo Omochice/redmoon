@@ -8,94 +8,127 @@ priv enum TimeEntryAction {
 }
 
 ///|
-let time_entry_list_input : @schema.Schema[TimeEntryAction] = @schema.object(project_id => {
-    user_id => {
-      spent_on => {
-        from => to => ListEntries({ project_id, user_id, spent_on, from, to, })
-      }
-    }
-  })
-  |> @schema.optional("project_id", record_id())
-  |> @schema.optional("user_id", record_id())
-  |> @schema.optional("spent_on", @schema.iso_date())
-  |> @schema.optional("from", @schema.iso_date())
-  |> @schema.optional("to", @schema.iso_date())
-  |> @schema.Obj::done
+let time_entry_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
-let time_entry_show_input : @schema.Schema[TimeEntryAction] = @schema.object(id => {
-    ShowEntry(id)
-  })
-  |> @schema.field("id", record_id())
-  |> @schema.Obj::done
+let time_entry_list_input : @schema.Schema[TimeEntryAction] = {
+  let project_id = @schema.optional_field("project_id", record_id())
+  let user_id = @schema.optional_field("user_id", record_id())
+  let spent_on = @schema.optional_field("spent_on", @schema.iso_date())
+  let from = @schema.optional_field("from", @schema.iso_date())
+  let to = @schema.optional_field("to", @schema.iso_date())
+  @schema.record(
+    [
+      project_id.as_member(),
+      user_id.as_member(),
+      spent_on.as_member(),
+      from.as_member(),
+      to.as_member(),
+    ],
+    v => {
+      ListEntries({
+        project_id: v.get(project_id),
+        user_id: v.get(user_id),
+        spent_on: v.get(spent_on),
+        from: v.get(from),
+        to: v.get(to),
+      })
+    },
+  )
+}
 
 ///|
-let time_entry_create_input : @schema.Schema[TimeEntryAction] = @schema.object(hours => {
-    issue_id => {
-      project_id => {
-        spent_on => {
-          activity_id => {
-            comments => {
-              CreateEntry({
-                hours,
-                issue_id,
-                project_id,
-                spent_on,
-                activity_id,
-                comments,
-              })
-            }
-          }
-        }
-      }
-    }
-  })
-  |> @schema.field("hours", @schema.number())
-  |> @schema.optional("issue_id", record_id())
-  |> @schema.optional("project_id", record_id())
-  |> @schema.optional("spent_on", @schema.iso_date())
-  |> @schema.optional("activity_id", record_id())
-  |> @schema.optional("comments", @schema.string())
-  |> @schema.Obj::done
+let time_entry_show_input : @schema.Schema[TimeEntryAction] = @schema.record(
+  [time_entry_id.as_member()],
+  v => ShowEntry(v.get(time_entry_id)),
+)
 
 ///|
-let time_entry_update_input : @schema.Schema[TimeEntryAction] = @schema.object(id => {
-    hours => {
-      issue_id => {
-        project_id => {
-          spent_on => {
-            activity_id => {
-              comments => {
-                UpdateEntry(id, {
-                  hours,
-                  issue_id,
-                  project_id,
-                  spent_on,
-                  activity_id,
-                  comments,
-                })
-              }
-            }
-          }
-        }
-      }
-    }
-  })
-  |> @schema.field("id", record_id())
-  |> @schema.optional("hours", @schema.number())
-  |> @schema.optional("issue_id", record_id())
-  |> @schema.optional("project_id", record_id())
-  |> @schema.optional("spent_on", @schema.iso_date())
-  |> @schema.optional("activity_id", record_id())
-  |> @schema.optional("comments", @schema.string())
-  |> @schema.Obj::done
+let time_entry_issue_id : @schema.Field[Int32?] = @schema.optional_field(
+  "issue_id",
+  record_id(),
+)
 
 ///|
-let time_entry_delete_input : @schema.Schema[TimeEntryAction] = @schema.object(id => {
-    DeleteEntry(id)
-  })
-  |> @schema.field("id", record_id())
-  |> @schema.Obj::done
+let time_entry_project_id : @schema.Field[Int32?] = @schema.optional_field(
+  "project_id",
+  record_id(),
+)
+
+///|
+let time_entry_spent_on : @schema.Field[String?] = @schema.optional_field(
+  "spent_on",
+  @schema.iso_date(),
+)
+
+///|
+let time_entry_activity_id : @schema.Field[Int32?] = @schema.optional_field(
+  "activity_id",
+  record_id(),
+)
+
+///|
+let time_entry_comments : @schema.Field[String?] = @schema.optional_field(
+  "comments",
+  @schema.string(),
+)
+
+///|
+let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
+  let hours = @schema.required("hours", @schema.number())
+  @schema.record(
+    [
+      hours.as_member(),
+      time_entry_issue_id.as_member(),
+      time_entry_project_id.as_member(),
+      time_entry_spent_on.as_member(),
+      time_entry_activity_id.as_member(),
+      time_entry_comments.as_member(),
+    ],
+    v => {
+      CreateEntry({
+        hours: v.get(hours),
+        issue_id: v.get(time_entry_issue_id),
+        project_id: v.get(time_entry_project_id),
+        spent_on: v.get(time_entry_spent_on),
+        activity_id: v.get(time_entry_activity_id),
+        comments: v.get(time_entry_comments),
+      })
+    },
+  )
+}
+
+///|
+let time_entry_update_input : @schema.Schema[TimeEntryAction] = {
+  let hours = @schema.optional_field("hours", @schema.number())
+  @schema.record(
+    [
+      time_entry_id.as_member(),
+      hours.as_member(),
+      time_entry_issue_id.as_member(),
+      time_entry_project_id.as_member(),
+      time_entry_spent_on.as_member(),
+      time_entry_activity_id.as_member(),
+      time_entry_comments.as_member(),
+    ],
+    v => {
+      UpdateEntry(v.get(time_entry_id), {
+        hours: v.get(hours),
+        issue_id: v.get(time_entry_issue_id),
+        project_id: v.get(time_entry_project_id),
+        spent_on: v.get(time_entry_spent_on),
+        activity_id: v.get(time_entry_activity_id),
+        comments: v.get(time_entry_comments),
+      })
+    },
+  )
+}
+
+///|
+let time_entry_delete_input : @schema.Schema[TimeEntryAction] = @schema.record(
+  [time_entry_id.as_member()],
+  v => DeleteEntry(v.get(time_entry_id)),
+)
 
 ///|
 /// Readonly drops the write actions so a write is inexpressible in the schema
