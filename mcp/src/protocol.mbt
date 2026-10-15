@@ -37,6 +37,7 @@ fn Server::route(
   let outcome = match name {
     "initialize" => self.initialize(params)
     "ping" => self.ping(params)
+    "server/discover" => self.discover(params)
     _ => Err(RpcError::new(method_not_found_code, "Method not found: \{name}"))
   }
   match outcome {
@@ -79,5 +80,32 @@ fn Server::ping(
     Ok(era) => Ok(self.result_for(era, []))
     Err({ code, .. } as error) if code == unsupported_version_code => Err(error)
     Err(_) => Ok(object([]))
+  }
+}
+
+///|
+fn Server::discover(
+  self : Server,
+  params : Map[String, Json],
+) -> Result[Json, RpcError] {
+  match resolve_era(params, self.negotiated) {
+    Err(error) => Err(error)
+    Ok(Legacy) =>
+      Err(
+        RpcError::new(method_not_found_code, "Method not found: server/discover"),
+      )
+    Ok(Modern) => {
+      let fields : Array[(String, Json)] = [
+        (
+          "supportedVersions",
+          Json::array(supported_versions().map(v => Json(v))),
+        ),
+        ("capabilities", self.capabilities()),
+      ]
+      if self.instructions is Some(text) {
+        fields.push(("instructions", Json(text)))
+      }
+      Ok(self.result_for(Modern, fields))
+    }
   }
 }
