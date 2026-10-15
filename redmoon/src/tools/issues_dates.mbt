@@ -1,18 +1,13 @@
 ///|
+/// Redmine reads a relative bound as a whole number of days and counts 0 as
+/// today, so a negative or fractional count has no wire form.
 fn days_ago() -> @schema.Schema[Int32] {
-  count_object("days_ago")
+  only("days_ago", @schema.integer(min=0))
 }
 
 ///|
 fn days_from_now() -> @schema.Schema[Int32] {
-  count_object("days_from_now")
-}
-
-///|
-/// Redmine reads a relative bound as a whole number of days and counts 0 as
-/// today, so a negative or fractional count has no wire form.
-fn count_object(name : String) -> @schema.Schema[Int32] {
-  only(name, @schema.integer(min=0))
+  only("days_from_now", @schema.integer(min=0))
 }
 
 ///|
@@ -54,11 +49,13 @@ fn date_period() -> @schema.Schema[@redmine.DatePeriod] {
 fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
   let iso = @schema.iso_date
   [
-    iso().map(day => @redmine.PastDateFilter::On(day)).describe("That day."),
-    date_period().map(period => Period(period)),
+    iso()
+    |> @schema.Schema::map(day => @redmine.PastDateFilter::On(day))
+    |> @schema.Schema::describe("That day."),
+    date_period() |> @schema.Schema::map(period => Period(period)),
     days_ago()
-    .map(days => @redmine.PastDateFilter::DaysAgo(days))
-    .describe("The single day that many days ago."),
+    |> @schema.Schema::map(days => @redmine.PastDateFilter::DaysAgo(days))
+    |> @schema.Schema::describe("The single day that many days ago."),
     pair(@schema.required("from", iso()), @schema.optional("to", iso()))
     |> @schema.Schema::map(bounds => {
       match bounds {
@@ -114,8 +111,8 @@ pub fn date_filter() -> @schema.Schema[@redmine.DateFilter] {
       ("nextMonth", NextMonth),
     ]),
     days_from_now()
-    .map(days => @redmine.DateFilter::DaysFromNow(days))
-    .describe("The single day that many days from now."),
+    |> @schema.Schema::map(days => @redmine.DateFilter::DaysFromNow(days))
+    |> @schema.Schema::describe("The single day that many days from now."),
     only("from", days_from_now())
     |> @schema.Schema::map(days => SinceDaysFromNow(days))
     |> @schema.Schema::describe("On or after the day n days from now."),
@@ -134,7 +131,7 @@ pub fn date_filter() -> @schema.Schema[@redmine.DateFilter] {
   @schema.union(
     [
       ..past_date_filters().map(filter => {
-        filter.map(past => @redmine.DateFilter::Past(past))
+        filter |> @schema.Schema::map(past => @redmine.DateFilter::Past(past))
       }),
       ..forward,
     ],
