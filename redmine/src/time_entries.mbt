@@ -120,3 +120,100 @@ fn TimeEntryListQuery::to_pairs(
   }
   pairs
 }
+
+///|
+/// The attributes of a time entry to log. `hours` is required by Redmine; `None` fields are left out of the request.
+pub(all) struct TimeEntryCreate {
+  hours : Double
+  issue_id : Int32?
+  project_id : Int32?
+  spent_on : String?
+  activity_id : Int32?
+  comments : String?
+} derive(ToJson, Eq, Debug)
+
+///|
+pub extend TimeEntryCreate with ToJson::{to_json}
+
+///|
+pub extend TimeEntryCreate with Eq::{equal, not_equal}
+
+///|
+pub extend TimeEntryCreate with @debug.Debug::{to_repr}
+
+///|
+/// The attributes of a time entry to change; `None` fields are left out of the request.
+pub(all) struct TimeEntryUpdate {
+  hours : Double?
+  issue_id : Int32?
+  project_id : Int32?
+  spent_on : String?
+  activity_id : Int32?
+  comments : String?
+} derive(ToJson, Eq, Debug)
+
+///|
+pub extend TimeEntryUpdate with ToJson::{to_json}
+
+///|
+pub extend TimeEntryUpdate with Eq::{equal, not_equal}
+
+///|
+pub extend TimeEntryUpdate with @debug.Debug::{to_repr}
+
+///|
+/// Shows the time entry with `id`.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
+pub async fn Redmine::show_time_entry(
+  self : Redmine,
+  id : Int32,
+) -> TimeEntry raise RedmineError {
+  let json = self.get(["time_entries", "\{id}.json"])
+  decode_field(json, "time_entry")
+}
+
+///|
+/// Logs a time entry and returns it as Redmine stored it.
+/// Raises `RedmineError` on a non-2xx answer (422 for invalid attributes) or a transport failure.
+pub async fn Redmine::create_time_entry(
+  self : Redmine,
+  time_entry : TimeEntryCreate,
+) -> TimeEntry raise RedmineError {
+  let json = self.send(
+    Post,
+    ["time_entries.json"],
+    body=time_entry_body(time_entry),
+  )
+  decode_field(json, "time_entry")
+}
+
+///|
+/// Changes the time entry with `id`.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist, 422 for invalid attributes) or a transport failure.
+pub async fn Redmine::update_time_entry(
+  self : Redmine,
+  id : Int32,
+  time_entry : TimeEntryUpdate,
+) -> Unit raise RedmineError {
+  let _ = self.send(
+    Put,
+    ["time_entries", "\{id}.json"],
+    body=time_entry_body(time_entry),
+  )
+}
+
+///|
+/// Deletes the time entry with `id`.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
+pub async fn Redmine::delete_time_entry(
+  self : Redmine,
+  id : Int32,
+) -> Unit raise RedmineError {
+  let _ = self.send(Delete, ["time_entries", "\{id}.json"])
+}
+
+///|
+/// Wraps a time entry's attributes in the `{"time_entry": ...}` envelope Redmine expects.
+fn[T : ToJson] time_entry_body(attributes : T) -> Json {
+  Json::object({ "time_entry": ToJson::to_json(attributes) })
+}
