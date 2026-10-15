@@ -26,6 +26,11 @@ test "default ports and the scheme case are normalized" {
 
 ///|
 test "an unparseable endpoint is rejected" {
-  assert_true((try? canonicalize_endpoint("not a url")) is Err(Message(_)))
-  assert_true((try? canonicalize_endpoint("https://")) is Err(Message(_)))
+  for raw in ["not a url", "https://"] {
+    try canonicalize_endpoint(raw) catch {
+      Message(_) => ()
+    } noraise {
+      _ => fail("\{raw} was accepted")
+    }
+  }
 }
