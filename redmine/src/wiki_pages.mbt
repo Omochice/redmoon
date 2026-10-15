@@ -195,15 +195,11 @@ fn wiki_page_body(
   version? : Int32,
   parent_title? : String,
 ) -> Json {
-  let page : Map[String, Json] = Map([("text", Json(text))])
-  if comments is Some(comments) {
-    page["comments"] = Json(comments)
-  }
-  if version is Some(version) {
-    page["version"] = Json(version)
-  }
-  if parent_title is Some(parent_title) {
-    page["parent_title"] = Json(wiki_title_segment(parent_title))
-  }
-  Json::object({ "wiki_page": Json::object(page) })
+  let page = present_members([
+    ("text", Some(Json(text))),
+    ("comments", comments.map(ToJson::to_json)),
+    ("version", version.map(ToJson::to_json)),
+    ("parent_title", parent_title.map(title => Json(wiki_title_segment(title)))),
+  ])
+  Json::object({ "wiki_page": page })
 }
