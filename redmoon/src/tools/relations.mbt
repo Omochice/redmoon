@@ -26,13 +26,13 @@ fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
   let entries : Array[(String, @schema.Schema[RelationAction])] = [
     (
       "list",
-      @schema.object(issue_id => List(issue_id))
+      @schema.object(issue_id => RelationAction::List(issue_id))
       |> @schema.field("issue_id", record_id())
       |> @schema.Obj::done,
     ),
     (
       "show",
-      @schema.object(id => Show(id))
+      @schema.object(id => RelationAction::Show(id))
       |> @schema.field("id", record_id())
       |> @schema.Obj::done,
     ),
@@ -44,7 +44,11 @@ fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
         @schema.object(issue_id => {
           issue_to_id => {
             relation_type => {
-              delay => Create(issue_id, issue_to_id, relation_type, delay)
+              delay => {
+                RelationAction::Create(
+                  issue_id, issue_to_id, relation_type, delay,
+                )
+              }
             }
           }
         })
@@ -58,7 +62,7 @@ fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
     entries.push(
       (
         "delete",
-        @schema.object(id => Delete(id))
+        @schema.object(id => RelationAction::Delete(id))
         |> @schema.field("id", record_id())
         |> @schema.Obj::done,
       ),
