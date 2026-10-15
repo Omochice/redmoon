@@ -19,9 +19,9 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   let project_id = @schema.required("project_id", project_ref())
   let title = @schema.required("title", wiki_title())
   let text = @schema.required("text", @schema.string())
-  let comments = @schema.optional_field("comments", @schema.string())
-  let version = @schema.optional_field("version", record_id())
-  let parent_title = @schema.optional_field("parent_title", @schema.string())
+  let comments = @schema.optional("comments", @schema.string())
+  let version = @schema.optional("version", record_id())
+  let parent_title = @schema.optional("parent_title", @schema.string())
   let read = [
     (
       "list",

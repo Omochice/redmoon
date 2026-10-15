@@ -7,7 +7,7 @@ struct Greeting {
 ///|
 let greeting_schema : @schema.Schema[Greeting] = {
   let who = @schema.required("who", @schema.not_blank())
-  let times = @schema.optional_or_field("times", @schema.integer(min=1), 1)
+  let times = @schema.optional_or("times", @schema.integer(min=1), 1)
   @schema.record([who.as_member(), times.as_member()], v => {
     who: v.get(who),
     times: v.get(times),

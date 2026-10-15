@@ -7,10 +7,7 @@ enum Input {
 } derive(Debug)
 
 ///|
-let limit : @schema.Field[Int32?] = @schema.optional_field(
-  "limit",
-  integer(min=1),
-)
+let limit : @schema.Field[Int32?] = @schema.optional("limit", integer(min=1))
 
 ///|
 let list_input : Schema[Input] = @schema.record([limit.as_member()], v => {

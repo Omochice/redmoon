@@ -15,21 +15,18 @@ fn attachment_scope_schema() -> @schema.Schema[@redmine.AttachmentScope] {
 ///|
 fn search_input() -> @schema.Schema[@redmine.SearchQuery] {
   let q = @schema.required("q", @schema.string())
-  let scope = @schema.optional_field("scope", @schema.string())
-  let all_words = @schema.optional_field("all_words", @schema.boolean())
-  let titles_only = @schema.optional_field("titles_only", @schema.boolean())
-  let open_issues = @schema.optional_field("open_issues", @schema.boolean())
-  let issues = @schema.optional_field("issues", @schema.boolean())
-  let news = @schema.optional_field("news", @schema.boolean())
-  let documents = @schema.optional_field("documents", @schema.boolean())
-  let changesets = @schema.optional_field("changesets", @schema.boolean())
-  let wiki_pages = @schema.optional_field("wiki_pages", @schema.boolean())
-  let messages = @schema.optional_field("messages", @schema.boolean())
-  let projects = @schema.optional_field("projects", @schema.boolean())
-  let attachments = @schema.optional_field(
-    "attachments",
-    attachment_scope_schema(),
-  )
+  let scope = @schema.optional("scope", @schema.string())
+  let all_words = @schema.optional("all_words", @schema.boolean())
+  let titles_only = @schema.optional("titles_only", @schema.boolean())
+  let open_issues = @schema.optional("open_issues", @schema.boolean())
+  let issues = @schema.optional("issues", @schema.boolean())
+  let news = @schema.optional("news", @schema.boolean())
+  let documents = @schema.optional("documents", @schema.boolean())
+  let changesets = @schema.optional("changesets", @schema.boolean())
+  let wiki_pages = @schema.optional("wiki_pages", @schema.boolean())
+  let messages = @schema.optional("messages", @schema.boolean())
+  let projects = @schema.optional("projects", @schema.boolean())
+  let attachments = @schema.optional("attachments", attachment_scope_schema())
   @schema.record(
     [
       q.as_member(),

@@ -44,7 +44,7 @@ pub fn[T] required(name : String, schema : Schema[T]) -> Field[T] {
 
 ///|
 /// A member that may be absent, in which case its value is `None`.
-pub fn[T] optional_field(name : String, schema : Schema[T]) -> Field[T?] {
+pub fn[T] optional(name : String, schema : Schema[T]) -> Field[T?] {
   {
     name,
     json: schema.json,
@@ -61,7 +61,7 @@ pub fn[T] optional_field(name : String, schema : Schema[T]) -> Field[T?] {
 ///|
 /// A member that may be absent, in which case its value is `default`. The
 /// default is advertised as the `default` keyword.
-pub fn[T : ToJson] optional_or_field(
+pub fn[T : ToJson] optional_or(
   name : String,
   schema : Schema[T],
   default : T,

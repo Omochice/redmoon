@@ -59,7 +59,7 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
     days_ago()
     .map(days => @redmine.PastDateFilter::DaysAgo(days))
     .describe("The single day that many days ago."),
-    pair(@schema.required("from", iso()), @schema.optional_field("to", iso()))
+    pair(@schema.required("from", iso()), @schema.optional("to", iso()))
     |> @schema.Schema::map(bounds => {
       match bounds {
         (from, Some(to)) => Between(from~, to~)
@@ -69,7 +69,7 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
     |> @schema.Schema::describe(
       "On or after `from`, and on or before `to` when it is given.",
     ),
-    pair(@schema.optional_field("from", iso()), @schema.required("to", iso()))
+    pair(@schema.optional("from", iso()), @schema.required("to", iso()))
     |> @schema.Schema::map(bounds => {
       match bounds {
         (Some(from), to) => Between(from~, to~)
@@ -79,7 +79,7 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
     |> @schema.Schema::describe("On or before `to`."),
     pair(
       @schema.required("from", days_ago()),
-      @schema.optional_field("to", @schema.literal("today")),
+      @schema.optional("to", @schema.literal("today")),
     )
     |> @schema.Schema::map(bounds => {
       match bounds {
