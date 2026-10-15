@@ -10,6 +10,8 @@ using @schema {
   picklist,
   choice,
   array,
+  nullable,
+  union,
   object,
   field,
   optional,
