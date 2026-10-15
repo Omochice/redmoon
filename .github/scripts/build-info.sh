@@ -2,22 +2,28 @@
 # Usage: build-info.sh stamp | verify
 #
 # `stamp` overwrites the build-info source with the checkout's commit and dirty
-# flag; `verify` fails unless the committed file is in its all-`None` form.
+# flag; `verify` fails unless the committed file is in its `None` form.
 set -euo pipefail
 
 target="redmoon/src/build/info.mbt"
 
 render() {
-  local commit="$1" dirty="$2"
+  local build="$1"
   cat <<MBT
 ///|
-/// The commit the binary was built from; CI overwrites this file before a
-/// release build, so a build from source reports \`None\`.
-pub let commit : String? = ${commit}
+/// The commit a binary was built from.
+pub(all) struct BuildInfo {
+  commit : String
+  dirty : Bool
+} derive(ToJson)
 
 ///|
-/// Whether the tree had uncommitted changes at build time.
-pub let dirty : Bool? = ${dirty}
+pub extend BuildInfo with ToJson::{to_json}
+
+///|
+/// The build info embedded in this binary; CI overwrites this file before a
+/// release build, so a build from source reports \`None\`.
+pub let build : BuildInfo? = ${build}
 MBT
 }
 
@@ -29,11 +35,11 @@ stamp)
   else
     dirty=false
   fi
-  render "Some(\"${commit}\")" "Some(${dirty})" >"$target"
+  render "Some({ commit: \"${commit}\", dirty: ${dirty} })" >"$target"
   ;;
 verify)
-  if ! render None None | diff -u - "$target"; then
-    echo "$target must be committed in its all-None form" >&2
+  if ! render None | diff -u - "$target"; then
+    echo "$target must be committed in its None form" >&2
     exit 1
   fi
   ;;
