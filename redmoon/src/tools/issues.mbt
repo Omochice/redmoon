@@ -91,21 +91,18 @@ let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
 let list_input : @schema.Schema[IssueAction] = {
-  let includes = @schema.optional_field("include", list_includes())
-  let project_id = @schema.optional_field("project_id", record_id())
-  let tracker_id = @schema.optional_field("tracker_id", record_id())
-  let status_id = @schema.optional_field("status_id", status_filter())
-  let fixed_version_id = @schema.optional_field("fixed_version_id", record_id())
-  let assigned_to_id = @schema.optional_field(
-    "assigned_to_id",
-    assignee_filter(),
-  )
-  let start_date = @schema.optional_field("start_date", date_filter())
-  let due_date = @schema.optional_field("due_date", date_filter())
-  let created_on = @schema.optional_field("created_on", past_date_filter())
-  let updated_on = @schema.optional_field("updated_on", past_date_filter())
-  let closed_on = @schema.optional_field("closed_on", past_date_filter())
-  let limit = @schema.optional_field("limit", @schema.integer())
+  let includes = @schema.optional("include", list_includes())
+  let project_id = @schema.optional("project_id", record_id())
+  let tracker_id = @schema.optional("tracker_id", record_id())
+  let status_id = @schema.optional("status_id", status_filter())
+  let fixed_version_id = @schema.optional("fixed_version_id", record_id())
+  let assigned_to_id = @schema.optional("assigned_to_id", assignee_filter())
+  let start_date = @schema.optional("start_date", date_filter())
+  let due_date = @schema.optional("due_date", date_filter())
+  let created_on = @schema.optional("created_on", past_date_filter())
+  let updated_on = @schema.optional("updated_on", past_date_filter())
+  let closed_on = @schema.optional("closed_on", past_date_filter())
+  let limit = @schema.optional("limit", @schema.integer())
   @schema.record(
     [
       includes.as_member(),
@@ -144,7 +141,7 @@ let list_input : @schema.Schema[IssueAction] = {
 
 ///|
 let show_input : @schema.Schema[IssueAction] = {
-  let includes = @schema.optional_field("include", show_includes())
+  let includes = @schema.optional("include", show_includes())
   @schema.record([issue_id.as_member(), includes.as_member()], v => {
     IssueAction::Show(v.get(issue_id), includes=v.get(includes).unwrap_or([]))
   })
@@ -157,23 +154,20 @@ let create_input : @schema.Schema[IssueAction] = {
   let status_id = @schema.required("status_id", record_id())
   let priority_id = @schema.required("priority_id", record_id())
   let subject = @schema.required("subject", @schema.string())
-  let description = @schema.optional_field("description", @schema.string())
-  let fixed_version_id = @schema.optional_field("fixed_version_id", record_id())
-  let assigned_to_id = @schema.optional_field("assigned_to_id", record_id())
-  let parent_issue_id = @schema.optional_field("parent_issue_id", record_id())
-  let start_date = @schema.optional_field(
+  let description = @schema.optional("description", @schema.string())
+  let fixed_version_id = @schema.optional("fixed_version_id", record_id())
+  let assigned_to_id = @schema.optional("assigned_to_id", record_id())
+  let parent_issue_id = @schema.optional("parent_issue_id", record_id())
+  let start_date = @schema.optional(
     "start_date",
     written_date(start_date_text(false)),
   )
-  let due_date = @schema.optional_field(
+  let due_date = @schema.optional(
     "due_date",
     written_date(due_date_text(false)),
   )
-  let is_private = @schema.optional_field("is_private", @schema.boolean())
-  let estimated_hours = @schema.optional_field(
-    "estimated_hours",
-    @schema.number(),
-  )
+  let is_private = @schema.optional("is_private", @schema.boolean())
+  let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   @schema.record(
     [
       project_id.as_member(),
@@ -214,57 +208,54 @@ let create_input : @schema.Schema[IssueAction] = {
 
 ///|
 let update_input : @schema.Schema[IssueAction] = {
-  let subject = @schema.optional_field("subject", @schema.string())
-  let description = @schema.optional_field("description", @schema.string())
-  let status_id = @schema.optional_field(
+  let subject = @schema.optional("subject", @schema.string())
+  let description = @schema.optional("description", @schema.string())
+  let status_id = @schema.optional(
     "status_id",
     record_id().describe(
       "Status to move the issue to. Redmine ignores, without an error, a status the workflow does not allow; `show` with `include: [\"allowedStatuses\"]` lists the ones it does.",
     ),
   )
-  let priority_id = @schema.optional_field("priority_id", record_id())
-  let tracker_id = @schema.optional_field("tracker_id", record_id())
-  let assigned_to_id = @schema.optional_field(
+  let priority_id = @schema.optional("priority_id", record_id())
+  let tracker_id = @schema.optional("tracker_id", record_id())
+  let assigned_to_id = @schema.optional(
     "assigned_to_id",
     clearable(record_id(), "User to assign the issue to; `null` unassigns it."),
   )
-  let category_id = @schema.optional_field(
+  let category_id = @schema.optional(
     "category_id",
     clearable(
       record_id(),
       "Issue category to file the issue under; `null` removes the category.",
     ),
   )
-  let parent_issue_id = @schema.optional_field(
+  let parent_issue_id = @schema.optional(
     "parent_issue_id",
     clearable(
       record_id(),
       "Issue to make the parent of this one; `null` detaches it from its parent.",
     ),
   )
-  let fixed_version_id = @schema.optional_field(
+  let fixed_version_id = @schema.optional(
     "fixed_version_id",
     clearable(
       record_id(),
       "Version to move the issue into; `null` takes it out of its version.",
     ),
   )
-  let start_date = @schema.optional_field(
+  let start_date = @schema.optional(
     "start_date",
     clearable(@schema.iso_date(), start_date_text(true)),
   )
-  let due_date = @schema.optional_field(
+  let due_date = @schema.optional(
     "due_date",
     clearable(@schema.iso_date(), due_date_text(true)),
   )
-  let done_ratio = @schema.optional_field("done_ratio", @schema.integer())
-  let is_private = @schema.optional_field("is_private", @schema.boolean())
-  let estimated_hours = @schema.optional_field(
-    "estimated_hours",
-    @schema.number(),
-  )
-  let notes = @schema.optional_field("notes", @schema.string())
-  let private_notes = @schema.optional_field("private_notes", @schema.boolean())
+  let done_ratio = @schema.optional("done_ratio", @schema.integer())
+  let is_private = @schema.optional("is_private", @schema.boolean())
+  let estimated_hours = @schema.optional("estimated_hours", @schema.number())
+  let notes = @schema.optional("notes", @schema.string())
+  let private_notes = @schema.optional("private_notes", @schema.boolean())
   @schema.record(
     [
       issue_id.as_member(),
@@ -348,7 +339,7 @@ let update_note_text_input : @schema.Schema[IssueAction] = {
       "New text of the comment. To erase it, use `delete_note`.",
     ),
   )
-  let private_notes = @schema.optional_field("private_notes", @schema.boolean())
+  let private_notes = @schema.optional("private_notes", @schema.boolean())
   @schema.record(
     [journal.as_member(), notes.as_member(), private_notes.as_member()],
     v => {

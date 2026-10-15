@@ -29,7 +29,7 @@ test "nullable parses null to None" {
 
 ///|
 test "nullable inside an object keeps absent and null apart" {
-  let a = @schema.optional_field("a", nullable(integer()))
+  let a = @schema.optional("a", nullable(integer()))
   let s = @schema.record([a.as_member()], v => v.get(a))
   assert_eq(outcome(s, "{}"), "ok: None")
   assert_eq(outcome(s, "{\"a\":null}"), "ok: Some(None)")

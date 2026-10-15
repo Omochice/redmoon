@@ -43,7 +43,7 @@ fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
       "relation_type",
       relation_type_schema(),
     )
-    let delay = @schema.optional_field("delay", @schema.integer())
+    let delay = @schema.optional("delay", @schema.integer())
     entries.push(
       (
         "create",

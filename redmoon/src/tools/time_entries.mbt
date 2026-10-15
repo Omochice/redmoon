@@ -12,11 +12,11 @@ let time_entry_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
 let time_entry_list_input : @schema.Schema[TimeEntryAction] = {
-  let project_id = @schema.optional_field("project_id", record_id())
-  let user_id = @schema.optional_field("user_id", record_id())
-  let spent_on = @schema.optional_field("spent_on", @schema.iso_date())
-  let from = @schema.optional_field("from", @schema.iso_date())
-  let to = @schema.optional_field("to", @schema.iso_date())
+  let project_id = @schema.optional("project_id", record_id())
+  let user_id = @schema.optional("user_id", record_id())
+  let spent_on = @schema.optional("spent_on", @schema.iso_date())
+  let from = @schema.optional("from", @schema.iso_date())
+  let to = @schema.optional("to", @schema.iso_date())
   @schema.record(
     [
       project_id.as_member(),
@@ -44,31 +44,31 @@ let time_entry_show_input : @schema.Schema[TimeEntryAction] = @schema.record(
 )
 
 ///|
-let time_entry_issue_id : @schema.Field[Int32?] = @schema.optional_field(
+let time_entry_issue_id : @schema.Field[Int32?] = @schema.optional(
   "issue_id",
   record_id(),
 )
 
 ///|
-let time_entry_project_id : @schema.Field[Int32?] = @schema.optional_field(
+let time_entry_project_id : @schema.Field[Int32?] = @schema.optional(
   "project_id",
   record_id(),
 )
 
 ///|
-let time_entry_spent_on : @schema.Field[String?] = @schema.optional_field(
+let time_entry_spent_on : @schema.Field[String?] = @schema.optional(
   "spent_on",
   @schema.iso_date(),
 )
 
 ///|
-let time_entry_activity_id : @schema.Field[Int32?] = @schema.optional_field(
+let time_entry_activity_id : @schema.Field[Int32?] = @schema.optional(
   "activity_id",
   record_id(),
 )
 
 ///|
-let time_entry_comments : @schema.Field[String?] = @schema.optional_field(
+let time_entry_comments : @schema.Field[String?] = @schema.optional(
   "comments",
   @schema.string(),
 )
@@ -100,7 +100,7 @@ let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
 
 ///|
 let time_entry_update_input : @schema.Schema[TimeEntryAction] = {
-  let hours = @schema.optional_field("hours", @schema.number())
+  let hours = @schema.optional("hours", @schema.number())
   @schema.record(
     [
       time_entry_id.as_member(),
