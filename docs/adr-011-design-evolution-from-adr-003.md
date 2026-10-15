@@ -40,7 +40,7 @@ let name : Field[String] = @schema.required("name", @schema.string())
 let status : Field[String?] = @schema.optional("status", version_status())
 
 let version_create : Schema[VersionCreate] = @schema.record(
-  [project_id.member(), name.member(), status.member()],
+  [project_id.as_member(), name.as_member(), status.as_member()],
   values => {
     project_id: values.get(project_id),
     name: values.get(name),
