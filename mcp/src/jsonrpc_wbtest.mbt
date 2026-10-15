@@ -85,7 +85,7 @@ test "a response from the peer is ignored" {
 ///|
 test "response builders" {
   assert_eq(
-    result_response(Json(1), object([("a", Json(true))])).stringify(),
+    result_response(Json(1), { "a": true }).stringify(),
     "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"a\":true}}",
   )
   assert_eq(
@@ -93,10 +93,7 @@ test "response builders" {
     "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32700,\"message\":\"bad\"}}",
   )
   assert_eq(
-    error_response(
-      Json("a"),
-      RpcError::new(-32022, "no", data=object([("k", Json(1))])),
-    ).stringify(),
+    error_response(Json("a"), RpcError::new(-32022, "no", data={ "k": 1 })).stringify(),
     "{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"error\":{\"code\":-32022,\"message\":\"no\",\"data\":{\"k\":1}}}",
   )
 }

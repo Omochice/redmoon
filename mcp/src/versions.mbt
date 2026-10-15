@@ -38,14 +38,10 @@ fn invalid_params(message : String) -> RpcError {
 
 ///|
 fn unsupported_version(requested : String) -> RpcError {
-  RpcError::new(
-    unsupported_version_code,
-    "Unsupported protocol version",
-    data=object([
-      ("supported", Json::array(supported_versions().map(v => Json(v)))),
-      ("requested", Json(requested)),
-    ]),
-  )
+  RpcError::new(unsupported_version_code, "Unsupported protocol version", data={
+    "supported": Json::array(supported_versions().map(v => Json(v))),
+    "requested": Json(requested),
+  })
 }
 
 ///|

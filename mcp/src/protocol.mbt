@@ -97,7 +97,7 @@ fn Server::initialize(
     ("serverInfo", self.server_info()),
   ]
   self.add_instructions(fields)
-  Ok(object(fields))
+  Ok(Json::object(Map::from_array(fields)))
 }
 
 ///|
@@ -108,7 +108,7 @@ fn Server::ping(
   match resolve_era(params, self.initialized) {
     Ok(era) => Ok(self.result_for(era, []))
     Err({ code, .. } as error) if code == unsupported_version_code => Err(error)
-    Err(_) => Ok(object([]))
+    Err(_) => Ok({})
   }
 }
 
@@ -168,7 +168,7 @@ fn Server::plan_call(
     return Err(invalid_params("`name` is required"))
   }
   let arguments = match params.get("arguments") {
-    None | Some(Null) => object([])
+    None | Some(Null) => Json::object({})
     Some(Object(_) as arguments) => arguments
     Some(_) => return Err(invalid_params("`arguments` must be an object"))
   }

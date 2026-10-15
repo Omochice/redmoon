@@ -26,11 +26,11 @@ pub fn Server::new(
 
 ///|
 fn Server::server_info(self : Server) -> Json {
-  object([("name", Json(self.name)), ("version", Json(self.version))])
+  { "name": Json(self.name), "version": Json(self.version) }
 }
 
 ///|
-let capabilities : Json = object([("tools", object([]))])
+let capabilities : Json = { "tools": {} }
 
 ///|
 fn Server::add_instructions(
@@ -49,14 +49,21 @@ fn Server::result_for(
   fields : Array[(String, Json)],
 ) -> Json {
   match era {
-    Legacy => object(fields)
+    Legacy => Json::object(Map::from_array(fields))
     Modern =>
-      object(
-        [
-          ("resultType", "complete"),
-          ..fields,
-          ("_meta", object([(server_info_key, self.server_info())])),
-        ],
+      Json::object(
+        Map::from_array(
+          [
+            ("resultType", "complete"),
+            ..fields,
+            (
+              "_meta",
+              Json::object(
+                Map::from_array([(server_info_key, self.server_info())]),
+              ),
+            ),
+          ],
+        ),
       )
   }
 }

@@ -29,14 +29,16 @@ pub fn[T] keyed(entries : Array[(String, Schema[T])]) -> Schema[T] {
   let names = actions.join(", ")
   {
     json: () => {
-      let properties = json_object(actions.map(a => (a, (by_action[a].json)())))
-      json_object([
-        ("type", "object"),
-        ("properties", properties),
-        ("minProperties", Json(1)),
-        ("maxProperties", Json(1)),
-        ("additionalProperties", false),
-      ])
+      let properties = Json::object(
+        Map::from_array(actions.map(a => (a, (by_action[a].json)()))),
+      )
+      {
+        "type": "object",
+        "properties": properties,
+        "minProperties": 1,
+        "maxProperties": 1,
+        "additionalProperties": false,
+      }
     },
     decode: (input, path) => {
       guard input is Object(fields) &&

@@ -66,18 +66,18 @@ pub fn[T] tool(
 
 ///|
 fn Tool::to_json(self : Tool) -> Json {
-  object([
-    ("name", Json(self.name)),
-    ("description", Json(self.description)),
-    ("inputSchema", self.input_schema),
-  ])
+  {
+    "name": Json(self.name),
+    "description": Json(self.description),
+    "inputSchema": self.input_schema,
+  }
 }
 
 ///|
 fn ToolResult::to_fields(self : ToolResult) -> Array[(String, Json)] {
-  let content = self.content.map(c => {
+  let content : Array[Json] = self.content.map(c => {
     match c {
-      Text(text) => object([("type", "text"), ("text", Json(text))])
+      Text(text) => { "type": "text", "text": Json(text) }
     }
   })
   [("content", Json::array(content)), ("isError", Json(self.is_error))]

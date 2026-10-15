@@ -111,7 +111,9 @@ pub fn[T] record(
   let names = members.map(m => m.name)
   {
     json: () => {
-      let properties = json_object(members.map(m => (m.name, (m.json)())))
+      let properties = Json::object(
+        Map::from_array(members.map(m => (m.name, (m.json)()))),
+      )
       let required = members.filter(m => m.required).map(m => Json(m.name))
       let entries : Array[(String, Json)] = [
         ("type", "object"),
@@ -121,7 +123,7 @@ pub fn[T] record(
         entries.push(("required", Json::array(required)))
       }
       entries.push(("additionalProperties", false))
-      json_object(entries)
+      Json::object(Map::from_array(entries))
     },
     decode: (input, path) => {
       guard input is Object(fields) else { fail(path, "expected an object") }

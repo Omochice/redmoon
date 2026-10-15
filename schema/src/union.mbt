@@ -2,14 +2,7 @@
 /// Accepts `null` as `None`, otherwise whatever `inner` accepts.
 pub fn[T] nullable(inner : Schema[T]) -> Schema[T?] {
   {
-    json: () => {
-      json_object([
-        (
-          "anyOf",
-          Json::array([(inner.json)(), json_object([("type", "null")])]),
-        ),
-      ])
-    },
+    json: () => { "anyOf": Json::array([(inner.json)(), { "type": "null" }]) },
     decode: (input, path) => {
       match input {
         Null => None
@@ -25,9 +18,7 @@ pub fn[T] nullable(inner : Schema[T]) -> Schema[T?] {
 /// field; otherwise the alternatives' messages are listed.
 pub fn[T] union(alternatives : Array[Schema[T]]) -> Schema[T] {
   {
-    json: () => {
-      json_object([("anyOf", Json::array(alternatives.map(a => (a.json)())))])
-    },
+    json: () => { "anyOf": Json::array(alternatives.map(a => (a.json)())) },
     decode: (input, path) => {
       let failures = []
       for alternative in alternatives {
