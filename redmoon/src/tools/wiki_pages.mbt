@@ -16,54 +16,79 @@ fn wiki_title() -> @schema.Schema[String] {
 
 ///|
 fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
+  let project_id = @schema.required("project_id", project_ref())
+  let title = @schema.required("title", wiki_title())
+  let text = @schema.required("text", @schema.string())
+  let comments = @schema.optional_field("comments", @schema.string())
+  let version = @schema.optional_field("version", record_id())
+  let parent_title = @schema.optional_field("parent_title", @schema.string())
   let read = [
     (
       "list",
-      @schema.object(p => WikiPageAction::List(p))
-      |> @schema.field("project_id", project_ref())
-      |> @schema.Obj::done,
+      @schema.record([project_id.as_member()], v => {
+        WikiPageAction::List(v.get(project_id))
+      }),
     ),
     (
       "show",
-      @schema.object(p => t => v => WikiPageAction::Show(p, t, v))
-      |> @schema.field("project_id", project_ref())
-      |> @schema.field("title", wiki_title())
-      |> @schema.optional("version", record_id())
-      |> @schema.Obj::done,
+      @schema.record(
+        [project_id.as_member(), title.as_member(), version.as_member()],
+        v => {
+          WikiPageAction::Show(v.get(project_id), v.get(title), v.get(version))
+        },
+      ),
     ),
   ]
   let write = [
     (
       "create",
-      @schema.object(p => {
-        t => x => c => pt => WikiPageAction::Create(p, t, x, c, pt)
-      })
-      |> @schema.field("project_id", project_ref())
-      |> @schema.field("title", wiki_title())
-      |> @schema.field("text", @schema.string())
-      |> @schema.optional("comments", @schema.string())
-      |> @schema.optional("parent_title", @schema.string())
-      |> @schema.Obj::done,
+      @schema.record(
+        [
+          project_id.as_member(),
+          title.as_member(),
+          text.as_member(),
+          comments.as_member(),
+          parent_title.as_member(),
+        ],
+        v => {
+          WikiPageAction::Create(
+            v.get(project_id),
+            v.get(title),
+            v.get(text),
+            v.get(comments),
+            v.get(parent_title),
+          )
+        },
+      ),
     ),
     (
       "update",
-      @schema.object(p => {
-        t => x => c => v => pt => WikiPageAction::Update(p, t, x, c, v, pt)
-      })
-      |> @schema.field("project_id", project_ref())
-      |> @schema.field("title", wiki_title())
-      |> @schema.field("text", @schema.string())
-      |> @schema.optional("comments", @schema.string())
-      |> @schema.optional("version", record_id())
-      |> @schema.optional("parent_title", @schema.string())
-      |> @schema.Obj::done,
+      @schema.record(
+        [
+          project_id.as_member(),
+          title.as_member(),
+          text.as_member(),
+          comments.as_member(),
+          version.as_member(),
+          parent_title.as_member(),
+        ],
+        v => {
+          WikiPageAction::Update(
+            v.get(project_id),
+            v.get(title),
+            v.get(text),
+            v.get(comments),
+            v.get(version),
+            v.get(parent_title),
+          )
+        },
+      ),
     ),
     (
       "delete",
-      @schema.object(p => t => WikiPageAction::Delete(p, t))
-      |> @schema.field("project_id", project_ref())
-      |> @schema.field("title", wiki_title())
-      |> @schema.Obj::done,
+      @schema.record([project_id.as_member(), title.as_member()], v => {
+        WikiPageAction::Delete(v.get(project_id), v.get(title))
+      }),
     ),
   ]
   match mode {
