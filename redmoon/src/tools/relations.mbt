@@ -71,13 +71,13 @@ fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
 ///|
 /// `redmine_issue_relations`: the links between issues.
 pub fn relations_tool(port : &RelationPort, mode : Mode) -> @mcp.Tool {
-  let summary = match mode {
-    Readonly => "List and show Redmine issue relations"
-    Full => "Create, read, and delete Redmine issue relations"
-  }
   @mcp.tool(
     name="redmine_issue_relations",
-    description="\{summary}. \{operation_key_hint}",
+    description=describe_crud_tool(
+      "issue relations",
+      mode,
+      full_verbs="Create, read, and delete",
+    ),
     input=relation_input(mode),
     handler=async fn(action) {
       match action {

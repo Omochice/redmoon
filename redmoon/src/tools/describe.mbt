@@ -7,10 +7,16 @@ pub let operation_key_hint : String = "Pass exactly one key, the operation name,
 /// are dropped so the description matches the pruned schema.
 ///
 /// `resource` is the plural noun, e.g. `"issues"` or `"wiki pages"`.
-pub fn describe_crud_tool(resource : String, mode : Mode) -> String {
+/// `full_verbs` opens the `Full` summary for resources that lack some of the
+/// four operations.
+pub fn describe_crud_tool(
+  resource : String,
+  mode : Mode,
+  full_verbs~ : String = "Create, read, update, and delete",
+) -> String {
   let summary = match mode {
     Readonly => "List and show Redmine \{resource}"
-    Full => "Create, read, update, and delete Redmine \{resource}"
+    Full => "\{full_verbs} Redmine \{resource}"
   }
   "\{summary}. \{operation_key_hint}"
 }
