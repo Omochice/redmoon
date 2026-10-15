@@ -59,8 +59,6 @@ async fn[T] walk_all(
 
 ///|
 /// Lists a paged resource whose response is `{"<key>": [...], "total_count": n}`.
-/// No resource uses it yet; the first paged resource removes the attribute below.
-#warnings("-unused_value")
 async fn[T : @json.FromJson] Redmine::list_all(
   self : Redmine,
   segments : Array[String],
