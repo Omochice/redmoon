@@ -13,6 +13,7 @@ using @schema {
   nullable,
   union,
   keyed,
+  iso_date,
   object,
   field,
   optional,
