@@ -1,7 +1,6 @@
 ///|
 using @schema {
   type Schema,
-  type Obj,
   integer,
   number,
   string,
@@ -15,10 +14,6 @@ using @schema {
   union,
   keyed,
   iso_date,
-  object,
-  field,
-  optional,
-  optional_or,
 }
 
 ///|

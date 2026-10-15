@@ -29,7 +29,8 @@ test "nullable parses null to None" {
 
 ///|
 test "nullable inside an object keeps absent and null apart" {
-  let s = object(a => a) |> optional("a", nullable(integer())) |> Obj::done
+  let a = @schema.optional_field("a", nullable(integer()))
+  let s = @schema.record([a.as_member()], v => v.get(a))
   assert_eq(outcome(s, "{}"), "ok: None")
   assert_eq(outcome(s, "{\"a\":null}"), "ok: Some(None)")
   assert_eq(outcome(s, "{\"a\":2}"), "ok: Some(Some(2))")
@@ -64,8 +65,10 @@ test "union lists alternatives when none matches" {
 
 ///|
 test "union of objects reports field errors" {
-  let by_id = object(id => id) |> field("id", integer()) |> Obj::done
-  let by_name = object(name => name) |> field("name", string()) |> Obj::done
+  let id = @schema.required("id", integer())
+  let name = @schema.required("name", string())
+  let by_id = @schema.record([id.as_member()], v => v.get(id))
+  let by_name = @schema.record([name.as_member()], v => v.get(name))
   let s = union([by_id.map(id => id.to_string()), by_name])
   assert_eq(outcome(s, "{\"id\":4}"), "ok: \"4\"")
   assert_eq(outcome(s, "{\"name\":\"n\"}"), "ok: \"n\"")
@@ -86,7 +89,8 @@ test "union of objects reports field errors" {
 
 ///|
 test "union errors carry the caller's path" {
-  let s = object(id => id) |> field("id", integer()) |> Obj::done
+  let id = @schema.required("id", integer())
+  let s = @schema.record([id.as_member()], v => v.get(id))
   let u = union([s, s])
   let result = try u.parse_at(j("{}"), ["act"]) catch {
     e => e.message()
