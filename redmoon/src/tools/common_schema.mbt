@@ -1,5 +1,5 @@
 ///|
-/// The numeric id of a Redmine record.
+/// Redmine ids start at 1.
 pub fn record_id() -> @schema.Schema[Int32] {
   @schema.integer(min=1)
 }
