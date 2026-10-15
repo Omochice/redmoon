@@ -87,208 +87,235 @@ fn due_date_text(clearing : Bool) -> String {
 }
 
 ///|
-let list_input : @schema.Schema[IssueAction] = @schema.object(
-    
-    includes =>
-    project_id =>
-    tracker_id =>
-    status_id =>
-    fixed_version_id =>
-    assigned_to_id =>
-    start_date =>
-    due_date =>
-    created_on =>
-    updated_on =>
-    closed_on =>
-    limit => {
+let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
+
+///|
+let list_input : @schema.Schema[IssueAction] = {
+  let includes = @schema.optional_field("include", list_includes())
+  let project_id = @schema.optional_field("project_id", record_id())
+  let tracker_id = @schema.optional_field("tracker_id", record_id())
+  let status_id = @schema.optional_field("status_id", status_filter())
+  let fixed_version_id = @schema.optional_field("fixed_version_id", record_id())
+  let assigned_to_id = @schema.optional_field(
+    "assigned_to_id",
+    assignee_filter(),
+  )
+  let start_date = @schema.optional_field("start_date", date_filter())
+  let due_date = @schema.optional_field("due_date", date_filter())
+  let created_on = @schema.optional_field("created_on", past_date_filter())
+  let updated_on = @schema.optional_field("updated_on", past_date_filter())
+  let closed_on = @schema.optional_field("closed_on", past_date_filter())
+  let limit = @schema.optional_field("limit", @schema.integer())
+  @schema.record(
+    [
+      includes.as_member(),
+      project_id.as_member(),
+      tracker_id.as_member(),
+      status_id.as_member(),
+      fixed_version_id.as_member(),
+      assigned_to_id.as_member(),
+      start_date.as_member(),
+      due_date.as_member(),
+      created_on.as_member(),
+      updated_on.as_member(),
+      closed_on.as_member(),
+      limit.as_member(),
+    ],
+    v => {
       IssueAction::List(
         @redmine.IssueListQuery::new(
-          includes=includes.unwrap_or([]),
-          project_id?,
-          tracker_id?,
-          status_id?,
-          fixed_version_id?,
-          assigned_to_id?,
-          start_date?,
-          due_date?,
-          created_on?,
-          updated_on?,
-          closed_on?,
+          includes=v.get(includes).unwrap_or([]),
+          project_id?=v.get(project_id),
+          tracker_id?=v.get(tracker_id),
+          status_id?=v.get(status_id),
+          fixed_version_id?=v.get(fixed_version_id),
+          assigned_to_id?=v.get(assigned_to_id),
+          start_date?=v.get(start_date),
+          due_date?=v.get(due_date),
+          created_on?=v.get(created_on),
+          updated_on?=v.get(updated_on),
+          closed_on?=v.get(closed_on),
         ),
-        limit~,
+        limit=v.get(limit),
       )
     },
   )
-  |> @schema.optional("include", list_includes())
-  |> @schema.optional("project_id", record_id())
-  |> @schema.optional("tracker_id", record_id())
-  |> @schema.optional("status_id", status_filter())
-  |> @schema.optional("fixed_version_id", record_id())
-  |> @schema.optional("assigned_to_id", assignee_filter())
-  |> @schema.optional("start_date", date_filter())
-  |> @schema.optional("due_date", date_filter())
-  |> @schema.optional("created_on", past_date_filter())
-  |> @schema.optional("updated_on", past_date_filter())
-  |> @schema.optional("closed_on", past_date_filter())
-  |> @schema.optional("limit", @schema.integer())
-  |> @schema.Obj::done
+}
 
 ///|
-let show_input : @schema.Schema[IssueAction] = @schema.object(id => {
-    includes => IssueAction::Show(id, includes=includes.unwrap_or([]))
+let show_input : @schema.Schema[IssueAction] = {
+  let includes = @schema.optional_field("include", show_includes())
+  @schema.record([issue_id.as_member(), includes.as_member()], v => {
+    IssueAction::Show(v.get(issue_id), includes=v.get(includes).unwrap_or([]))
   })
-  |> @schema.field("id", record_id())
-  |> @schema.optional("include", show_includes())
-  |> @schema.Obj::done
+}
 
 ///|
-let create_input : @schema.Schema[IssueAction] = @schema.object(
-    
-    project_id =>
-    tracker_id =>
-    status_id =>
-    priority_id =>
-    subject =>
-    description =>
-    fixed_version_id =>
-    assigned_to_id =>
-    parent_issue_id =>
-    start_date =>
-    due_date =>
-    is_private =>
-    estimated_hours => {
+let create_input : @schema.Schema[IssueAction] = {
+  let project_id = @schema.required("project_id", record_id())
+  let tracker_id = @schema.required("tracker_id", record_id())
+  let status_id = @schema.required("status_id", record_id())
+  let priority_id = @schema.required("priority_id", record_id())
+  let subject = @schema.required("subject", @schema.string())
+  let description = @schema.optional_field("description", @schema.string())
+  let fixed_version_id = @schema.optional_field("fixed_version_id", record_id())
+  let assigned_to_id = @schema.optional_field("assigned_to_id", record_id())
+  let parent_issue_id = @schema.optional_field("parent_issue_id", record_id())
+  let start_date = @schema.optional_field(
+    "start_date",
+    written_date(start_date_text(false)),
+  )
+  let due_date = @schema.optional_field(
+    "due_date",
+    written_date(due_date_text(false)),
+  )
+  let is_private = @schema.optional_field("is_private", @schema.boolean())
+  let estimated_hours = @schema.optional_field(
+    "estimated_hours",
+    @schema.number(),
+  )
+  @schema.record(
+    [
+      project_id.as_member(),
+      tracker_id.as_member(),
+      status_id.as_member(),
+      priority_id.as_member(),
+      subject.as_member(),
+      description.as_member(),
+      fixed_version_id.as_member(),
+      assigned_to_id.as_member(),
+      parent_issue_id.as_member(),
+      start_date.as_member(),
+      due_date.as_member(),
+      is_private.as_member(),
+      estimated_hours.as_member(),
+    ],
+    v => {
       IssueAction::Create(
         @redmine.IssueCreate::new(
-          project_id~,
-          tracker_id~,
-          status_id~,
-          priority_id~,
-          subject~,
-          description?,
-          fixed_version_id?,
-          assigned_to_id?,
-          parent_issue_id?,
-          is_private?,
-          estimated_hours?,
-          start_date?,
-          due_date?,
+          project_id=v.get(project_id),
+          tracker_id=v.get(tracker_id),
+          status_id=v.get(status_id),
+          priority_id=v.get(priority_id),
+          subject=v.get(subject),
+          description?=v.get(description),
+          fixed_version_id?=v.get(fixed_version_id),
+          assigned_to_id?=v.get(assigned_to_id),
+          parent_issue_id?=v.get(parent_issue_id),
+          is_private?=v.get(is_private),
+          estimated_hours?=v.get(estimated_hours),
+          start_date?=v.get(start_date),
+          due_date?=v.get(due_date),
         ),
       )
     },
   )
-  |> @schema.field("project_id", record_id())
-  |> @schema.field("tracker_id", record_id())
-  |> @schema.field("status_id", record_id())
-  |> @schema.field("priority_id", record_id())
-  |> @schema.field("subject", @schema.string())
-  |> @schema.optional("description", @schema.string())
-  |> @schema.optional("fixed_version_id", record_id())
-  |> @schema.optional("assigned_to_id", record_id())
-  |> @schema.optional("parent_issue_id", record_id())
-  |> @schema.optional("start_date", written_date(start_date_text(false)))
-  |> @schema.optional("due_date", written_date(due_date_text(false)))
-  |> @schema.optional("is_private", @schema.boolean())
-  |> @schema.optional("estimated_hours", @schema.number())
-  |> @schema.Obj::done
+}
 
 ///|
-let update_input : @schema.Schema[IssueAction] = @schema.object(
-    
-    id =>
-    subject =>
-    description =>
-    status_id =>
-    priority_id =>
-    tracker_id =>
-    assigned_to_id =>
-    category_id =>
-    parent_issue_id =>
-    fixed_version_id =>
-    start_date =>
-    due_date =>
-    done_ratio =>
-    is_private =>
-    estimated_hours =>
-    notes =>
-    private_notes => {
-      IssueAction::Update(
-        id,
-        @redmine.IssueUpdate::new(
-          subject?,
-          description?,
-          notes?,
-          private_notes?,
-          done_ratio?,
-          is_private?,
-          estimated_hours?,
-          status_id?,
-          priority_id?,
-          tracker_id?,
-          assigned_to_id?,
-          category_id?,
-          parent_issue_id?,
-          fixed_version_id?,
-          start_date?,
-          due_date?,
-        ),
-      )
-    },
-  )
-  |> @schema.field("id", record_id())
-  |> @schema.optional("subject", @schema.string())
-  |> @schema.optional("description", @schema.string())
-  |> @schema.optional(
+let update_input : @schema.Schema[IssueAction] = {
+  let subject = @schema.optional_field("subject", @schema.string())
+  let description = @schema.optional_field("description", @schema.string())
+  let status_id = @schema.optional_field(
     "status_id",
     record_id().describe(
       "Status to move the issue to. Redmine ignores, without an error, a status the workflow does not allow; `show` with `include: [\"allowedStatuses\"]` lists the ones it does.",
     ),
   )
-  |> @schema.optional("priority_id", record_id())
-  |> @schema.optional("tracker_id", record_id())
-  |> @schema.optional(
+  let priority_id = @schema.optional_field("priority_id", record_id())
+  let tracker_id = @schema.optional_field("tracker_id", record_id())
+  let assigned_to_id = @schema.optional_field(
     "assigned_to_id",
     clearable(record_id(), "User to assign the issue to; `null` unassigns it."),
   )
-  |> @schema.optional(
+  let category_id = @schema.optional_field(
     "category_id",
     clearable(
       record_id(),
       "Issue category to file the issue under; `null` removes the category.",
     ),
   )
-  |> @schema.optional(
+  let parent_issue_id = @schema.optional_field(
     "parent_issue_id",
     clearable(
       record_id(),
       "Issue to make the parent of this one; `null` detaches it from its parent.",
     ),
   )
-  |> @schema.optional(
+  let fixed_version_id = @schema.optional_field(
     "fixed_version_id",
     clearable(
       record_id(),
       "Version to move the issue into; `null` takes it out of its version.",
     ),
   )
-  |> @schema.optional(
+  let start_date = @schema.optional_field(
     "start_date",
     clearable(@schema.iso_date(), start_date_text(true)),
   )
-  |> @schema.optional(
+  let due_date = @schema.optional_field(
     "due_date",
     clearable(@schema.iso_date(), due_date_text(true)),
   )
-  |> @schema.optional("done_ratio", @schema.integer())
-  |> @schema.optional("is_private", @schema.boolean())
-  |> @schema.optional("estimated_hours", @schema.number())
-  |> @schema.optional("notes", @schema.string())
-  |> @schema.optional("private_notes", @schema.boolean())
-  |> @schema.Obj::done
+  let done_ratio = @schema.optional_field("done_ratio", @schema.integer())
+  let is_private = @schema.optional_field("is_private", @schema.boolean())
+  let estimated_hours = @schema.optional_field(
+    "estimated_hours",
+    @schema.number(),
+  )
+  let notes = @schema.optional_field("notes", @schema.string())
+  let private_notes = @schema.optional_field("private_notes", @schema.boolean())
+  @schema.record(
+    [
+      issue_id.as_member(),
+      subject.as_member(),
+      description.as_member(),
+      status_id.as_member(),
+      priority_id.as_member(),
+      tracker_id.as_member(),
+      assigned_to_id.as_member(),
+      category_id.as_member(),
+      parent_issue_id.as_member(),
+      fixed_version_id.as_member(),
+      start_date.as_member(),
+      due_date.as_member(),
+      done_ratio.as_member(),
+      is_private.as_member(),
+      estimated_hours.as_member(),
+      notes.as_member(),
+      private_notes.as_member(),
+    ],
+    v => {
+      IssueAction::Update(
+        v.get(issue_id),
+        @redmine.IssueUpdate::new(
+          subject?=v.get(subject),
+          description?=v.get(description),
+          notes?=v.get(notes),
+          private_notes?=v.get(private_notes),
+          done_ratio?=v.get(done_ratio),
+          is_private?=v.get(is_private),
+          estimated_hours?=v.get(estimated_hours),
+          status_id?=v.get(status_id),
+          priority_id?=v.get(priority_id),
+          tracker_id?=v.get(tracker_id),
+          assigned_to_id?=v.get(assigned_to_id),
+          category_id?=v.get(category_id),
+          parent_issue_id?=v.get(parent_issue_id),
+          fixed_version_id?=v.get(fixed_version_id),
+          start_date?=v.get(start_date),
+          due_date?=v.get(due_date),
+        ),
+      )
+    },
+  )
+}
 
 ///|
-let delete_input : @schema.Schema[IssueAction] = @schema.object(id => IssueAction::Delete(id))
-  |> @schema.field("id", record_id())
-  |> @schema.Obj::done
+let delete_input : @schema.Schema[IssueAction] = @schema.record(
+  [issue_id.as_member()],
+  v => IssueAction::Delete(v.get(issue_id)),
+)
 
 ///|
 fn journal_id() -> @schema.Schema[Int32] {
@@ -298,42 +325,59 @@ fn journal_id() -> @schema.Schema[Int32] {
 }
 
 ///|
+let journal : @schema.Field[Int32] = @schema.required(
+  "journal_id",
+  journal_id(),
+)
+
+///|
+let private_notes_required : @schema.Field[Bool] = @schema.required(
+  "private_notes",
+  @schema.boolean(),
+)
+
+///|
 /// "At least one of `notes` and `private_notes`" is two alternatives of one
 /// action, because the advertised JSON Schema cannot state it as a check on a
 /// single object. The second has no `notes` field, so a call whose `notes` is
 /// not valid text is rejected instead of falling through and losing it.
-let update_note_text_input : @schema.Schema[IssueAction] = @schema.object(journal_id => {
-    notes => {
-      private_notes => IssueAction::UpdateNote(journal_id, notes=Some(notes), private_notes~)
-    }
-  })
-  |> @schema.field("journal_id", journal_id())
-  |> @schema.field(
+let update_note_text_input : @schema.Schema[IssueAction] = {
+  let notes = @schema.required(
     "notes",
     @schema.string(min_length=1).describe(
       "New text of the comment. To erase it, use `delete_note`.",
     ),
   )
-  |> @schema.optional("private_notes", @schema.boolean())
-  |> @schema.Obj::done
-
-///|
-let update_note_visibility_input : @schema.Schema[IssueAction] = @schema.object(journal_id => {
-      private_notes => {
-        IssueAction::UpdateNote(journal_id, notes=None, private_notes=Some(private_notes))
-      }
+  let private_notes = @schema.optional_field("private_notes", @schema.boolean())
+  @schema.record(
+    [journal.as_member(), notes.as_member(), private_notes.as_member()],
+    v => {
+      IssueAction::UpdateNote(
+        v.get(journal),
+        notes=Some(v.get(notes)),
+        private_notes=v.get(private_notes),
+      )
     },
   )
-  |> @schema.field("journal_id", journal_id())
-  |> @schema.field("private_notes", @schema.boolean())
-  |> @schema.Obj::done
+}
 
 ///|
-let delete_note_input : @schema.Schema[IssueAction] = @schema.object(journal_id => {
-    IssueAction::DeleteNote(journal_id)
-  })
-  |> @schema.field("journal_id", journal_id())
-  |> @schema.Obj::done
+let update_note_visibility_input : @schema.Schema[IssueAction] = @schema.record(
+  [journal.as_member(), private_notes_required.as_member()],
+  v => {
+    IssueAction::UpdateNote(
+      v.get(journal),
+      notes=None,
+      private_notes=Some(v.get(private_notes_required)),
+    )
+  },
+)
+
+///|
+let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
+  [journal.as_member()],
+  v => IssueAction::DeleteNote(v.get(journal)),
+)
 
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {

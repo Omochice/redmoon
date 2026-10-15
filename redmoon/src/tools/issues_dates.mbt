@@ -12,9 +12,23 @@ fn days_from_now() -> @schema.Schema[Int32] {
 /// Redmine reads a relative bound as a whole number of days and counts 0 as
 /// today, so a negative or fractional count has no wire form.
 fn count_object(name : String) -> @schema.Schema[Int32] {
-  @schema.object(days => days)
-  |> @schema.field(name, @schema.integer(min=0))
-  |> @schema.Obj::done
+  only(name, @schema.integer(min=0))
+}
+
+///|
+fn[T] only(name : String, schema : @schema.Schema[T]) -> @schema.Schema[T] {
+  let value = @schema.required(name, schema)
+  @schema.record([value.as_member()], v => v.get(value))
+}
+
+///|
+fn[A, B] pair(
+  first : @schema.Field[A],
+  second : @schema.Field[B],
+) -> @schema.Schema[(A, B)] {
+  @schema.record([first.as_member(), second.as_member()], v => {
+    (v.get(first), v.get(second))
+  })
 }
 
 ///|
@@ -45,10 +59,7 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
     days_ago()
     .map(days => @redmine.PastDateFilter::DaysAgo(days))
     .describe("The single day that many days ago."),
-    @schema.object(from => to => (from, to))
-    |> @schema.field("from", iso())
-    |> @schema.optional("to", iso())
-    |> @schema.Obj::done
+    pair(@schema.required("from", iso()), @schema.optional_field("to", iso()))
     |> @schema.Schema::map(bounds => {
       match bounds {
         (from, Some(to)) => Between(from~, to~)
@@ -58,10 +69,7 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
     |> @schema.Schema::describe(
       "On or after `from`, and on or before `to` when it is given.",
     ),
-    @schema.object(from => to => (from, to))
-    |> @schema.optional("from", iso())
-    |> @schema.field("to", iso())
-    |> @schema.Obj::done
+    pair(@schema.optional_field("from", iso()), @schema.required("to", iso()))
     |> @schema.Schema::map(bounds => {
       match bounds {
         (Some(from), to) => Between(from~, to~)
@@ -69,10 +77,10 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
       }
     })
     |> @schema.Schema::describe("On or before `to`."),
-    @schema.object(from => to => (from, to))
-    |> @schema.field("from", days_ago())
-    |> @schema.optional("to", @schema.literal("today"))
-    |> @schema.Obj::done
+    pair(
+      @schema.required("from", days_ago()),
+      @schema.optional_field("to", @schema.literal("today")),
+    )
     |> @schema.Schema::map(bounds => {
       match bounds {
         (days, Some(_)) => LastDays(days)
@@ -82,9 +90,7 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
     |> @schema.Schema::describe(
       "The last n days: on or after the day n days ago.",
     ),
-    @schema.object(days => days)
-    |> @schema.field("to", days_ago())
-    |> @schema.Obj::done
+    only("to", days_ago())
     |> @schema.Schema::map(days => UntilDaysAgo(days))
     |> @schema.Schema::describe("On or before the day n days ago."),
   ]
@@ -110,21 +116,17 @@ pub fn date_filter() -> @schema.Schema[@redmine.DateFilter] {
     days_from_now()
     .map(days => @redmine.DateFilter::DaysFromNow(days))
     .describe("The single day that many days from now."),
-    @schema.object(days => days)
-    |> @schema.field("from", days_from_now())
-    |> @schema.Obj::done
+    only("from", days_from_now())
     |> @schema.Schema::map(days => SinceDaysFromNow(days))
     |> @schema.Schema::describe("On or after the day n days from now."),
-    @schema.object(days => days)
-    |> @schema.field("to", days_from_now())
-    |> @schema.Obj::done
+    only("to", days_from_now())
     |> @schema.Schema::map(days => UntilDaysFromNow(days))
     |> @schema.Schema::describe("On or before the day n days from now."),
-    @schema.object(_ => days => days)
-    |> @schema.field("from", @schema.literal("today"))
-    |> @schema.field("to", days_from_now())
-    |> @schema.Obj::done
-    |> @schema.Schema::map(days => NextDays(days))
+    pair(
+      @schema.required("from", @schema.literal("today")),
+      @schema.required("to", days_from_now()),
+    )
+    |> @schema.Schema::map(bounds => NextDays(bounds.1))
     |> @schema.Schema::describe(
       "The next n days: today through the day n days from now.",
     ),
