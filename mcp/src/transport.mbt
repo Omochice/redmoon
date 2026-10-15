@@ -30,15 +30,13 @@ pub async fn Server::serve(
           if in_flight.remove_and_get(request_id.stringify()) is Some(task) {
             task.cancel()
           }
-        Call(id~, ..) as action => {
+        Call(id~, tool~, arguments~, era~) => {
           let key = id.stringify()
           in_flight[key] = group.spawn(async fn() {
-            let response = self.respond(action)
+            let response = self.respond(id~, tool~, arguments~, era~)
             if in_flight.contains(key) {
               in_flight.remove(key)
-              if response is Some(message) {
-                send(message)
-              }
+              send(response)
             }
           })
         }
