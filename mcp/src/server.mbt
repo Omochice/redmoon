@@ -30,8 +30,16 @@ fn Server::server_info(self : Server) -> Json {
 }
 
 ///|
-fn Server::capabilities(_ : Server) -> Json {
-  object([("tools", object([]))])
+let capabilities : Json = object([("tools", object([]))])
+
+///|
+fn Server::add_instructions(
+  self : Server,
+  fields : Array[(String, Json)],
+) -> Unit {
+  if self.instructions is Some(text) {
+    fields.push(("instructions", Json(text)))
+  }
 }
 
 ///|
