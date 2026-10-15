@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+}
+
+supported_targets = "+native"
+
+options(
+  "native-stub": [
+    "keyring_result.c",
+    "keyring_darwin.c",
+    "keyring_linux.c",
+    "keyring_windows.c",
+  ],
+)
