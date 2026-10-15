@@ -14,59 +14,54 @@ fn attachment_scope_schema() -> @schema.Schema[@redmine.AttachmentScope] {
 
 ///|
 fn search_input() -> @schema.Schema[@redmine.SearchQuery] {
-  @schema.object(q => {
-    scope => {
-      all_words => {
-        titles_only => {
-          open_issues => {
-            issues => {
-              news => {
-                documents => {
-                  changesets => {
-                    wiki_pages => {
-                      messages => {
-                        projects => {
-                          attachments => @redmine.SearchQuery::{
-                            q,
-                            scope,
-                            all_words,
-                            titles_only,
-                            open_issues,
-                            issues,
-                            news,
-                            documents,
-                            changesets,
-                            wiki_pages,
-                            messages,
-                            projects,
-                            attachments,
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  })
-  |> @schema.field("q", @schema.string())
-  |> @schema.optional("scope", @schema.string())
-  |> @schema.optional("all_words", @schema.boolean())
-  |> @schema.optional("titles_only", @schema.boolean())
-  |> @schema.optional("open_issues", @schema.boolean())
-  |> @schema.optional("issues", @schema.boolean())
-  |> @schema.optional("news", @schema.boolean())
-  |> @schema.optional("documents", @schema.boolean())
-  |> @schema.optional("changesets", @schema.boolean())
-  |> @schema.optional("wiki_pages", @schema.boolean())
-  |> @schema.optional("messages", @schema.boolean())
-  |> @schema.optional("projects", @schema.boolean())
-  |> @schema.optional("attachments", attachment_scope_schema())
-  |> @schema.Obj::done
+  let q = @schema.required("q", @schema.string())
+  let scope = @schema.optional_field("scope", @schema.string())
+  let all_words = @schema.optional_field("all_words", @schema.boolean())
+  let titles_only = @schema.optional_field("titles_only", @schema.boolean())
+  let open_issues = @schema.optional_field("open_issues", @schema.boolean())
+  let issues = @schema.optional_field("issues", @schema.boolean())
+  let news = @schema.optional_field("news", @schema.boolean())
+  let documents = @schema.optional_field("documents", @schema.boolean())
+  let changesets = @schema.optional_field("changesets", @schema.boolean())
+  let wiki_pages = @schema.optional_field("wiki_pages", @schema.boolean())
+  let messages = @schema.optional_field("messages", @schema.boolean())
+  let projects = @schema.optional_field("projects", @schema.boolean())
+  let attachments = @schema.optional_field(
+    "attachments",
+    attachment_scope_schema(),
+  )
+  @schema.record(
+    [
+      q.as_member(),
+      scope.as_member(),
+      all_words.as_member(),
+      titles_only.as_member(),
+      open_issues.as_member(),
+      issues.as_member(),
+      news.as_member(),
+      documents.as_member(),
+      changesets.as_member(),
+      wiki_pages.as_member(),
+      messages.as_member(),
+      projects.as_member(),
+      attachments.as_member(),
+    ],
+    v => @redmine.SearchQuery::{
+      q: v.get(q),
+      scope: v.get(scope),
+      all_words: v.get(all_words),
+      titles_only: v.get(titles_only),
+      open_issues: v.get(open_issues),
+      issues: v.get(issues),
+      news: v.get(news),
+      documents: v.get(documents),
+      changesets: v.get(changesets),
+      wiki_pages: v.get(wiki_pages),
+      messages: v.get(messages),
+      projects: v.get(projects),
+      attachments: v.get(attachments),
+    },
+  )
 }
 
 ///|
