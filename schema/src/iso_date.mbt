@@ -2,7 +2,7 @@
 /// A `YYYY-MM-DD` string naming a real calendar date, returned unchanged.
 pub fn iso_date() -> Schema[String] {
   {
-    json: () => json_object([("type", "string"), ("format", "date")]),
+    json: () => { "type": "string", "format": "date" },
     decode: (input, path) => {
       guard input is String(s) else { fail(path, "expected a string") }
       if !is_calendar_date(s) {

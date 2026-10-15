@@ -10,12 +10,3 @@ fn with_keywords(base : Json, extra : Array[(String, Json)]) -> Json {
   }
   Json::object(merged)
 }
-
-///|
-fn json_object(entries : Array[(String, Json)]) -> Json {
-  let fields : Map[String, Json] = Map([])
-  for entry in entries {
-    fields[entry.0] = entry.1
-  }
-  Json::object(fields)
-}

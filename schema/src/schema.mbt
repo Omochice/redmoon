@@ -78,7 +78,7 @@ pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
       if max is Some(m) {
         entries.push(("maximum", Json(m)))
       }
-      json_object(entries)
+      Json::object(Map::from_array(entries))
     },
     decode: (input, path) => {
       guard input is Number(d, ..) &&
@@ -111,7 +111,7 @@ pub fn number(min? : Double, max? : Double) -> Schema[Double] {
       if max is Some(m) {
         entries.push(("maximum", Json(m)))
       }
-      json_object(entries)
+      Json::object(Map::from_array(entries))
     },
     decode: (input, path) => {
       guard input is Number(d, ..) else { fail(path, "expected a number") }
@@ -138,7 +138,7 @@ pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String] {
       if max_length is Some(m) {
         entries.push(("maxLength", Json(m)))
       }
-      json_object(entries)
+      Json::object(Map::from_array(entries))
     },
     decode: (input, path) => {
       guard input is String(s) else { fail(path, "expected a string") }
@@ -168,7 +168,7 @@ pub fn not_blank() -> Schema[String] {
 /// A boolean.
 pub fn boolean() -> Schema[Bool] {
   {
-    json: () => json_object([("type", "boolean")]),
+    json: () => { "type": "boolean" },
     decode: (input, path) => {
       match input {
         True => true
@@ -183,7 +183,7 @@ pub fn boolean() -> Schema[Bool] {
 /// Exactly the string `value`.
 pub fn literal(value : String) -> Schema[String] {
   {
-    json: () => json_object([("type", "string"), ("const", Json(value))]),
+    json: () => { "type": "string", "const": Json(value) },
     decode: (input, path) => {
       guard input is String(s) && s == value else {
         fail(path, "must be `\{value}`")
@@ -205,10 +205,8 @@ pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
   let names = options.map(o => o.0)
   {
     json: () => {
-      json_object([
-        ("type", "string"),
-        ("enum", Json::array(names.map(n => Json(n)))),
-      ])
+      "type": "string",
+      "enum": Json::array(names.map(n => Json(n))),
     },
     decode: (input, path) => {
       guard input is String(s) else {
@@ -236,7 +234,7 @@ pub fn[T] array(item : Schema[T], min_items? : Int32) -> Schema[Array[T]] {
       if min_items is Some(m) {
         entries.push(("minItems", Json(m)))
       }
-      json_object(entries)
+      Json::object(Map::from_array(entries))
     },
     decode: (input, path) => {
       guard input is Array(items) else { fail(path, "expected an array") }

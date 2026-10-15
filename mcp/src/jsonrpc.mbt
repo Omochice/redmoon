@@ -37,17 +37,8 @@ fn RpcError::new(code : Int32, message : String, data? : Json) -> RpcError {
 }
 
 ///|
-fn object(entries : Array[(String, Json)]) -> Json {
-  let fields : Map[String, Json] = Map([])
-  for entry in entries {
-    fields[entry.0] = entry.1
-  }
-  Json::object(fields)
-}
-
-///|
 fn result_response(id : Json, result : Json) -> Json {
-  object([("jsonrpc", "2.0"), ("id", id), ("result", result)])
+  { "jsonrpc": "2.0", "id": id, "result": result }
 }
 
 ///|
@@ -59,7 +50,7 @@ fn error_response(id : Json, error : RpcError) -> Json {
   if error.data is Some(data) {
     fields.push(("data", data))
   }
-  object([("jsonrpc", "2.0"), ("id", id), ("error", object(fields))])
+  { "jsonrpc": "2.0", "id": id, "error": Json::object(Map::from_array(fields)) }
 }
 
 ///|
