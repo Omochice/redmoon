@@ -13,7 +13,11 @@ pub fn SchemaError::messages(self : SchemaError) -> Array[String] {
   let out : Array[String] = []
   for leaf in self.leaves() {
     let (path, message) = leaf
-    let text = if path.is_empty() { message } else { path.join(".") + ": " + message }
+    let text = if path.is_empty() {
+      message
+    } else {
+      path.join(".") + ": " + message
+    }
     if !out.contains(text) {
       out.push(text)
     }
@@ -28,7 +32,7 @@ pub fn SchemaError::message(self : SchemaError) -> String {
 }
 
 ///|
-pub impl Show for SchemaError with output(self, logger) {
+pub impl Show for SchemaError with fn output(self, logger) {
   logger.write_string(self.message())
 }
 

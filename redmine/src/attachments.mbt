@@ -3,7 +3,7 @@
 pub(all) struct Attachment {
   id : Int32
   filename : String
-  filesize : Int
+  filesize : Int32
   content_type : String
   description : String?
   content_url : String
@@ -29,7 +29,7 @@ pub extend Attachment with @debug.Debug::{to_repr}
 /// Raises `Response` with status 404 when it does not exist.
 pub async fn Redmine::show_attachment(
   self : Redmine,
-  id : Int,
+  id : Int32,
 ) -> Attachment raise RedmineError {
   decode_field(self.get(["attachments", "\{id}.json"]), "attachment")
 }
@@ -40,9 +40,9 @@ pub async fn Redmine::show_attachment(
 /// Errors raised by `consume` propagate unchanged; every failure of the download itself is a `RedmineError`.
 pub async fn Redmine::download_attachment(
   self : Redmine,
-  id : Int,
-  consume : async (Attachment, &@io.Reader) -> Unit raise,
-) -> Unit raise {
+  id : Int32,
+  consume : async (Attachment, &@io.Reader) -> Unit,
+) -> Unit {
   let attachment = self.show_attachment(id)
   let mut location = self.attachment_content_location(attachment)
   for followed = 0; followed <= MAX_REDIRECTS; followed = followed + 1 {

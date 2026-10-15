@@ -1,3 +1,4 @@
+///|
 using @schema {
   type Schema,
   type Obj,

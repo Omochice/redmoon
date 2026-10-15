@@ -19,7 +19,7 @@ pub extend VersionStatus with @json.FromJson::{from_json}
 pub extend VersionStatus with @debug.Debug::{to_repr}
 
 ///|
-pub impl ToJson for VersionStatus with to_json(self) -> Json {
+pub impl ToJson for VersionStatus with fn to_json(self) -> Json {
   match self {
     Open => "open"
     Locked => "locked"
@@ -28,7 +28,7 @@ pub impl ToJson for VersionStatus with to_json(self) -> Json {
 }
 
 ///|
-pub impl @json.FromJson for VersionStatus with from_json(json, path) {
+pub impl @json.FromJson for VersionStatus with fn from_json(json, path) {
   match json {
     "open" => Open
     "locked" => Locked
@@ -60,7 +60,7 @@ pub extend VersionSharing with @json.FromJson::{from_json}
 pub extend VersionSharing with @debug.Debug::{to_repr}
 
 ///|
-pub impl ToJson for VersionSharing with to_json(self) -> Json {
+pub impl ToJson for VersionSharing with fn to_json(self) -> Json {
   match self {
     None => "none"
     Descendants => "descendants"
@@ -71,7 +71,7 @@ pub impl ToJson for VersionSharing with to_json(self) -> Json {
 }
 
 ///|
-pub impl @json.FromJson for VersionSharing with from_json(json, path) {
+pub impl @json.FromJson for VersionSharing with fn from_json(json, path) {
   match json {
     "none" => None
     "descendants" => Descendants
@@ -85,7 +85,7 @@ pub impl @json.FromJson for VersionSharing with from_json(json, path) {
 ///|
 /// A project version (milestone).
 pub(all) struct Version {
-  id : Int
+  id : Int32
   project : IdName
   name : String
   description : String?
@@ -159,7 +159,7 @@ pub async fn Redmine::list_versions(
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 pub async fn Redmine::show_version(
   self : Redmine,
-  id : Int,
+  id : Int32,
 ) -> Version raise RedmineError {
   let json = self.get(["versions", id.to_string() + ".json"])
   decode_field(json, "version")
@@ -193,7 +193,7 @@ pub async fn Redmine::create_version(
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 pub async fn Redmine::update_version(
   self : Redmine,
-  id : Int,
+  id : Int32,
   attributes : VersionUpdate,
 ) -> Unit raise RedmineError {
   let _ = self.send(
@@ -208,7 +208,6 @@ pub async fn Redmine::update_version(
       attributes.wiki_page_title,
     ),
   )
-
 }
 
 ///|
@@ -216,10 +215,9 @@ pub async fn Redmine::update_version(
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 pub async fn Redmine::delete_version(
   self : Redmine,
-  id : Int,
+  id : Int32,
 ) -> Unit raise RedmineError {
   let _ = self.send(Delete, ["versions", id.to_string() + ".json"])
-
 }
 
 ///|

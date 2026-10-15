@@ -17,20 +17,14 @@ async test "live: upload, attach, show and download round-trip" {
   let reader = @io.MemoryReader(w => w.write(content))
   let token = redmine.upload(reader, content.length().to_int64(), filename~)
   assert_false(token.is_empty())
-  let created = redmine.send(
-    Post,
-    ["issues.json"],
-    body={ "issue": { "project_id": 1, "subject": "attachments live \{filename}" } },
-  )
-  let issue_id : Int = decode_field(decode_field(created, "issue"), "id")
+  let created = redmine.send(Post, ["issues.json"], body={
+    "issue": { "project_id": 1, "subject": "attachments live \{filename}" },
+  })
+  let issue_id : Int32 = decode_field(decode_field(created, "issue"), "id")
   defer ignore(redmine.send(Delete, ["issues", "\{issue_id}.json"]))
-  let _ = redmine.send(
-    Put,
-    ["issues", "\{issue_id}.json"],
-    body={
-      "issue": { "uploads": [{ "token": token, "filename": filename }] },
-    },
-  )
+  let _ = redmine.send(Put, ["issues", "\{issue_id}.json"], body={
+    "issue": { "uploads": [{ "token": token, "filename": filename }] },
+  })
   let shown = redmine.send(Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
@@ -62,20 +56,14 @@ async test "live: an error raised by consume propagates unchanged" {
   let reader = @io.MemoryReader(w => w.write(content))
   let filename = "attachments-live-consume-\{@env.now()}.txt"
   let token = redmine.upload(reader, 1L, filename~)
-  let created = redmine.send(
-    Post,
-    ["issues.json"],
-    body={ "issue": { "project_id": 1, "subject": "attachments consume \{filename}" } },
-  )
-  let issue_id : Int = decode_field(decode_field(created, "issue"), "id")
+  let created = redmine.send(Post, ["issues.json"], body={
+    "issue": { "project_id": 1, "subject": "attachments consume \{filename}" },
+  })
+  let issue_id : Int32 = decode_field(decode_field(created, "issue"), "id")
   defer ignore(redmine.send(Delete, ["issues", "\{issue_id}.json"]))
-  let _ = redmine.send(
-    Put,
-    ["issues", "\{issue_id}.json"],
-    body={
-      "issue": { "uploads": [{ "token": token, "filename": filename }] },
-    },
-  )
+  let _ = redmine.send(Put, ["issues", "\{issue_id}.json"], body={
+    "issue": { "uploads": [{ "token": token, "filename": filename }] },
+  })
   let shown = redmine.send(Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
@@ -84,9 +72,7 @@ async test "live: an error raised by consume propagates unchanged" {
     "attachments",
   )
   try
-    redmine.download_attachment(attachments[0].id, (_, _) => {
-      raise ConsumeFailed
-    })
+    redmine.download_attachment(attachments[0].id, (_, _) => raise ConsumeFailed)
   catch {
     ConsumeFailed => ()
     _ => fail("expected ConsumeFailed")
@@ -98,7 +84,9 @@ async test "live: an error raised by consume propagates unchanged" {
 ///|
 async test "live: downloading a missing attachment raises Response 404" {
   guard attachments_live_redmine() is Some(redmine) else { return }
-  try redmine.download_attachment(0, (_, _) => fail("unexpected content")) catch {
+  try
+    redmine.download_attachment(0, (_, _) => fail("unexpected content"))
+  catch {
     Response(status~, ..) => assert_eq(status, 404)
     _ => fail("expected Response")
   } noraise {

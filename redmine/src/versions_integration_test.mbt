@@ -26,7 +26,9 @@ async test "live: versions go through create, list, show, update and delete" {
     assert_eq(created.name, name)
     assert_eq(created.due_date, Some("2030-01-31"))
     assert_eq(created.sharing, Descendants)
-    assert_true(redmine.list_versions(project).any(fn(v) { v.id == created.id }))
+    assert_true(
+      redmine.list_versions(project).any(fn(v) { v.id == created.id }),
+    )
     redmine.update_version(created.id, {
       name: None,
       description: Some("changed"),

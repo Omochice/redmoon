@@ -20,8 +20,10 @@ fn is_calendar_date(text : String) -> Bool {
     return false
   }
   let digits = [0, 1, 2, 3, 5, 6, 8, 9]
-  guard digits.all(i => chars[i] >= '0' && chars[i] <= '9') else { return false }
-  let number = (from : Int, to : Int) => {
+  guard digits.all(i => chars[i] >= '0' && chars[i] <= '9') else {
+    return false
+  }
+  let number = (from : Int32, to : Int32) => {
     let mut n = 0
     for i = from; i < to; i = i + 1 {
       n = n * 10 + (chars[i].to_int() - '0'.to_int())
@@ -35,7 +37,7 @@ fn is_calendar_date(text : String) -> Bool {
 }
 
 ///|
-fn days_in_month(year : Int, month : Int) -> Int {
+fn days_in_month(year : Int32, month : Int32) -> Int32 {
   match month {
     2 => if is_leap_year(year) { 29 } else { 28 }
     4 | 6 | 9 | 11 => 30
@@ -44,6 +46,6 @@ fn days_in_month(year : Int, month : Int) -> Int {
 }
 
 ///|
-fn is_leap_year(year : Int) -> Bool {
+fn is_leap_year(year : Int32) -> Bool {
   year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
 }

@@ -1,9 +1,9 @@
 ///|
 enum Input {
-  List(Int?)
-  Show(Int)
-  Note(Int, String)
-  NoteDelete(Int, Int)
+  List(Int32?)
+  Show(Int32)
+  Note(Int32, String)
+  NoteDelete(Int32, Int32)
 } derive(Debug)
 
 ///|
@@ -23,10 +23,9 @@ let note_input : Schema[Input] = object(id => text => Input::Note(id, text))
   |> Obj::done
 
 ///|
-let note_by_journal : Schema[Input] = object(id => journal => Input::NoteDelete(
-    id,
-    journal,
-  ))
+let note_by_journal : Schema[Input] = object(id => {
+    journal => Input::NoteDelete(id, journal)
+  })
   |> field("id", integer())
   |> field("journal_id", integer())
   |> Obj::done

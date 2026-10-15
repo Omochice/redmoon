@@ -1,6 +1,6 @@
 ///|
 struct VersionCreate {
-  project_id : Int
+  project_id : Int32
   name : String
   description : String
   status : String?
@@ -9,16 +9,17 @@ struct VersionCreate {
 } derive(Debug)
 
 ///|
-let version_create : Schema[VersionCreate] = object(
-  project_id => name => description => status => sharing => notes => {
-    project_id,
-    name,
-    description,
-    status,
-    sharing,
-    notes,
-  },
-)
+let version_create : Schema[VersionCreate] = object(project_id => {
+    name => {
+      description => {
+        status => {
+          sharing => {
+            notes => { project_id, name, description, status, sharing, notes, }
+          }
+        }
+      }
+    }
+  })
   |> field("project_id", integer(min=1))
   |> field("name", string(min_length=1))
   |> field("description", string().describe("Free text"))
@@ -37,7 +38,7 @@ test "object emits a strict schema" {
 
 ///|
 test "object without required fields omits required" {
-  let s = object(a => a)|> optional("a", boolean()) |> Obj::done
+  let s = object(a => a) |> optional("a", boolean()) |> Obj::done
   assert_eq(
     schema_json(s),
     "{\"type\":\"object\",\"properties\":{\"a\":{\"type\":\"boolean\"}},\"additionalProperties\":false}",
@@ -94,7 +95,9 @@ test "object errors name the field" {
     "error: notes.1: expected a string",
   )
   assert_eq(
-    outcome(version_create, "{\"project_id\":1,\"name\":\"\",\"description\":\"\"}"),
+    outcome(
+      version_create, "{\"project_id\":1,\"name\":\"\",\"description\":\"\"}",
+    ),
     "error: name: must be at least 1 characters",
   )
   assert_eq(outcome(version_create, "[]"), "error: expected an object")
@@ -131,9 +134,12 @@ test "errors are prefixed by the caller's path" {
 
 ///|
 test "nested objects report dotted paths" {
-  let inner = object(n => n)|> field("n", integer()) |> Obj::done
-  let outer = object(i => i)|> field("inner", inner) |> Obj::done
-  assert_eq(outcome(outer, "{\"inner\":{\"n\":\"x\"}}"), "error: inner.n: expected an integer")
+  let inner = object(n => n) |> field("n", integer()) |> Obj::done
+  let outer = object(i => i) |> field("inner", inner) |> Obj::done
+  assert_eq(
+    outcome(outer, "{\"inner\":{\"n\":\"x\"}}"),
+    "error: inner.n: expected an integer",
+  )
   assert_eq(outcome(outer, "{\"inner\":{}}"), "error: inner.n: is required")
   assert_eq(outcome(outer, "{\"inner\":{\"n\":1}}"), "ok: 1")
 }

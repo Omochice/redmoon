@@ -1,6 +1,6 @@
 ///|
 enum DayBound {
-  Days(Int)
+  Days(Int32)
   Period(String)
 } derive(Debug)
 
@@ -73,10 +73,7 @@ test "union of objects reports field errors" {
     outcome(s, "{\"id\":\"x\"}"),
     "error: id: expected an integer; id: unknown field",
   )
-  assert_eq(
-    outcome(s, "{}"),
-    "error: id: is required; name: is required",
-  )
+  assert_eq(outcome(s, "{}"), "error: id: is required; name: is required")
   assert_eq(
     outcome(s, "{\"id\":1,\"name\":\"n\"}"),
     "error: name: unknown field; id: unknown field",

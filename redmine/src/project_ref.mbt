@@ -2,7 +2,7 @@
 /// A project as Redmine's `/projects/:project_id/...` routes accept it: the
 /// numeric id or the string identifier that appears in project URLs.
 pub(all) enum ProjectRef {
-  Id(Int)
+  Id(Int32)
   Identifier(String)
 } derive(Eq, Debug)
 

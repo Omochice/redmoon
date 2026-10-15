@@ -20,7 +20,11 @@ pub fn[T] keyed(entries : Array[(String, Schema[T])]) -> Schema[T] {
   let by_action : Map[String, Schema[T]] = Map([])
   for action in actions {
     let group = shapes[action]
-    by_action[action] = if group.length() == 1 { group[0] } else { union(group) }
+    by_action[action] = if group.length() == 1 {
+      group[0]
+    } else {
+      union(group)
+    }
   }
   let names = actions.join(", ")
   {

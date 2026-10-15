@@ -4,43 +4,47 @@ pub suberror KeyringError {
   /// No credential store can be opened; the payload tells the user what to install or start.
   NoStore(String)
   /// The store rejected the operation; the payload is its native error code.
-  Refused(Int)
+  Refused(Int32)
 }
 
 ///|
 #borrow(service, account, secret)
-extern "C" fn ffi_set(service : Bytes, account : Bytes, secret : Bytes) -> Int = "omochice_keyring_set"
+extern "C" fn ffi_set(
+  service : Bytes,
+  account : Bytes,
+  secret : Bytes,
+) -> Int32 = "omochice_keyring_set"
 
 ///|
 #borrow(service, account)
-extern "C" fn ffi_get(service : Bytes, account : Bytes) -> Int = "omochice_keyring_get"
+extern "C" fn ffi_get(service : Bytes, account : Bytes) -> Int32 = "omochice_keyring_get"
 
 ///|
 #borrow(service, account)
-extern "C" fn ffi_delete(service : Bytes, account : Bytes) -> Int = "omochice_keyring_delete"
+extern "C" fn ffi_delete(service : Bytes, account : Bytes) -> Int32 = "omochice_keyring_delete"
 
 ///|
 #borrow(service)
-extern "C" fn ffi_list(service : Bytes) -> Int = "omochice_keyring_list"
+extern "C" fn ffi_list(service : Bytes) -> Int32 = "omochice_keyring_list"
 
 ///|
-extern "C" fn ffi_result_size() -> Int = "omochice_keyring_result_size"
+extern "C" fn ffi_result_size() -> Int32 = "omochice_keyring_result_size"
 
 ///|
 #borrow(dst)
 extern "C" fn ffi_result_take(dst : Bytes) = "omochice_keyring_result_take"
 
 ///|
-let ok : Int = 0
+let ok : Int32 = 0
 
 ///|
-let not_found : Int = 1000000001
+let not_found : Int32 = 1000000001
 
 ///|
-let no_store : Int = 1000000002
+let no_store : Int32 = 1000000002
 
 ///|
-fn check(status : Int) -> Unit raise KeyringError {
+fn check(status : Int32) -> Unit raise KeyringError {
   if status == ok {
     return
   }
@@ -92,7 +96,9 @@ pub fn set(
   account : String,
   secret : String,
 ) -> Unit raise KeyringError {
-  check(ffi_set(@utf8.encode(service), @utf8.encode(account), @utf8.encode(secret)))
+  check(
+    ffi_set(@utf8.encode(service), @utf8.encode(account), @utf8.encode(secret)),
+  )
 }
 
 ///|

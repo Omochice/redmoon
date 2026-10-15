@@ -10,7 +10,10 @@ test "wiki page segments sanitize the title and select the version" {
 
 ///|
 test "wiki page body leaves unset fields out" {
-  assert_eq(wiki_page_body("hello").stringify(), "{\"wiki_page\":{\"text\":\"hello\"}}")
+  assert_eq(
+    wiki_page_body("hello").stringify(),
+    "{\"wiki_page\":{\"text\":\"hello\"}}",
+  )
   assert_eq(
     wiki_page_body("hello", comments="why", version=2, parent_title="A B").stringify(),
     "{\"wiki_page\":{\"text\":\"hello\",\"comments\":\"why\",\"version\":2,\"parent_title\":\"A_B\"}}",
@@ -28,7 +31,7 @@ test "wiki page summaries decode a Redmine index" {
     _ => fail("decode")
   }
   assert_eq(pages.length(), 2)
-  assert_eq(pages[0].parent, Some({ title: "Root" }))
+  assert_eq(pages[0].parent, Some({ title: "Root", }))
   assert_eq(pages[1].parent, None)
 }
 
@@ -43,6 +46,6 @@ test "a wiki page decodes with and without comments" {
     _ => fail("decode")
   }
   assert_eq(page.comments, None)
-  assert_eq(page.author, { id: 1, name: "Redmine Admin" })
+  assert_eq(page.author, { id: 1, name: "Redmine Admin", })
   assert_eq(page.attachments, None)
 }

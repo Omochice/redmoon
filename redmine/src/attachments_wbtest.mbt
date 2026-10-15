@@ -30,22 +30,22 @@ test "resolve_location handles absolute, rooted and relative references" {
   )
   assert_eq(resolve("//cdn.example/b").unwrap().origin, "http://cdn.example")
   assert_eq(resolve("/files/b.txt?z=1").unwrap().target, "/files/b.txt?z=1")
+  assert_eq(resolve("b.txt").unwrap().target, "/attachments/download/1/b.txt")
   assert_eq(
-    resolve("b.txt").unwrap().target,
-    "/attachments/download/1/b.txt",
+    resolve("../2/b.txt").unwrap().target,
+    "/attachments/download/2/b.txt",
   )
-  assert_eq(resolve("../2/b.txt").unwrap().target, "/attachments/download/2/b.txt")
-  assert_eq(resolve("?q=2").unwrap().target, "/attachments/download/1/a.txt?q=2")
+  assert_eq(
+    resolve("?q=2").unwrap().target,
+    "/attachments/download/1/a.txt?q=2",
+  )
   assert_true(resolve("ftp://h/x") is None)
   assert_true(resolve("javascript:alert(1)") is None)
 }
 
 ///|
 test "the first download request goes to the endpoint, not the reported host" {
-  let redmine = Redmine::new(
-    endpoint="https://r.example/redmine",
-    api_key="k",
-  )
+  let redmine = Redmine::new(endpoint="https://r.example/redmine", api_key="k")
   let attachment : Attachment = {
     id: 1,
     filename: "a.txt",
@@ -54,7 +54,7 @@ test "the first download request goes to the endpoint, not the reported host" {
     description: None,
     content_url: "http://internal:3000/attachments/download/1/a.txt",
     thumbnail_url: None,
-    author: { id: 1, name: "Admin" },
+    author: { id: 1, name: "Admin", },
     created_on: "2026-01-01T00:00:00Z",
   }
   let location = redmine.attachment_content_location(attachment)

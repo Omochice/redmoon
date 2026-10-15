@@ -17,9 +17,12 @@ test "set, get, list and delete round-trip a secret" {
     assert_eq(@keyring.get(test_service, test_account), None)
     assert_false(@keyring.list(test_service).contains(test_account))
   } catch {
-    @keyring.NoStore(reason) => println("skipped: no credential store (\{reason})")
+    @keyring.NoStore(reason) =>
+      println("skipped: no credential store (\{reason})")
     e => {
-      @keyring.delete(test_service, test_account) catch { _ => () }
+      @keyring.delete(test_service, test_account) catch {
+        _ => ()
+      }
       raise e
     }
   } noraise {

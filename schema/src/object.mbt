@@ -9,7 +9,7 @@ pub struct Obj[F] {
 ///|
 /// Starts an object from a curried make taking one parameter per field.
 pub fn[F] object(make : F) -> Obj[F] {
-  { props: [], build: (_, _) => make }
+  { props: [], build: (_, _) => make, }
 }
 
 ///|
@@ -61,7 +61,11 @@ pub fn[A : ToJson, R] optional_or(
   {
     props: [
       ..o.props,
-      (name, with_keywords((schema.json)(), [("default", Json(default))]), false),
+      (
+        name,
+        with_keywords((schema.json)(), [("default", Json(default))]),
+        false,
+      ),
     ],
     build: (fields, path) => {
       let apply = (o.build)(fields, path)
@@ -97,7 +101,9 @@ pub fn[T] Obj::done(self : Obj[T]) -> Schema[T] {
       let unknown = []
       for key, _ in fields {
         if !known.contains(key) {
-          unknown.push(SchemaError::Invalid(path=[..path, key], message="unknown field"))
+          unknown.push(
+            SchemaError::Invalid(path=[..path, key], message="unknown field"),
+          )
         }
       }
       if unknown.length() == 1 {

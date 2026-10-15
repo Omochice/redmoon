@@ -46,7 +46,10 @@ test "string emits and parses" {
 
 ///|
 test "not_blank carries a real pattern" {
-  assert_eq(schema_json(not_blank()), "{\"type\":\"string\",\"pattern\":\"\\\\S\"}")
+  assert_eq(
+    schema_json(not_blank()),
+    "{\"type\":\"string\",\"pattern\":\"\\\\S\"}",
+  )
   assert_eq(outcome(not_blank(), "\" x \""), "ok: \" x \"")
   assert_eq(outcome(not_blank(), "\"  \""), "error: must not be blank")
   assert_eq(outcome(not_blank(), "\"\""), "error: must not be blank")
@@ -99,7 +102,10 @@ test "array" {
   assert_eq(outcome(s, "[]"), "error: must have at least 1 items")
   assert_eq(outcome(s, "[1,0]"), "error: 1: must be at least 1")
   assert_eq(outcome(s, "{}"), "error: expected an array")
-  assert_eq(outcome(array(picklist(["a"])), "[\"a\",\"b\"]"), "error: 1: must be one of a")
+  assert_eq(
+    outcome(array(picklist(["a"])), "[\"a\",\"b\"]"),
+    "error: 1: must be one of a",
+  )
 }
 
 ///|
@@ -119,11 +125,9 @@ test "map converts the parsed value only" {
 
 ///|
 test "refine rejects and merges keywords" {
-  let s = string().refine(
-    v => v.has_prefix("#"),
-    "must start with #",
-    keywords=[("pattern", "^#")],
-  )
+  let s = string().refine(v => v.has_prefix("#"), "must start with #", keywords=[
+    ("pattern", "^#"),
+  ])
   assert_eq(schema_json(s), "{\"type\":\"string\",\"pattern\":\"^#\"}")
   assert_eq(outcome(s, "\"#a\""), "ok: \"#a\"")
   assert_eq(outcome(s, "\"a\""), "error: must start with #")

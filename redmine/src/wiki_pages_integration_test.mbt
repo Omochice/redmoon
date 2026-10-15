@@ -46,7 +46,9 @@ async test "live: wiki pages go through create, list, show, update and delete" {
 ///|
 async test "live: a missing wiki page raises Response 404" {
   guard wiki_live() is Some(redmine) else { return }
-  try redmine.show_wiki_page(@redmine.Identifier("demo"), "No such page") catch {
+  try
+    redmine.show_wiki_page(@redmine.Identifier("demo"), "No such page")
+  catch {
     Response(status~, ..) => assert_eq(status, 404)
     _ => fail("expected Response")
   } noraise {

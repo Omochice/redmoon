@@ -32,13 +32,16 @@ pub fn[T] Schema::parse_at(
 ///|
 /// Adds a `description` to the emitted schema.
 pub fn[T] Schema::describe(self : Schema[T], text : String) -> Schema[T] {
-  { json: () => with_keywords((self.json)(), [("description", Json(text))]), decode: self.decode }
+  {
+    json: () => with_keywords((self.json)(), [("description", Json(text))]),
+    decode: self.decode,
+  }
 }
 
 ///|
 /// Converts the parsed value; the emitted schema is unchanged.
 pub fn[A, B] Schema::map(self : Schema[A], f : (A) -> B) -> Schema[B] {
-  { json: self.json, decode: (input, path) => f((self.decode)(input, path)) }
+  { json: self.json, decode: (input, path) => f((self.decode)(input, path)), }
 }
 
 ///|
@@ -49,7 +52,7 @@ pub fn[T] Schema::refine(
   self : Schema[T],
   check : (T) -> Bool,
   message : String,
-  keywords? : Array[(String, Json)] = [],
+  keywords~ : Array[(String, Json)] = [],
 ) -> Schema[T] {
   {
     json: () => with_keywords((self.json)(), keywords),
@@ -65,7 +68,7 @@ pub fn[T] Schema::refine(
 
 ///|
 /// An integer, optionally bounded (inclusive).
-pub fn integer(min? : Int, max? : Int) -> Schema[Int] {
+pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
   {
     json: () => {
       let entries : Array[(String, Json)] = [("type", "integer")]
@@ -78,7 +81,10 @@ pub fn integer(min? : Int, max? : Int) -> Schema[Int] {
       json_object(entries)
     },
     decode: (input, path) => {
-      guard input is Number(d, ..) && d == d.floor() && d >= -2147483648.0 && d <= 2147483647.0 else {
+      guard input is Number(d, ..) &&
+        d == d.floor() &&
+        d >= -2147483648.0 &&
+        d <= 2147483647.0 else {
         fail(path, "expected an integer")
       }
       let n = d.to_int()
@@ -122,7 +128,7 @@ pub fn number(min? : Double, max? : Double) -> Schema[Double] {
 
 ///|
 /// A string, optionally bounded in length (in characters).
-pub fn string(min_length? : Int, max_length? : Int) -> Schema[String] {
+pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String] {
   {
     json: () => {
       let entries : Array[(String, Json)] = [("type", "string")]
@@ -163,10 +169,12 @@ pub fn not_blank() -> Schema[String] {
 pub fn boolean() -> Schema[Bool] {
   {
     json: () => json_object([("type", "boolean")]),
-    decode: (input, path) => match input {
-      True => true
-      False => false
-      _ => fail(path, "expected a boolean")
+    decode: (input, path) => {
+      match input {
+        True => true
+        False => false
+        _ => fail(path, "expected a boolean")
+      }
     },
   }
 }
@@ -196,10 +204,12 @@ pub fn picklist(values : Array[String]) -> Schema[String] {
 pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
   let names = options.map(o => o.0)
   {
-    json: () => json_object([
-      ("type", "string"),
-      ("enum", Json::array(names.map(n => Json(n)))),
-    ]),
+    json: () => {
+      json_object([
+        ("type", "string"),
+        ("enum", Json::array(names.map(n => Json(n)))),
+      ])
+    },
     decode: (input, path) => {
       guard input is String(s) else {
         fail(path, "must be one of \{names.join(", ")}")
@@ -216,7 +226,7 @@ pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
 
 ///|
 /// An array whose items all satisfy `item`.
-pub fn[T] array(item : Schema[T], min_items? : Int) -> Schema[Array[T]] {
+pub fn[T] array(item : Schema[T], min_items? : Int32) -> Schema[Array[T]] {
   {
     json: () => {
       let entries : Array[(String, Json)] = [

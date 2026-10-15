@@ -1,7 +1,7 @@
 ///|
 /// The Fetch standard's own limit; redirects are followed by hand only to keep
 /// the API key from crossing origins.
-const MAX_REDIRECTS : Int = 20
+const MAX_REDIRECTS : Int32 = 20
 
 ///|
 priv struct AttachmentLocation {
@@ -50,16 +50,14 @@ fn parse_absolute_url(url : String) -> AttachmentLocation? {
     Some(i) => rest[:i]
     None => rest
   }
-  let authority_end = rest.find_by(c => c == '/' || c == '?').unwrap_or(rest.length())
+  let authority_end = rest
+    .find_by(c => c == '/' || c == '?')
+    .unwrap_or(rest.length())
   let authority = rest[:authority_end]
   guard authority != "" && !authority.contains("@") else { return None }
   let tail = rest[authority_end:].to_owned()
-  let target = if tail.has_prefix("/") {
-    tail
-  } else {
-    "/\{tail}"
-  }
-  Some({ origin: "\{scheme}://\{authority}", target })
+  let target = if tail.has_prefix("/") { tail } else { "/\{tail}" }
+  Some({ origin: "\{scheme}://\{authority}", target, })
 }
 
 ///|
@@ -96,8 +94,7 @@ fn resolve_location(
     return parse_absolute_url("\{scheme}:\{location}")
   }
   let is_absolute = match location.find(":") {
-    Some(colon) =>
-      !location[:colon].contains_any(chars="/?#") && colon > 0
+    Some(colon) => !location[:colon].contains_any(chars="/?#") && colon > 0
     None => false
   }
   if is_absolute {
@@ -125,12 +122,16 @@ fn resolve_location(
     let slash = current_path.rev_find("/").unwrap()
     remove_dot_segments(current_path[:slash + 1].to_owned() + path) + query
   }
-  Some({ origin: current.origin, target: resolved })
+  Some({ origin: current.origin, target: resolved, })
 }
 
 ///|
 fn is_redirect_status(status : Int32) -> Bool {
-  status == 301 || status == 302 || status == 303 || status == 307 || status == 308
+  status == 301 ||
+  status == 302 ||
+  status == 303 ||
+  status == 307 ||
+  status == 308
 }
 
 ///|
@@ -144,7 +145,7 @@ fn Redmine::attachment_content_location(
   guard parse_absolute_url(attachment.content_url) is Some(content) else {
     raise Transport(message="attachment has an invalid `content_url`")
   }
-  { origin: self.endpoint.origin, target: content.target }
+  { origin: self.endpoint.origin, target: content.target, }
 }
 
 ///|
@@ -164,12 +165,12 @@ async fn attachment_fetch(
   client : @http.Client,
   location : AttachmentLocation,
 ) -> AttachmentLocation? raise RedmineError {
-  let response = (try {
+  let response = try {
     client.request(Get, location.target)
     client.end_request()
   } catch {
     error => raise Transport(message="\{error}")
-  })
+  }
   let redirect = if is_redirect_status(response.code) {
     response.headers.get("Location")
   } else {
@@ -184,21 +185,21 @@ async fn attachment_fetch(
     return Some(next)
   }
   guard response.code >= 200 && response.code < 300 else {
-    let text = (try {
+    let text = try {
       match client.read_some(max_len=ERROR_BODY_LIMIT) {
         Some(bytes) => @utf8.decode_lossy(bytes)
         None => ""
       }
     } catch {
       _ => ""
-    })
+    }
     raise Response(status=response.code, errors=errors_from_body(text))
   }
   None
 }
 
 ///|
-const ERROR_BODY_LIMIT : Int = 65536
+const ERROR_BODY_LIMIT : Int32 = 65536
 
 ///|
 async fn Redmine::attachment_post_upload(
