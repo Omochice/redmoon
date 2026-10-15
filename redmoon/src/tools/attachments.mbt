@@ -18,7 +18,7 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let entries = [
     (
       "show",
-      @schema.object(id => Show(id))
+      @schema.object(id => AttachmentAction::Show(id))
       |> @schema.field("id", record_id())
       |> @schema.Obj::done,
     ),
