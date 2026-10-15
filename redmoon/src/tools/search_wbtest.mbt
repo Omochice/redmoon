@@ -177,9 +177,7 @@ async test "a Redmine failure becomes a failure payload" {
 
 ///|
 async test "tools/list advertises the search schema" {
-  let advertised = list_tools(
-    build_tools([always(search_tool(fake_search()))], Full),
-  ).stringify()
+  let advertised = list_tools([search_tool(fake_search())]).stringify()
   assert_eq(
     advertised, "{\"tools\":[{\"name\":\"redmine_search\",\"description\":\"Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.\\nRequires `q`; narrow with `scope` and the per-resource flags.\\nPass the arguments under the single key `search`: `{\\\"search\\\": {\\\"q\\\": \\\"login\\\"}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"search\":{\"type\":\"object\",\"properties\":{\"q\":{\"type\":\"string\"},\"scope\":{\"type\":\"string\"},\"all_words\":{\"type\":\"boolean\"},\"titles_only\":{\"type\":\"boolean\"},\"open_issues\":{\"type\":\"boolean\"},\"issues\":{\"type\":\"boolean\"},\"news\":{\"type\":\"boolean\"},\"documents\":{\"type\":\"boolean\"},\"changesets\":{\"type\":\"boolean\"},\"wiki_pages\":{\"type\":\"boolean\"},\"messages\":{\"type\":\"boolean\"},\"projects\":{\"type\":\"boolean\"},\"attachments\":{\"anyOf\":[{\"type\":\"boolean\"},{\"type\":\"string\",\"const\":\"only\"}]}},\"required\":[\"q\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )

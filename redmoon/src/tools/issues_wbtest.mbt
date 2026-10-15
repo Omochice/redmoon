@@ -206,9 +206,7 @@ fn at(json : Json, path : Array[String]) -> Json raise {
 
 ///|
 async fn advertised_issues(mode : Mode) -> Json {
-  let listing = list_tools(
-    build_tools([fn(mode) { issues_tool(FakeIssues::new(), mode) }], mode),
-  )
+  let listing = list_tools([issues_tool(FakeIssues::new(), mode)])
   at(listing, ["tools"])
 }
 
@@ -919,9 +917,7 @@ async test "tools/list advertises the issues tool in both modes" {
   let advertised = []
   for mode in [Mode::Full, Readonly] {
     advertised.push(
-      list_tools(
-        build_tools([fn(mode) { issues_tool(FakeIssues::new(), mode) }], mode),
-      ).stringify(),
+      list_tools([issues_tool(FakeIssues::new(), mode)]).stringify(),
     )
   }
   assert_eq(
