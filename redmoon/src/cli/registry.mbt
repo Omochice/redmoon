@@ -6,7 +6,11 @@ pub fn registered_tools(
 ) -> Array[@mcp.Tool] {
   @tools.build_tools(
     [
+      mode => @tools.wiki_pages_tool(redmine, mode),
+      mode => @tools.versions_tool(redmine, mode),
+      mode => @tools.time_entries_tool(redmine, mode),
       @tools.always(@tools.enumerations_tool(redmine)),
+      mode => @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
       @tools.always(@tools.server_info_tool()),
     ],
     mode,
