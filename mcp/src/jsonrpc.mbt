@@ -4,36 +4,36 @@
 priv enum Message {
   Request(id~ : Json, name~ : String, params~ : Map[String, Json])
   Notification(name~ : String, params~ : Map[String, Json])
-  Reply
+  Response
   Unparseable(String)
   Malformed(id~ : Json, reason~ : String)
 }
 
 ///|
 priv struct RpcError {
-  code : Int
+  code : Int32
   message : String
   data : Json?
 }
 
 ///|
-let parse_error_code : Int = -32700
+let parse_error_code : Int32 = -32700
 
 ///|
-let invalid_request_code : Int = -32600
+let invalid_request_code : Int32 = -32600
 
 ///|
-let method_not_found_code : Int = -32601
+let method_not_found_code : Int32 = -32601
 
 ///|
-let invalid_params_code : Int = -32602
+let invalid_params_code : Int32 = -32602
 
 ///|
-let unsupported_version_code : Int = -32022
+let unsupported_version_code : Int32 = -32022
 
 ///|
-fn RpcError::new(code : Int, message : String, data? : Json) -> RpcError {
-  { code, message, data }
+fn RpcError::new(code : Int32, message : String, data? : Json) -> RpcError {
+  { code, message, data, }
 }
 
 ///|
@@ -64,9 +64,7 @@ fn error_response(id : Json, error : RpcError) -> Json {
 
 ///|
 fn parse_message(line : String) -> Message {
-  let json = @json.parse(line) catch {
-    err => return Unparseable("\{err}")
-  }
+  let json = @json.parse(line) catch { err => return Unparseable("\{err}") }
   guard json is Object(fields) else {
     return Malformed(id=Json::null(), reason="a message must be a JSON object")
   }
@@ -81,7 +79,7 @@ fn parse_message(line : String) -> Message {
   guard fields.get("method") is Some(String(name)) else {
     // A peer's response to a request this server never sent carries no method.
     return if fields.contains("result") || fields.contains("error") {
-      Reply
+      Response
     } else {
       Malformed(id=usable_id, reason="`method` must be a string")
     }
@@ -94,8 +92,8 @@ fn parse_message(line : String) -> Message {
   }
   match id {
     None => Notification(name~, params~)
-    Some(String(_) as i) | Some(Number(_) as i) =>
-      Request(id=i, name~, params~)
-    Some(_) => Malformed(id=Json::null(), reason="`id` must be a string or a number")
+    Some(String(_) as i) | Some(Number(_) as i) => Request(id=i, name~, params~)
+    Some(_) =>
+      Malformed(id=Json::null(), reason="`id` must be a string or a number")
   }
 }

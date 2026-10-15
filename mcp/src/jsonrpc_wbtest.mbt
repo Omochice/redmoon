@@ -5,7 +5,7 @@ fn show(message : Message) -> String {
       "request \{id.stringify()} \{name} \{Json::object(params).stringify()}"
     Notification(name~, params~) =>
       "notification \{name} \{Json::object(params).stringify()}"
-    Reply => "reply"
+    Response => "reply"
     Unparseable(_) => "unparseable"
     Malformed(id~, reason~) => "malformed \{id.stringify()} \{reason}"
   }
@@ -22,7 +22,9 @@ test "a request keeps its id and params" {
     "request 7 ping {\"a\":1}",
   )
   assert_eq(
-    show(parse_message("{\"jsonrpc\":\"2.0\",\"id\":\"x\",\"method\":\"ping\"}")),
+    show(
+      parse_message("{\"jsonrpc\":\"2.0\",\"id\":\"x\",\"method\":\"ping\"}"),
+    ),
     "request \"x\" ping {}",
   )
 }
@@ -60,7 +62,9 @@ test "envelope violations are malformed requests carrying a usable id" {
   )
   assert_eq(
     show(
-      parse_message("{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":[]}"),
+      parse_message(
+        "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"ping\",\"params\":[]}",
+      ),
     ),
     "malformed 3 `params` must be an object",
   )
