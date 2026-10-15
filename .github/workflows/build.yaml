@@ -1,0 +1,115 @@
+name: build
+
+# Called by both `ci` and `release` so the target matrix is defined once and a
+# tag can never build a set the pull requests did not already exercise.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  toolchain:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/toolchain.yaml
+
+  build:
+    needs: toolchain
+    # MoonBit does not cross-compile, so every asset is built on a runner of its
+    # own OS and architecture (ADR-002). `toolchain` says where the compiler
+    # comes from: nix where moonbit-overlay has a build, the official installer
+    # pinned to the same version elsewhere.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            runner: macos-15
+            toolchain: nix
+            ext: ""
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            toolchain: nix
+            ext: ""
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+            toolchain: installer
+            ext: ""
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            toolchain: installer
+            ext: ".exe"
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    # The staging step needs `mkdir -p` and `cp`, which the Windows runner's
+    # default pwsh does not provide.
+    defaults:
+      run:
+        shell: bash
+    env:
+      MOONBIT_INSTALL_VERSION: ${{ needs.toolchain.outputs.version }}
+    steps:
+      # A checkout with CRLF endings would make the generated build-info file
+      # differ from the committed one on Windows.
+      - name: Disable auto CRLF
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-nix
+        if: matrix.toolchain == 'nix'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+
+      - name: Install MoonBit (Unix installer)
+        if: matrix.toolchain == 'installer' && runner.os != 'Windows'
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Install MoonBit (Windows installer)
+        if: matrix.toolchain == 'installer' && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Print the toolchain version
+        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
+
+      # The checked-in file holds `None`; a release binary has to report the
+      # commit it came from, and MoonBit cannot embed a file at build time.
+      - name: Stamp the build information
+        run: .github/scripts/build-info.sh stamp
+
+      - name: Build the executable
+        run: >
+          ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon build --target native --release redmoon/src/cmd/redmoon
+
+      # The native backend names the executable after its package on every OS.
+      - name: Stage the executable under the asset name
+        run: |
+          mkdir -p dist
+          cp _build/native/release/build/omochice/redmoon/cmd/redmoon/redmoon.exe \
+            "dist/redmoon-${{ matrix.target }}${{ matrix.ext }}"
+
+      # `--help` is as far as this goes because it proves the binary links and
+      # starts without depending on a credential store the runner may not have.
+      - name: Smoke-run the artifact
+        run: ./dist/redmoon-${{ matrix.target }}${{ matrix.ext }} --help
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: redmoon-${{ matrix.target }}
+          path: dist/redmoon-${{ matrix.target }}${{ matrix.ext }}
+          if-no-files-found: error
