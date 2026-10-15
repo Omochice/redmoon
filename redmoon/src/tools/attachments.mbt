@@ -15,67 +15,75 @@ fn attachment_path(description : String) -> @schema.Schema[String] {
 
 ///|
 fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
+  let id = @schema.required("id", record_id())
+  let download_path = @schema.required(
+    "path",
+    attachment_path(
+      "Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.",
+    ),
+  )
+  let max_size = @schema.optional_or_field(
+    "max_size",
+    @schema.integer(min=1).describe(
+      "Maximum number of bytes to write, \{DEFAULT_MAX_SIZE} (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.",
+    ),
+    DEFAULT_MAX_SIZE,
+  )
   let entries = [
     (
       "show",
-      @schema.object(id => AttachmentAction::Show(id))
-      |> @schema.field("id", record_id())
-      |> @schema.Obj::done,
+      @schema.record([id.as_member()], v => AttachmentAction::Show(v.get(id))),
     ),
     (
       "download",
-      @schema.object(id => path => max_size => Download(id, path, max_size))
-      |> @schema.field("id", record_id())
-      |> @schema.field(
-        "path",
-        attachment_path(
-          "Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.",
-        ),
-      )
-      |> @schema.optional_or(
-        "max_size",
-        @schema.integer(min=1).describe(
-          "Maximum number of bytes to write, \{DEFAULT_MAX_SIZE} (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.",
-        ),
-        DEFAULT_MAX_SIZE,
-      )
-      |> @schema.Obj::done,
+      @schema.record(
+        [id.as_member(), download_path.as_member(), max_size.as_member()],
+        v => Download(v.get(id), v.get(download_path), v.get(max_size)),
+      ),
     ),
   ]
   if mode is Full {
+    let issue_id = @schema.required("issue_id", record_id())
+    let path = @schema.required(
+      "path",
+      attachment_path(
+        "Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process.",
+      ),
+    )
+    let filename = @schema.optional_field(
+      "filename",
+      @schema.not_blank().describe(
+        "Name the attachment is shown under; the last segment of `path` by default.",
+      ),
+    )
+    let description = @schema.optional_field("description", @schema.string())
+    let notes = @schema.optional_field(
+      "notes",
+      @schema.string().describe(
+        "Comment to add to the issue in the same history entry as the attachment.",
+      ),
+    )
     entries.push(
       (
         "attach",
-        @schema.object(issue_id => {
-          path => {
-            filename => {
-              description => {
-                notes => Attach(issue_id, path, filename, description, notes)
-              }
-            }
-          }
-        })
-        |> @schema.field("issue_id", record_id())
-        |> @schema.field(
-          "path",
-          attachment_path(
-            "Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process.",
-          ),
-        )
-        |> @schema.optional(
-          "filename",
-          @schema.not_blank().describe(
-            "Name the attachment is shown under; the last segment of `path` by default.",
-          ),
-        )
-        |> @schema.optional("description", @schema.string())
-        |> @schema.optional(
-          "notes",
-          @schema.string().describe(
-            "Comment to add to the issue in the same history entry as the attachment.",
-          ),
-        )
-        |> @schema.Obj::done,
+        @schema.record(
+          [
+            issue_id.as_member(),
+            path.as_member(),
+            filename.as_member(),
+            description.as_member(),
+            notes.as_member(),
+          ],
+          v => {
+            Attach(
+              v.get(issue_id),
+              v.get(path),
+              v.get(filename),
+              v.get(description),
+              v.get(notes),
+            )
+          },
+        ),
       ),
     )
   }
