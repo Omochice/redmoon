@@ -97,22 +97,12 @@ async test "a stray argument is reported with its action path" {
 }
 
 ///|
-async test "tools/list advertises the same enumerations tool in both modes" {
-  let advertised = []
-  for mode in [Mode::Full, Readonly] {
-    advertised.push(
-      list_tools(
-        build_tools(
-          [always(enumerations_tool(FakeEnumerations::{ failure: None, }))],
-          mode,
-        ),
-      ).stringify(),
-    )
-  }
-  assert_eq(advertised[0], advertised[1])
+async test "tools/list advertises the enumerations tool" {
+  let advertised = list_tools([
+    enumerations_tool(FakeEnumerations::{ failure: None, }),
+  ]).stringify()
   assert_eq(
-    advertised[0],
-    "{\"tools\":[{\"name\":\"redmine_enumerations\",\"description\":\"Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\\nName the listing as the only key, with an empty object as its value: `{\\\"list_issue_priorities\\\": {}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list_time_entry_activities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issue_priorities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_document_categories\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    advertised, "{\"tools\":[{\"name\":\"redmine_enumerations\",\"description\":\"Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\\nName the listing as the only key, with an empty object as its value: `{\\\"list_issue_priorities\\\": {}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list_time_entry_activities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issue_priorities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_document_categories\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
 

@@ -242,9 +242,10 @@ async test "readonly refuses a create as an unknown action" {
 
 ///|
 async test "tools/list advertises the write actions only in full mode" {
-  let factory : ToolFactory = mode => relations_tool(fake_relations(), mode)
-  let advertised_full = list_tools(build_tools([factory], Full)).stringify()
-  let advertised_read_only = list_tools(build_tools([factory], Readonly)).stringify()
+  let advertised_full = list_tools([relations_tool(fake_relations(), Full)]).stringify()
+  let advertised_read_only = list_tools([
+    relations_tool(fake_relations(), Readonly),
+  ]).stringify()
   assert_eq(
     advertised_full, "{\"tools\":[{\"name\":\"redmine_issue_relations\",\"description\":\"Create, read, and delete Redmine issue relations. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"issue_to_id\":{\"type\":\"integer\",\"minimum\":1},\"relation_type\":{\"type\":\"string\",\"enum\":[\"relates\",\"duplicates\",\"duplicated\",\"blocks\",\"blocked\",\"precedes\",\"follows\",\"copied_to\",\"copied_from\"]},\"delay\":{\"type\":\"integer\"}},\"required\":[\"issue_id\",\"issue_to_id\",\"relation_type\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )

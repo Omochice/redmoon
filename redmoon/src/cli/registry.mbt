@@ -4,20 +4,17 @@ pub fn registered_tools(
   redmine : @redmine.Redmine,
   mode : @tools.Mode,
 ) -> Array[@mcp.Tool] {
-  @tools.build_tools(
-    [
-      mode => @tools.issues_tool(redmine, mode),
-      mode => @tools.wiki_pages_tool(redmine, mode),
-      mode => @tools.versions_tool(redmine, mode),
-      mode => @tools.relations_tool(redmine, mode),
-      @tools.always(@tools.search_tool(redmine)),
-      mode => @tools.time_entries_tool(redmine, mode),
-      @tools.always(@tools.enumerations_tool(redmine)),
-      mode => @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
-      @tools.always(@tools.server_info_tool()),
-    ],
-    mode,
-  )
+  [
+    @tools.issues_tool(redmine, mode),
+    @tools.wiki_pages_tool(redmine, mode),
+    @tools.versions_tool(redmine, mode),
+    @tools.relations_tool(redmine, mode),
+    @tools.search_tool(redmine),
+    @tools.time_entries_tool(redmine, mode),
+    @tools.enumerations_tool(redmine),
+    @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
+    @tools.server_info_tool(),
+  ]
 }
 
 ///|
