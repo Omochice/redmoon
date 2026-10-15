@@ -149,16 +149,6 @@ fn Redmine::attachment_content_location(
 }
 
 ///|
-async fn attachment_connect(
-  origin : String,
-  headers : Map[@http.CaseInsensitiveString, String],
-) -> @http.Client raise RedmineError {
-  @http.Client(origin, headers~) catch {
-    error => raise Transport(message="\{error}")
-  }
-}
-
-///|
 /// Requests `location` on `client`. Returns the next location when the answer is
 /// a redirect, and `None` when the body of a successful answer is ready to be read.
 async fn attachment_fetch(
@@ -208,10 +198,7 @@ async fn Redmine::attachment_post_upload(
   size : Int64,
   filename : String,
 ) -> (Int32, String) {
-  let client = @http.Client(self.endpoint.origin, headers={
-    "X-Redmine-API-Key": self.api_key,
-    "Accept": "application/json",
-  })
+  let client = self.open_client(self.endpoint.origin, accept="application/json")
   defer client.close()
   let path = self.endpoint.path(["uploads.json"])
   client.request(Post, "\{path}?\{encode_query([("filename", filename)])}", extra_headers={

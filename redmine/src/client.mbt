@@ -35,6 +35,12 @@ async fn Redmine::send(
   let (status, text) = self.exchange(meth, segments, query, body) catch {
     error => raise Transport(message="\{error}")
   }
+  interpret_response(status, text)
+}
+
+///|
+/// Turns a finished exchange into its JSON body, `null` when the body is empty.
+fn interpret_response(status : Int32, text : String) -> Json raise RedmineError {
   guard status >= 200 && status < 300 else {
     raise Response(status~, errors=errors_from_body(text))
   }
@@ -46,6 +52,24 @@ async fn Redmine::send(
 }
 
 ///|
+/// Opens a connection to `origin`. The API key goes only to the endpoint's own
+/// origin, because attachment downloads may be redirected to a third party.
+async fn Redmine::open_client(
+  self : Redmine,
+  origin : String,
+  accept? : String,
+) -> @http.Client {
+  let headers : Map[@http.CaseInsensitiveString, String] = Map([])
+  if same_origin(origin, self.endpoint.origin) {
+    headers["X-Redmine-API-Key"] = self.api_key
+  }
+  if accept is Some(accept) {
+    headers["Accept"] = accept
+  }
+  @http.Client(origin, headers~)
+}
+
+///|
 async fn Redmine::exchange(
   self : Redmine,
   meth : @http.RequestMethod,
@@ -53,10 +77,7 @@ async fn Redmine::exchange(
   query : Array[(String, String)],
   body : Json?,
 ) -> (Int32, String) {
-  let client = @http.Client(self.endpoint.origin, headers={
-    "X-Redmine-API-Key": self.api_key,
-    "Accept": "application/json",
-  })
+  let client = self.open_client(self.endpoint.origin, accept="application/json")
   defer client.close()
   let path = self.endpoint.path(segments)
   let target = if query.is_empty() {

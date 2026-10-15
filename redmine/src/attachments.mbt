@@ -46,14 +46,9 @@ pub async fn Redmine::download_attachment(
   let attachment = self.show_attachment(id)
   let mut location = self.attachment_content_location(attachment)
   for followed = 0; followed <= MAX_REDIRECTS; followed = followed + 1 {
-    let client = attachment_connect(
-      location.origin,
-      if same_origin(location.origin, self.endpoint.origin) {
-        { "X-Redmine-API-Key": self.api_key }
-      } else {
-        {}
-      },
-    )
+    let client = self.open_client(location.origin) catch {
+      error => raise Transport(message="\{error}")
+    }
     let next = {
       errdefer client.close()
       attachment_fetch(client, location)
@@ -87,12 +82,6 @@ pub async fn Redmine::upload(
   let (status, text) = self.attachment_post_upload(body, size, filename) catch {
     error => raise Transport(message="\{error}")
   }
-  guard status >= 200 && status < 300 else {
-    raise Response(status~, errors=errors_from_body(text))
-  }
-  let json = @json.parse(text) catch {
-    error => raise Transport(message="invalid JSON in response: \{error}")
-  }
-  let upload : Json = decode_field(strip_nulls(json), "upload")
+  let upload : Json = decode_field(interpret_response(status, text), "upload")
   decode_field(upload, "token")
 }
