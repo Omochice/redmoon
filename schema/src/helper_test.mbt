@@ -1,5 +1,6 @@
 using @schema {
   type Schema,
+  type Obj,
   integer,
   number,
   string,
@@ -9,6 +10,10 @@ using @schema {
   picklist,
   choice,
   array,
+  object,
+  field,
+  optional,
+  optional_or,
 }
 
 ///|
