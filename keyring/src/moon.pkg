@@ -5,5 +5,10 @@ import {
 supported_targets = "+native"
 
 options(
-  "native-stub": [ "keyring_result.c", "keyring_darwin.c", "keyring_linux.c", "keyring_windows.c" ],
+  "native-stub": [
+    "keyring_result.c",
+    "keyring_darwin.c",
+    "keyring_linux.c",
+    "keyring_windows.c",
+  ],
 )
