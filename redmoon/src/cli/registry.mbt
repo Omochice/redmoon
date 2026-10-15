@@ -8,6 +8,8 @@ pub fn registered_tools(
     [
       mode => @tools.wiki_pages_tool(redmine, mode),
       mode => @tools.versions_tool(redmine, mode),
+      mode => @tools.relations_tool(redmine, mode),
+      @tools.always(@tools.search_tool(redmine)),
       mode => @tools.time_entries_tool(redmine, mode),
       @tools.always(@tools.enumerations_tool(redmine)),
       mode => @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
