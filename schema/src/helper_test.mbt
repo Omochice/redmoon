@@ -12,6 +12,7 @@ using @schema {
   array,
   nullable,
   union,
+  keyed,
   object,
   field,
   optional,
