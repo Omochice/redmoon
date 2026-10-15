@@ -61,7 +61,7 @@ fn meta_of(params : Map[String, Json]) -> Map[String, Json] {
 /// otherwise the version an earlier `initialize` negotiated applies.
 fn resolve_era(
   params : Map[String, Json],
-  negotiated : String?,
+  initialized : Bool,
 ) -> Result[Era, RpcError] {
   let meta = meta_of(params)
   match meta.get(version_key) {
@@ -79,7 +79,7 @@ fn resolve_era(
       }
     Some(_) => Err(invalid_params("`_meta.\{version_key}` must be a string"))
     None =>
-      if negotiated is Some(_) {
+      if initialized {
         Ok(Legacy)
       } else {
         Err(

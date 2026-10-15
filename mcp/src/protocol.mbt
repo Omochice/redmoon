@@ -90,7 +90,7 @@ fn Server::initialize(
   } else {
     fallback_legacy_version
   }
-  self.negotiated = Some(negotiated)
+  self.initialized = true
   let fields : Array[(String, Json)] = [
     ("protocolVersion", Json(negotiated)),
     ("capabilities", self.capabilities()),
@@ -107,7 +107,7 @@ fn Server::ping(
   self : Server,
   params : Map[String, Json],
 ) -> Result[Json, RpcError] {
-  match resolve_era(params, self.negotiated) {
+  match resolve_era(params, self.initialized) {
     Ok(era) => Ok(self.result_for(era, []))
     Err({ code, .. } as error) if code == unsupported_version_code => Err(error)
     Err(_) => Ok(object([]))
@@ -119,7 +119,7 @@ fn Server::discover(
   self : Server,
   params : Map[String, Json],
 ) -> Result[Json, RpcError] {
-  match resolve_era(params, self.negotiated) {
+  match resolve_era(params, self.initialized) {
     Err(error) => Err(error)
     Ok(Legacy) =>
       Err(
@@ -148,7 +148,7 @@ fn Server::list_tools(
   self : Server,
   params : Map[String, Json],
 ) -> Result[Json, RpcError] {
-  match resolve_era(params, self.negotiated) {
+  match resolve_era(params, self.initialized) {
     Err(error) => Err(error)
     Ok(era) =>
       Ok(
@@ -164,7 +164,7 @@ fn Server::plan_call(
   self : Server,
   params : Map[String, Json],
 ) -> Result[(Tool, Json, Era), RpcError] {
-  let era = match resolve_era(params, self.negotiated) {
+  let era = match resolve_era(params, self.initialized) {
     Err(error) => return Err(error)
     Ok(era) => era
   }

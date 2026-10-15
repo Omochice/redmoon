@@ -6,7 +6,7 @@ pub struct Server {
   priv instructions : String?
   priv tools : Array[Tool]
   priv on_invalid : (@schema.SchemaError) -> ToolResult
-  priv mut negotiated : String?
+  priv mut initialized : Bool
 }
 
 ///|
@@ -21,7 +21,7 @@ pub fn Server::new(
   instructions? : String,
   on_invalid~ : (@schema.SchemaError) -> ToolResult = default_on_invalid,
 ) -> Server {
-  { name, version, instructions, tools, on_invalid, negotiated: None, }
+  { name, version, instructions, tools, on_invalid, initialized: false, }
 }
 
 ///|
