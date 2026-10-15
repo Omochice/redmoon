@@ -4,7 +4,13 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "extra-files": ["redmoon/src/build/version.mbt"],
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "redmoon/src/build/version.json",
+          "jsonpath": "$.version"
+        }
+      ],
       "initial-version": "0.1.0",
       "draft": true
     }
