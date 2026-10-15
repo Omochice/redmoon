@@ -1,1 +1,9 @@
+import {
+  "moonbitlang/core/json",
+}
+
 supported_targets = "+native"
+
+rule(name: "embed", command: ":embed -i $input -o $output --name version_json")
+
+dev_build(rule: "embed", input: "version.json", output: "version_json.mbt")

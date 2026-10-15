@@ -26,7 +26,7 @@ pub fn server_info_tool(build~ : BuildInfo? = current_build()) -> @mcp.Tool {
     input=@schema.keyed([("show", @schema.record([], _ => ()))]),
     handler=fn(_) {
       success({
-        "version": Json(@build.VERSION),
+        "version": Json(@build.version),
         "build": match build {
           Some(info) => Json(info)
           None => Json::null()

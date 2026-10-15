@@ -4,7 +4,7 @@ async test "redmoon_info reports the version and a null build from source" {
     "show": {},
   })
   assert_eq(called.is_error, false)
-  assert_eq(called.text, "{\"version\":\"\{@build.VERSION}\",\"build\":null}")
+  assert_eq(called.text, "{\"version\":\"\{@build.version}\",\"build\":null}")
 }
 
 ///|
@@ -15,7 +15,7 @@ async test "redmoon_info reports the build when one is embedded" {
   })
   assert_eq(
     called.text,
-    "{\"version\":\"\{@build.VERSION}\",\"build\":{\"commit\":\"abc123\",\"dirty\":true}}",
+    "{\"version\":\"\{@build.version}\",\"build\":{\"commit\":\"abc123\",\"dirty\":true}}",
   )
 }
 

@@ -23,7 +23,7 @@ fn command() -> @argparse.Command {
   @argparse.Command(
     "redmoon",
     about="MCP server for Redmine.",
-    version=@build.VERSION,
+    version=@build.version,
     subcommand_required=true,
     arg_required_else_help=true,
     subcommands=[

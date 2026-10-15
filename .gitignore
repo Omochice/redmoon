@@ -56,6 +56,9 @@ node_modules/
 result
 result-*
 
+# Regenerated from version.json by moon on every build; the application has no dependents, so the committed copy that library packages need is unnecessary.
+redmoon/src/build/version_json.mbt
+
 # Ignore automatically generated direnv output
 .direnv
 
