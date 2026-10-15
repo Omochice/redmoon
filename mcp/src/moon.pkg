@@ -1,5 +1,15 @@
 import {
+  "moonbitlang/async",
   "moonbitlang/core/json",
+  "omochice/schema",
 }
+
+import {
+  "moonbitlang/core/debug",
+} for "test"
+
+import {
+  "moonbitlang/core/debug",
+} for "wbtest"
 
 supported_targets = "+native"

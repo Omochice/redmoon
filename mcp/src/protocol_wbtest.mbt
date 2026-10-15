@@ -1,14 +1,19 @@
 ///|
 fn new_server() -> Server {
-  Server::new(name="demo", version="1.2.3")
+  Server::new(name="demo", version="1.2.3", tools=[])
+}
+
+///|
+fn reply_text(action : Action) -> String {
+  match action {
+    Reply(json) => json.stringify()
+    _ => ""
+  }
 }
 
 ///|
 fn send(server : Server, request : Json) -> String {
-  match server.dispatch(request.stringify()) {
-    Reply(json) => json.stringify()
-    Nothing => ""
-  }
+  reply_text(server.dispatch(request.stringify()))
 }
 
 ///|
@@ -43,7 +48,12 @@ test "initialize answers an unknown or modern version with 2025-11-25" {
 
 ///|
 test "initialize carries instructions when configured" {
-  let server = Server::new(name="demo", version="1", instructions="be kind")
+  let server = Server::new(
+    name="demo",
+    version="1",
+    tools=[],
+    instructions="be kind",
+  )
   assert_eq(
     send(server, initialize_request("2025-06-18")),
     "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{\"tools\":{}},\"serverInfo\":{\"name\":\"demo\",\"version\":\"1\"},\"instructions\":\"be kind\"}}",
@@ -93,11 +103,9 @@ test "an unknown method is -32601" {
 ///|
 test "malformed JSON is -32700 with a null id" {
   assert_eq(
-    match new_server().dispatch("{nope") {
-      Reply(json) =>
-        json.stringify().contains("\"id\":null,\"error\":{\"code\":-32700")
-      Nothing => false
-    },
+    reply_text(new_server().dispatch("{nope")).contains(
+      "\"id\":null,\"error\":{\"code\":-32700",
+    ),
     true,
   )
 }
@@ -105,16 +113,13 @@ test "malformed JSON is -32700 with a null id" {
 ///|
 test "an invalid request is -32600" {
   assert_eq(
-    match new_server().dispatch("{\"jsonrpc\":\"2.0\",\"id\":4}") {
-      Reply(json) => json.stringify()
-      Nothing => ""
-    },
+    reply_text(new_server().dispatch("{\"jsonrpc\":\"2.0\",\"id\":4}")),
     "{\"jsonrpc\":\"2.0\",\"id\":4,\"error\":{\"code\":-32600,\"message\":\"Invalid Request: `method` must be a string\"}}",
   )
 }
 
 ///|
-fn modern_meta(version? : String = "2026-07-28") -> Json {
+fn modern_meta(version~ : String = "2026-07-28") -> Json {
   {
     "io.modelcontextprotocol/protocolVersion": version,
     "io.modelcontextprotocol/clientCapabilities": {},
@@ -124,8 +129,8 @@ fn modern_meta(version? : String = "2026-07-28") -> Json {
 ///|
 fn modern_request(
   name : String,
-  params? : Map[String, Json] = Map([]),
-  version? : String = "2026-07-28",
+  params~ : Map[String, Json] = Map([]),
+  version~ : String = "2026-07-28",
 ) -> Json {
   params["_meta"] = modern_meta(version~)
   { "jsonrpc": "2.0", "id": 1, "method": name, "params": Json::object(params) }
@@ -141,7 +146,12 @@ test "server/discover answers versions, capabilities and identity" {
 
 ///|
 test "server/discover carries instructions" {
-  let server = Server::new(name="demo", version="1", instructions="be kind")
+  let server = Server::new(
+    name="demo",
+    version="1",
+    tools=[],
+    instructions="be kind",
+  )
   assert_eq(
     send(server, modern_request("server/discover")).contains(
       "\"instructions\":\"be kind\"",
@@ -186,10 +196,11 @@ test "a modern request without clientCapabilities is -32602" {
 ///|
 test "a request with neither _meta version nor initialize is -32602" {
   assert_eq(
-    send(
-      new_server(),
-      { "jsonrpc": "2.0", "id": 1, "method": "server/discover" },
-    ),
+    send(new_server(), {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "server/discover",
+    }),
     "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32602,\"message\":\"`_meta.io.modelcontextprotocol/protocolVersion` is required before `initialize` has been called\"}}",
   )
 }
