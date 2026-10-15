@@ -104,10 +104,7 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
       @schema.record([id.as_member()], v => VersionAction::Delete(v.get(id))),
     ),
   ]
-  match mode {
-    Full => @schema.keyed([..read, ..write])
-    Readonly => @schema.keyed(read)
-  }
+  actions(mode, read~, write~)
 }
 
 ///|

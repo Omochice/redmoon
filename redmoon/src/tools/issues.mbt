@@ -373,21 +373,15 @@ let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
   let read = [("list", list_input), ("show", show_input)]
-  match mode {
-    Readonly => @schema.keyed(read)
-    Full =>
-      @schema.keyed(
-        [
-          ..read,
-          ("create", create_input),
-          ("update", update_input),
-          ("delete", delete_input),
-          ("update_note", update_note_text_input),
-          ("update_note", update_note_visibility_input),
-          ("delete_note", delete_note_input),
-        ],
-      )
-  }
+  let write = [
+    ("create", create_input),
+    ("update", update_input),
+    ("delete", delete_input),
+    ("update_note", update_note_text_input),
+    ("update_note", update_note_visibility_input),
+    ("delete_note", delete_note_input),
+  ]
+  actions(mode, read~, write~)
 }
 
 ///|
