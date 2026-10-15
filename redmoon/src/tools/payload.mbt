@@ -1,5 +1,5 @@
 ///|
-/// A success holding the JSON of `value`.
+/// Compact JSON, since a model reads the payload rather than a human.
 pub fn[T : ToJson] success(value : T) -> @mcp.ToolResult {
   @mcp.ToolResult::text(value.to_json().stringify())
 }
@@ -36,8 +36,7 @@ pub fn failure_of(error : @redmine.RedmineError) -> @mcp.ToolResult {
 }
 
 ///|
-/// Runs a Redmine call and answers its value as a success, or its failure as a
-/// failure payload.
+/// Never raises: a failed `call` becomes the failure payload instead.
 pub async fn[T : ToJson] respond(
   call : async () -> T raise @redmine.RedmineError,
 ) -> @mcp.ToolResult {
@@ -46,8 +45,7 @@ pub async fn[T : ToJson] respond(
 }
 
 ///|
-/// Like `respond`, for a call that returns nothing: a success answers
-/// `{"ok":true}`.
+/// Like `respond`, answering `{"ok":true}` for a call that returns nothing.
 pub async fn respond_ok(
   call : async () -> Unit raise @redmine.RedmineError,
 ) -> @mcp.ToolResult {
