@@ -2,6 +2,7 @@
 /// What the transport has to do about one incoming line.
 priv enum Action {
   Reply(Json)
+  Call(id~ : Json, tool~ : Tool, arguments~ : Json, era~ : Era)
   Nothing
 }
 
@@ -38,11 +39,31 @@ fn Server::route(
     "initialize" => self.initialize(params)
     "ping" => self.ping(params)
     "server/discover" => self.discover(params)
+    "tools/list" => self.list_tools(params)
+    "tools/call" =>
+      match self.plan_call(params) {
+        Ok((tool, arguments, era)) => return Call(id~, tool~, arguments~, era~)
+        Err(error) => Err(error)
+      }
     _ => Err(RpcError::new(method_not_found_code, "Method not found: \{name}"))
   }
   match outcome {
     Ok(result) => Reply(result_response(id, result))
     Err(error) => Reply(error_response(id, error))
+  }
+}
+
+///|
+/// Runs the tool of a planned call. The only await in the protocol, so the
+/// transport can keep reading while a handler waits.
+async fn Server::respond(self : Server, action : Action) -> Json? {
+  match action {
+    Reply(json) => Some(json)
+    Nothing => None
+    Call(id~, tool~, arguments~, era~) => {
+      let result = (tool.invoke)(arguments, self.on_invalid)
+      Some(result_response(id, self.result_for(era, result.to_fields())))
+    }
   }
 }
 
@@ -92,7 +113,9 @@ fn Server::discover(
     Err(error) => Err(error)
     Ok(Legacy) =>
       Err(
-        RpcError::new(method_not_found_code, "Method not found: server/discover"),
+        RpcError::new(
+          method_not_found_code, "Method not found: server/discover",
+        ),
       )
     Ok(Modern) => {
       let fields : Array[(String, Json)] = [
@@ -108,4 +131,45 @@ fn Server::discover(
       Ok(self.result_for(Modern, fields))
     }
   }
+}
+
+///|
+fn Server::list_tools(
+  self : Server,
+  params : Map[String, Json],
+) -> Result[Json, RpcError] {
+  match resolve_era(params, self.negotiated) {
+    Err(error) => Err(error)
+    Ok(era) =>
+      Ok(
+        self.result_for(era, [
+          ("tools", Json::array(self.tools.map(t => t.to_json()))),
+        ]),
+      )
+  }
+}
+
+///|
+fn Server::plan_call(
+  self : Server,
+  params : Map[String, Json],
+) -> Result[(Tool, Json, Era), RpcError] {
+  let era = match resolve_era(params, self.negotiated) {
+    Err(error) => return Err(error)
+    Ok(era) => era
+  }
+  guard params.get("name") is Some(String(name)) else {
+    return Err(invalid_params("`name` is required"))
+  }
+  let arguments = match params.get("arguments") {
+    None | Some(Null) => object([])
+    Some(Object(_) as arguments) => arguments
+    Some(_) => return Err(invalid_params("`arguments` must be an object"))
+  }
+  for tool in self.tools {
+    if tool.name == name {
+      return Ok((tool, arguments, era))
+    }
+  }
+  Err(invalid_params("Unknown tool: \{name}"))
 }

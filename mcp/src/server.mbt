@@ -4,18 +4,24 @@ pub struct Server {
   priv name : String
   priv version : String
   priv instructions : String?
+  priv tools : Array[Tool]
+  priv on_invalid : (@schema.SchemaError) -> ToolResult
   priv mut negotiated : String?
 }
 
 ///|
-/// Creates a server that identifies itself as `name` and `version`;
-/// `instructions` is guidance for the model, sent to the client as is.
+/// Creates a server that identifies itself as `name` and `version` and offers
+/// `tools` in the given order. `instructions` is guidance for the model, sent
+/// to the client as is. `on_invalid` turns a failed argument validation into
+/// the result the model sees; it defaults to the joined validation messages.
 pub fn Server::new(
   name~ : String,
   version~ : String,
+  tools~ : Array[Tool],
   instructions? : String,
+  on_invalid~ : (@schema.SchemaError) -> ToolResult = default_on_invalid,
 ) -> Server {
-  { name, version, instructions, negotiated: None, }
+  { name, version, instructions, tools, on_invalid, negotiated: None, }
 }
 
 ///|
