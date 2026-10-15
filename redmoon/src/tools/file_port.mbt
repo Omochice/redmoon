@@ -27,17 +27,12 @@ pub(open) trait FilePort {
 
 ///|
 /// The last segment of a path written with `/` or `\`.
-pub fn last_segment(path : String) -> String {
-  match path.rev_find("/") {
-    Some(i) =>
-      match path.rev_find("\\") {
-        Some(j) if j > i => path[j + 1:].to_owned()
-        _ => path[i + 1:].to_owned()
-      }
-    None =>
-      match path.rev_find("\\") {
-        Some(j) => path[j + 1:].to_owned()
-        None => path
-      }
+fn last_segment(path : String) -> String {
+  let slash = path.rev_find("/")
+  let backslash = path.rev_find("\\")
+  match (slash, backslash) {
+    (Some(i), Some(j)) => path[i.max(j) + 1:].to_owned()
+    (Some(i), None) | (None, Some(i)) => path[i + 1:].to_owned()
+    (None, None) => path
   }
 }
