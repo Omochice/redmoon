@@ -108,19 +108,10 @@ pub async fn Redmine::search(
   query : SearchQuery,
   limit? : Int32,
 ) -> Array[SearchResult] raise RedmineError {
-  let pairs = search_query_pairs(query)
-  walk_pages(
-    async fn(size, offset) raise RedmineError {
-      let json = self.get(
-        ["search.json"],
-        query=[
-          ..pairs,
-          ("limit", size.to_string()),
-          ("offset", offset.to_string()),
-        ],
-      )
-      { items: search_results(json), total_count: search_total_count(json), }
-    },
+  self.list_all(
+    ["search.json"],
+    key="results",
+    query=search_query_pairs(query),
     limit?,
   )
 }
@@ -157,46 +148,4 @@ fn search_push_flag(
   if flag is Some(true) {
     pairs.push((name, "1"))
   }
-}
-
-///|
-fn search_results(json : Json) -> Array[SearchResult] raise RedmineError {
-  let entries : Array[Json] = decode_field(json, "results")
-  let results = []
-  for entry in entries {
-    results.push(search_result(entry))
-  }
-  results
-}
-
-///|
-fn search_result(entry : Json) -> SearchResult raise RedmineError {
-  {
-    id: decode_field(entry, "id"),
-    title: decode_field(entry, "title"),
-    kind: decode_field(entry, "type"),
-    url: decode_field(entry, "url"),
-    description: search_optional_field(entry, "description"),
-    datetime: decode_field(entry, "datetime"),
-  }
-}
-
-///|
-/// Redmine omits `total_count` when it did not run the search, for example for a one-letter query, so a missing count means no matches.
-fn search_total_count(json : Json) -> Int32 raise RedmineError {
-  let total : Int32? = search_optional_field(json, "total_count")
-  match total {
-    Some(count) => count
-    None => 0
-  }
-}
-
-///|
-fn[T : @json.FromJson] search_optional_field(
-  json : Json,
-  key : String,
-) -> T? raise RedmineError {
-  guard json is Object(members) else { return None }
-  guard members.get(key) is Some(value) else { return None }
-  Some(decode(value))
 }
