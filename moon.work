@@ -2,5 +2,6 @@ members = [
   "./keyring",
   "./mcp",
   "./redmine",
+  "./redmoon",
   "./schema",
 ]
