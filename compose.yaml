@@ -1,0 +1,42 @@
+# Verification harness: a throwaway Redmine instance the MCP server can be
+# pointed at during development. Not a production or deployment artifact.
+#
+#   docker compose up -d
+#   open http://localhost:3000   (first login: admin / admin, forced to change)
+services:
+  db:
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    environment:
+      POSTGRES_USER: redmine
+      POSTGRES_PASSWORD: redmine
+      POSTGRES_DB: redmine
+    volumes:
+      - db-data:/var/lib/postgresql
+    # Gate Redmine's startup on the database actually accepting connections,
+    # otherwise the first migration run races the database boot and fails.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redmine -d redmine"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redmine:
+    image: redmine:7.0@sha256:dde20c4a8b9aa1b7627c6971d4a882f7f5fdb26f921cc8dbae05e10c6dc540c8
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      REDMINE_DB_POSTGRES: db
+      REDMINE_DB_USERNAME: redmine
+      REDMINE_DB_PASSWORD: redmine
+      REDMINE_DB_DATABASE: redmine
+      # Pinned so sessions survive a container restart during a verification run.
+      REDMINE_SECRET_KEY_BASE: redmoon-verification-only
+    volumes:
+      - redmine-files:/usr/src/redmine/files
+
+volumes:
+  db-data:
+  redmine-files:
