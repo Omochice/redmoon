@@ -62,3 +62,23 @@ pub fn resolve_api_key(
       )
   }
 }
+
+///|
+/// Serves the MCP protocol on stdin and stdout for the Redmine at `endpoint`.
+/// Nothing else may write to stdout, because it is the protocol channel.
+///
+/// # Raises
+/// `Message` when no API key is stored for `endpoint` or the endpoint is not an
+/// http(s) URL.
+pub async fn run_serve(
+  endpoint : String,
+  read_only : Bool,
+  store : &CredentialStore,
+) -> Unit {
+  let credential = resolve_api_key(endpoint, store)
+  let redmine = @redmine.Redmine::new(
+    endpoint=credential.endpoint,
+    api_key=credential.api_key,
+  )
+  build_server(redmine, read_only).serve_stdio()
+}
