@@ -1,0 +1,125 @@
+///|
+enum Input {
+  List(Int?)
+  Show(Int)
+  Note(Int, String)
+  NoteDelete(Int, Int)
+} derive(Debug)
+
+///|
+let list_input : Schema[Input] = object(limit => Input::List(limit))
+  |> optional("limit", integer(min=1))
+  |> Obj::done
+
+///|
+let show_input : Schema[Input] = object(id => Input::Show(id))
+  |> field("id", integer(min=1))
+  |> Obj::done
+
+///|
+let note_input : Schema[Input] = object(id => text => Input::Note(id, text))
+  |> field("id", integer())
+  |> field("text", not_blank())
+  |> Obj::done
+
+///|
+let note_by_journal : Schema[Input] = object(id => journal => Input::NoteDelete(
+    id,
+    journal,
+  ))
+  |> field("id", integer())
+  |> field("journal_id", integer())
+  |> Obj::done
+
+///|
+let tool : Schema[Input] = keyed([
+  ("list", list_input),
+  ("show", show_input),
+  ("update_note", note_input),
+  ("update_note", note_by_journal),
+])
+
+///|
+test "keyed emits an action-keyed object" {
+  assert_eq(
+    schema_json(keyed([("list", list_input), ("show", show_input)])),
+    "{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}",
+  )
+}
+
+///|
+test "keyed merges duplicate keys into anyOf" {
+  let json = tool.to_json_schema()
+  assert_eq(
+    json.stringify(),
+    "{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"update_note\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\"},\"text\":{\"type\":\"string\",\"pattern\":\"\\\\S\"}},\"required\":[\"id\",\"text\"],\"additionalProperties\":false},{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\"},\"journal_id\":{\"type\":\"integer\"}},\"required\":[\"id\",\"journal_id\"],\"additionalProperties\":false}]}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}",
+  )
+}
+
+///|
+test "keyed parses the named action" {
+  assert_eq(outcome(tool, "{\"list\":{}}"), "ok: List(None)")
+  assert_eq(outcome(tool, "{\"list\":{\"limit\":5}}"), "ok: List(Some(5))")
+  assert_eq(outcome(tool, "{\"show\":{\"id\":3}}"), "ok: Show(3)")
+  assert_eq(
+    outcome(tool, "{\"update_note\":{\"id\":1,\"text\":\"hi\"}}"),
+    "ok: Note(1, \"hi\")",
+  )
+  assert_eq(
+    outcome(tool, "{\"update_note\":{\"id\":1,\"journal_id\":2}}"),
+    "ok: NoteDelete(1, 2)",
+  )
+}
+
+///|
+test "keyed rejects a wrong shape" {
+  let expected = "error: expected an object with exactly one key naming the action, one of: list, show, update_note"
+  assert_eq(outcome(tool, "{}"), expected)
+  assert_eq(outcome(tool, "{\"list\":{},\"show\":{\"id\":1}}"), expected)
+  assert_eq(outcome(tool, "[]"), expected)
+  assert_eq(outcome(tool, "null"), expected)
+}
+
+///|
+test "keyed rejects an unknown action" {
+  assert_eq(
+    outcome(tool, "{\"delete\":{}}"),
+    "error: unknown action `delete`, one of: list, show, update_note",
+  )
+}
+
+///|
+test "keyed names the action and field in errors" {
+  assert_eq(outcome(tool, "{\"show\":{}}"), "error: show.id: is required")
+  assert_eq(
+    outcome(tool, "{\"show\":{\"id\":0}}"),
+    "error: show.id: must be at least 1",
+  )
+  assert_eq(
+    outcome(tool, "{\"show\":{\"id\":1,\"projectId\":2}}"),
+    "error: show.projectId: unknown field",
+  )
+  assert_eq(outcome(tool, "{\"show\":3}"), "error: show: expected an object")
+}
+
+///|
+test "keyed reports field errors of duplicated shapes" {
+  assert_eq(
+    outcome(tool, "{\"update_note\":{\"id\":1}}"),
+    "error: update_note.text: is required; update_note.journal_id: is required",
+  )
+  assert_eq(
+    outcome(tool, "{\"update_note\":{\"id\":1,\"text\":\" \"}}"),
+    "error: update_note.text: must not be blank; update_note.text: unknown field",
+  )
+}
+
+///|
+test "keyed can be nested under a caller's path" {
+  let result = try tool.parse_at(j("{\"show\":{}}"), ["tool"]) catch {
+    e => e.message()
+  } noraise {
+    _ => "ok"
+  }
+  assert_eq(result, "tool.show.id: is required")
+}
