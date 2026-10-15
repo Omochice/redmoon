@@ -72,18 +72,8 @@ fn[T] clearable(
 }
 
 ///|
-fn written_date(description : String) -> @schema.Schema[String] {
-  @schema.iso_date().describe(description)
-}
-
-///|
-fn start_date_text(clearing : Bool) -> String {
-  "Day the issue starts, as an ISO date (`YYYY-MM-DD`)\{if clearing { "; `null` clears the date" } else { "" }}. This is the date to write, not a filter: unlike `start_date` on `list`, no period or range is accepted here."
-}
-
-///|
-fn due_date_text(clearing : Bool) -> String {
-  "Day the issue is due, as an ISO date (`YYYY-MM-DD`)\{if clearing { "; `null` clears the date" } else { "" }}. This is the date to write, not a filter: unlike `due_date` on `list`, no period or range is accepted here."
+fn written_date_text(field : String, event : String, clearing : Bool) -> String {
+  "Day the issue \{event}, as an ISO date (`YYYY-MM-DD`)\{if clearing { "; `null` clears the date" } else { "" }}. This is the date to write, not a filter: unlike `\{field}` on `list`, no period or range is accepted here."
 }
 
 ///|
@@ -160,11 +150,13 @@ let create_input : @schema.Schema[IssueAction] = {
   let parent_issue_id = @schema.optional("parent_issue_id", record_id())
   let start_date = @schema.optional(
     "start_date",
-    written_date(start_date_text(false)),
+    @schema.iso_date().describe(
+      written_date_text("start_date", "starts", false),
+    ),
   )
   let due_date = @schema.optional(
     "due_date",
-    written_date(due_date_text(false)),
+    @schema.iso_date().describe(written_date_text("due_date", "is due", false)),
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
@@ -245,11 +237,14 @@ let update_input : @schema.Schema[IssueAction] = {
   )
   let start_date = @schema.optional(
     "start_date",
-    clearable(@schema.iso_date(), start_date_text(true)),
+    clearable(
+      @schema.iso_date(),
+      written_date_text("start_date", "starts", true),
+    ),
   )
   let due_date = @schema.optional(
     "due_date",
-    clearable(@schema.iso_date(), due_date_text(true)),
+    clearable(@schema.iso_date(), written_date_text("due_date", "is due", true)),
   )
   let done_ratio = @schema.optional("done_ratio", @schema.integer())
   let is_private = @schema.optional("is_private", @schema.boolean())
@@ -309,16 +304,11 @@ let delete_input : @schema.Schema[IssueAction] = @schema.record(
 )
 
 ///|
-fn journal_id() -> @schema.Schema[Int32] {
-  record_id().describe(
-    "Id of the comment (journal), as listed by `show` with `include: [\"journals\"]`.",
-  )
-}
-
-///|
 let journal : @schema.Field[Int32] = @schema.required(
   "journal_id",
-  journal_id(),
+  record_id().describe(
+    "Id of the comment (journal), as listed by `show` with `include: [\"journals\"]`.",
+  ),
 )
 
 ///|
