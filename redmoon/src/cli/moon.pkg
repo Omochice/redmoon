@@ -1,10 +1,18 @@
 import {
+  "moonbitlang/core/argparse",
+  "moonbitlang/core/debug",
   "omochice/keyring",
+  "omochice/mcp",
+  "omochice/redmine",
+  "omochice/redmoon/build",
+  "omochice/redmoon/tools",
 }
 
 import {
   "moonbitlang/async",
-  "moonbitlang/core/debug",
+  "moonbitlang/async/io",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
 } for "wbtest"
 
 supported_targets = "+native"
