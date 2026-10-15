@@ -91,10 +91,7 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
       }),
     ),
   ]
-  match mode {
-    Full => @schema.keyed([..read, ..write])
-    Readonly => @schema.keyed(read)
-  }
+  actions(mode, read~, write~)
 }
 
 ///|

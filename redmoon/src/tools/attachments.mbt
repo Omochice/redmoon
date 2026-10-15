@@ -29,7 +29,7 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
     ),
     DEFAULT_MAX_SIZE,
   )
-  let entries = [
+  let read = [
     (
       "show",
       @schema.record([id.as_member()], v => AttachmentAction::Show(v.get(id))),
@@ -42,52 +42,50 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       ),
     ),
   ]
-  if mode is Full {
-    let issue_id = @schema.required("issue_id", record_id())
-    let path = @schema.required(
-      "path",
-      attachment_path(
-        "Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process.",
+  let issue_id = @schema.required("issue_id", record_id())
+  let path = @schema.required(
+    "path",
+    attachment_path(
+      "Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process.",
+    ),
+  )
+  let filename = @schema.optional(
+    "filename",
+    @schema.not_blank().describe(
+      "Name the attachment is shown under; the last segment of `path` by default.",
+    ),
+  )
+  let description = @schema.optional("description", @schema.string())
+  let notes = @schema.optional(
+    "notes",
+    @schema.string().describe(
+      "Comment to add to the issue in the same history entry as the attachment.",
+    ),
+  )
+  let write = [
+    (
+      "attach",
+      @schema.record(
+        [
+          issue_id.as_member(),
+          path.as_member(),
+          filename.as_member(),
+          description.as_member(),
+          notes.as_member(),
+        ],
+        v => {
+          Attach(
+            v.get(issue_id),
+            v.get(path),
+            v.get(filename),
+            v.get(description),
+            v.get(notes),
+          )
+        },
       ),
-    )
-    let filename = @schema.optional(
-      "filename",
-      @schema.not_blank().describe(
-        "Name the attachment is shown under; the last segment of `path` by default.",
-      ),
-    )
-    let description = @schema.optional("description", @schema.string())
-    let notes = @schema.optional(
-      "notes",
-      @schema.string().describe(
-        "Comment to add to the issue in the same history entry as the attachment.",
-      ),
-    )
-    entries.push(
-      (
-        "attach",
-        @schema.record(
-          [
-            issue_id.as_member(),
-            path.as_member(),
-            filename.as_member(),
-            description.as_member(),
-            notes.as_member(),
-          ],
-          v => {
-            Attach(
-              v.get(issue_id),
-              v.get(path),
-              v.get(filename),
-              v.get(description),
-              v.get(notes),
-            )
-          },
-        ),
-      ),
-    )
-  }
-  @schema.keyed(entries)
+    ),
+  ]
+  actions(mode, read~, write~)
 }
 
 ///|

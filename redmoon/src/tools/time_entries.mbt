@@ -140,12 +140,7 @@ fn time_entry_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
     ("update", time_entry_update_input),
     ("delete", time_entry_delete_input),
   ]
-  @schema.keyed(
-    match mode {
-      Full => [..read, ..write]
-      Readonly => read
-    },
-  )
+  actions(mode, read~, write~)
 }
 
 ///|
