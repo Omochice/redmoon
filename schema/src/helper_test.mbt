@@ -1,3 +1,4 @@
+///|
 using @schema {
   type Schema,
   type Obj,
@@ -13,6 +14,7 @@ using @schema {
   nullable,
   union,
   keyed,
+  iso_date,
   object,
   field,
   optional,
