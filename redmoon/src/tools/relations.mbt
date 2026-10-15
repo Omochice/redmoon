@@ -23,48 +23,52 @@ fn relation_type_schema() -> @schema.Schema[@redmine.RelationType] {
 
 ///|
 fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
+  let issue_id = @schema.required("issue_id", record_id())
+  let id = @schema.required("id", record_id())
   let entries : Array[(String, @schema.Schema[RelationAction])] = [
     (
       "list",
-      @schema.object(issue_id => RelationAction::List(issue_id))
-      |> @schema.field("issue_id", record_id())
-      |> @schema.Obj::done,
+      @schema.record([issue_id.as_member()], v => {
+        RelationAction::List(v.get(issue_id))
+      }),
     ),
     (
       "show",
-      @schema.object(id => RelationAction::Show(id))
-      |> @schema.field("id", record_id())
-      |> @schema.Obj::done,
+      @schema.record([id.as_member()], v => RelationAction::Show(v.get(id))),
     ),
   ]
   if mode is Full {
+    let issue_to_id = @schema.required("issue_to_id", record_id())
+    let relation_type = @schema.required(
+      "relation_type",
+      relation_type_schema(),
+    )
+    let delay = @schema.optional_field("delay", @schema.integer())
     entries.push(
       (
         "create",
-        @schema.object(issue_id => {
-          issue_to_id => {
-            relation_type => {
-              delay => {
-                RelationAction::Create(
-                  issue_id, issue_to_id, relation_type, delay,
-                )
-              }
-            }
-          }
-        })
-        |> @schema.field("issue_id", record_id())
-        |> @schema.field("issue_to_id", record_id())
-        |> @schema.field("relation_type", relation_type_schema())
-        |> @schema.optional("delay", @schema.integer())
-        |> @schema.Obj::done,
+        @schema.record(
+          [
+            issue_id.as_member(),
+            issue_to_id.as_member(),
+            relation_type.as_member(),
+            delay.as_member(),
+          ],
+          v => {
+            RelationAction::Create(
+              v.get(issue_id),
+              v.get(issue_to_id),
+              v.get(relation_type),
+              v.get(delay),
+            )
+          },
+        ),
       ),
     )
     entries.push(
       (
         "delete",
-        @schema.object(id => RelationAction::Delete(id))
-        |> @schema.field("id", record_id())
-        |> @schema.Obj::done,
+        @schema.record([id.as_member()], v => RelationAction::Delete(v.get(id))),
       ),
     )
   }
