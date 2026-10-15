@@ -58,6 +58,15 @@ async fn[T] walk_all(
 }
 
 ///|
+/// Redmine omits `total_count` when it did not run the search, for example for a one-letter query, so a missing count means no matches.
+fn total_count_of(json : Json) -> Int32 raise RedmineError {
+  guard json is Object(members) && members.get("total_count") is Some(count) else {
+    return 0
+  }
+  decode(count)
+}
+
+///|
 /// Lists a paged resource whose response is `{"<key>": [...], "total_count": n}`.
 async fn[T : @json.FromJson] Redmine::list_all(
   self : Redmine,
@@ -75,9 +84,6 @@ async fn[T : @json.FromJson] Redmine::list_all(
         ("offset", offset.to_string()),
       ],
     )
-    {
-      items: decode_field(json, key),
-      total_count: decode_field(json, "total_count"),
-    }
+    { items: decode_field(json, key), total_count: total_count_of(json), }
   })
 }

@@ -84,7 +84,7 @@ test "a result decodes from Redmine's response with a null description" {
   let text =
     #|{"results":[{"id":2,"title":"Bug #2 (New): login","type":"issue","url":"http://localhost:3000/issues/2","description":null,"datetime":"2026-10-15T18:08:53Z"}],"total_count":1,"offset":0,"limit":25}
   let json = @json.parse(text) catch { _ => fail("fixture is not JSON") }
-  let results = search_results(strip_nulls(json)) catch {
+  let results : Array[SearchResult] = decode_field(strip_nulls(json), "results") catch {
     _ => fail("results did not decode")
   }
   assert_eq(results.length(), 1)
@@ -99,7 +99,7 @@ test "a missing total_count counts as no matches" {
   let json = @json.parse("{\"results\":[]}") catch {
     _ => fail("fixture is not JSON")
   }
-  let total = search_total_count(strip_nulls(json)) catch {
+  let total = total_count_of(strip_nulls(json)) catch {
     _ => fail("total_count did not decode")
   }
   assert_eq(total, 0)
