@@ -93,12 +93,10 @@ fn Server::initialize(
   self.initialized = true
   let fields : Array[(String, Json)] = [
     ("protocolVersion", Json(negotiated)),
-    ("capabilities", self.capabilities()),
+    ("capabilities", capabilities),
     ("serverInfo", self.server_info()),
   ]
-  if self.instructions is Some(text) {
-    fields.push(("instructions", Json(text)))
-  }
+  self.add_instructions(fields)
   Ok(object(fields))
 }
 
@@ -133,11 +131,9 @@ fn Server::discover(
           "supportedVersions",
           Json::array(supported_versions().map(v => Json(v))),
         ),
-        ("capabilities", self.capabilities()),
+        ("capabilities", capabilities),
       ]
-      if self.instructions is Some(text) {
-        fields.push(("instructions", Json(text)))
-      }
+      self.add_instructions(fields)
       Ok(self.result_for(Modern, fields))
     }
   }
