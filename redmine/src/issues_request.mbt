@@ -181,58 +181,57 @@ fn[T] Clearable::to_member(
 }
 
 ///|
-fn int_json(value : Int32) -> Json {
-  Json::number(value.to_double())
-}
-
-///|
 fn UploadToken::to_json_object(self : UploadToken) -> Json {
   present_members([
     ("token", Some(Json(self.token))),
-    ("filename", self.filename.map(fn(v) { Json(v) })),
-    ("description", self.description.map(fn(v) { Json(v) })),
-    ("content_type", self.content_type.map(fn(v) { Json(v) })),
+    ("filename", self.filename.map(ToJson::to_json)),
+    ("description", self.description.map(ToJson::to_json)),
+    ("content_type", self.content_type.map(ToJson::to_json)),
   ])
 }
 
 ///|
 fn IssueCustomFieldInput::to_json_object(self : IssueCustomFieldInput) -> Json {
-  Json::object({ "id": int_json(self.id), "value": self.value.to_json() })
+  Json::object({ "id": ToJson::to_json(self.id), "value": self.value.to_json() })
+}
+
+///|
+fn custom_fields_member(fields : Array[IssueCustomFieldInput]?) -> Json? {
+  fields.map(fields => {
+    Json::array(fields.map(IssueCustomFieldInput::to_json_object))
+  })
+}
+
+///|
+fn uploads_member(uploads : Array[UploadToken]?) -> Json? {
+  uploads.map(uploads => Json::array(uploads.map(UploadToken::to_json_object)))
 }
 
 ///|
 fn IssueCreate::to_body(self : IssueCreate) -> Json {
   let issue = present_members([
-    ("project_id", Some(int_json(self.project_id))),
-    ("tracker_id", Some(int_json(self.tracker_id))),
-    ("status_id", Some(int_json(self.status_id))),
-    ("priority_id", Some(int_json(self.priority_id))),
+    ("project_id", Some(ToJson::to_json(self.project_id))),
+    ("tracker_id", Some(ToJson::to_json(self.tracker_id))),
+    ("status_id", Some(ToJson::to_json(self.status_id))),
+    ("priority_id", Some(ToJson::to_json(self.priority_id))),
     ("subject", Some(Json(self.subject))),
-    ("description", self.description.map(fn(v) { Json(v) })),
-    ("category_id", self.category_id.map(int_json)),
-    ("fixed_version_id", self.fixed_version_id.map(int_json)),
-    ("assigned_to_id", self.assigned_to_id.map(int_json)),
-    ("parent_issue_id", self.parent_issue_id.map(int_json)),
+    ("description", self.description.map(ToJson::to_json)),
+    ("category_id", self.category_id.map(ToJson::to_json)),
+    ("fixed_version_id", self.fixed_version_id.map(ToJson::to_json)),
+    ("assigned_to_id", self.assigned_to_id.map(ToJson::to_json)),
+    ("parent_issue_id", self.parent_issue_id.map(ToJson::to_json)),
     (
       "watcher_user_ids",
-      self.watcher_user_ids.map(fn(ids) { Json::array(ids.map(int_json)) }),
-    ),
-    ("is_private", self.is_private.map(fn(v) { Json(v) })),
-    ("estimated_hours", self.estimated_hours.map(fn(v) { Json(v) })),
-    ("start_date", self.start_date.map(fn(v) { Json(v) })),
-    ("due_date", self.due_date.map(fn(v) { Json(v) })),
-    (
-      "custom_fields",
-      self.custom_fields.map(fn(fields) {
-        Json::array(fields.map(IssueCustomFieldInput::to_json_object))
+      self.watcher_user_ids.map(fn(ids) {
+        Json::array(ids.map(ToJson::to_json))
       }),
     ),
-    (
-      "uploads",
-      self.uploads.map(fn(uploads) {
-        Json::array(uploads.map(UploadToken::to_json_object))
-      }),
-    ),
+    ("is_private", self.is_private.map(ToJson::to_json)),
+    ("estimated_hours", self.estimated_hours.map(ToJson::to_json)),
+    ("start_date", self.start_date.map(ToJson::to_json)),
+    ("due_date", self.due_date.map(ToJson::to_json)),
+    ("custom_fields", custom_fields_member(self.custom_fields)),
+    ("uploads", uploads_member(self.uploads)),
   ])
   Json::object({ "issue": issue })
 }
@@ -240,44 +239,38 @@ fn IssueCreate::to_body(self : IssueCreate) -> Json {
 ///|
 fn IssueUpdate::to_body(self : IssueUpdate) -> Json {
   let issue = present_members([
-    ("subject", self.subject.map(fn(v) { Json(v) })),
-    ("description", self.description.map(fn(v) { Json(v) })),
-    ("notes", self.notes.map(fn(v) { Json(v) })),
-    ("private_notes", self.private_notes.map(fn(v) { Json(v) })),
-    ("done_ratio", self.done_ratio.map(int_json)),
-    ("is_private", self.is_private.map(fn(v) { Json(v) })),
-    ("estimated_hours", self.estimated_hours.map(fn(v) { Json(v) })),
-    ("status_id", self.status_id.map(int_json)),
-    ("priority_id", self.priority_id.map(int_json)),
-    ("tracker_id", self.tracker_id.map(int_json)),
+    ("subject", self.subject.map(ToJson::to_json)),
+    ("description", self.description.map(ToJson::to_json)),
+    ("notes", self.notes.map(ToJson::to_json)),
+    ("private_notes", self.private_notes.map(ToJson::to_json)),
+    ("done_ratio", self.done_ratio.map(ToJson::to_json)),
+    ("is_private", self.is_private.map(ToJson::to_json)),
+    ("estimated_hours", self.estimated_hours.map(ToJson::to_json)),
+    ("status_id", self.status_id.map(ToJson::to_json)),
+    ("priority_id", self.priority_id.map(ToJson::to_json)),
+    ("tracker_id", self.tracker_id.map(ToJson::to_json)),
     // Redmine ignores `assigned_to_id: null` and unassigns only on a blank string.
     (
       "assigned_to_id",
-      Clearable::to_member(self.assigned_to_id, clear=Json(""), set=int_json),
+      Clearable::to_member(
+        self.assigned_to_id,
+        clear=Json(""),
+        set=ToJson::to_json,
+      ),
     ),
-    ("category_id", Clearable::to_member(self.category_id, set=int_json)),
+    ("category_id", Clearable::to_member(self.category_id, set=ToJson::to_json)),
     (
       "parent_issue_id",
-      Clearable::to_member(self.parent_issue_id, set=int_json),
+      Clearable::to_member(self.parent_issue_id, set=ToJson::to_json),
     ),
     (
       "fixed_version_id",
-      Clearable::to_member(self.fixed_version_id, set=int_json),
+      Clearable::to_member(self.fixed_version_id, set=ToJson::to_json),
     ),
-    ("start_date", Clearable::to_member(self.start_date, set=fn(v) { Json(v) })),
-    ("due_date", Clearable::to_member(self.due_date, set=fn(v) { Json(v) })),
-    (
-      "custom_fields",
-      self.custom_fields.map(fn(fields) {
-        Json::array(fields.map(IssueCustomFieldInput::to_json_object))
-      }),
-    ),
-    (
-      "uploads",
-      self.uploads.map(fn(uploads) {
-        Json::array(uploads.map(UploadToken::to_json_object))
-      }),
-    ),
+    ("start_date", Clearable::to_member(self.start_date, set=ToJson::to_json)),
+    ("due_date", Clearable::to_member(self.due_date, set=ToJson::to_json)),
+    ("custom_fields", custom_fields_member(self.custom_fields)),
+    ("uploads", uploads_member(self.uploads)),
   ])
   Json::object({ "issue": issue })
 }
