@@ -66,11 +66,11 @@ test "a time entry response decodes with an issue and null comments" {
   let text =
     #|{"time_entry":{"id":7,"project":{"id":1,"name":"Demo"},"issue":{"id":3},"user":{"id":1,"name":"Redmine Admin"},"activity":{"id":8,"name":"Design"},"hours":1.5,"comments":null,"spent_on":"2026-10-10","created_on":"2026-10-15T18:06:58Z","updated_on":"2026-10-15T18:06:58Z"}}
   let json = strip_nulls(@json.parse(text))
-  let entry : TimeEntry = try decode_field(json, "time_entry") catch {
+  let entry : TimeEntry = decode_field(json, "time_entry") catch {
     _ => abort("decode failed")
   }
   assert_eq(entry.id, 7)
-  assert_eq(entry.issue, Some({ id: 3 }))
+  assert_eq(entry.issue, Some({ id: 3, }))
   assert_eq(entry.comments, None)
   assert_eq(entry.hours, 1.5)
   assert_eq(entry.custom_fields, None)
