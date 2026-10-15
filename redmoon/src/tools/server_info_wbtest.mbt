@@ -9,7 +9,7 @@ async test "redmoon_info reports the version and a null build from source" {
 
 ///|
 async test "redmoon_info reports the build when one is embedded" {
-  let build = Some(BuildInfo::{ commit: "abc123", dirty: true, })
+  let build = Some(@build.BuildInfo::{ commit: "abc123", dirty: true, })
   let called = call_tool([server_info_tool(build~)], "redmoon_info", {
     "show": {},
   })
@@ -21,5 +21,5 @@ async test "redmoon_info reports the build when one is embedded" {
 
 ///|
 test "the checked-in build info is empty" {
-  assert_true(current_build() is None)
+  assert_true(@build.build is None)
 }
