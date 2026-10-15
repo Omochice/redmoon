@@ -48,7 +48,7 @@ async fn[T] walk_all(
   fetch_page : async (Int32, Int32) -> Page[T] raise RedmineError,
 ) -> Array[T] raise RedmineError {
   let first = fetch_page(PAGE_SIZE, 0)
-  let items = first.items.copy()
+  let items = first.items
   for offset = PAGE_SIZE
       offset < first.total_count
       offset = offset + PAGE_SIZE {
