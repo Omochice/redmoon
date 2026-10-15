@@ -66,15 +66,15 @@ fn Server::route(
 ///|
 /// Runs the tool of a planned call. The only await in the protocol, so the
 /// transport can keep reading while a handler waits.
-async fn Server::respond(self : Server, action : Action) -> Json? {
-  match action {
-    Reply(json) => Some(json)
-    Nothing | Cancel(_) => None
-    Call(id~, tool~, arguments~, era~) => {
-      let result = (tool.invoke)(arguments, self.on_invalid)
-      Some(result_response(id, self.result_for(era, result.to_fields())))
-    }
-  }
+async fn Server::respond(
+  self : Server,
+  id~ : Json,
+  tool~ : Tool,
+  arguments~ : Json,
+  era~ : Era,
+) -> Json {
+  let result = (tool.invoke)(arguments, self.on_invalid)
+  result_response(id, self.result_for(era, result.to_fields()))
 }
 
 ///|

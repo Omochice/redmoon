@@ -33,9 +33,11 @@ fn tools_server(tools : Array[Tool]) -> Server {
 
 ///|
 async fn call(server : Server, request : Json) -> String {
-  match server.respond(server.dispatch(request.stringify())) {
-    Some(json) => json.stringify()
-    None => ""
+  match server.dispatch(request.stringify()) {
+    Reply(json) => json.stringify()
+    Call(id~, tool~, arguments~, era~) =>
+      server.respond(id~, tool~, arguments~, era~).stringify()
+    Cancel(_) | Nothing => ""
   }
 }
 
