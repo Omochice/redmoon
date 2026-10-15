@@ -29,92 +29,82 @@ fn version_sharing() -> @schema.Schema[@redmine.VersionSharing] {
 
 ///|
 fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
+  let project_id = @schema.required("project_id", project_ref())
+  let id = @schema.required("id", record_id())
+  let name = @schema.optional_field("name", @schema.string())
+  let description = @schema.optional_field("description", @schema.string())
+  let status = @schema.optional_field("status", version_status())
+  let due_date = @schema.optional_field("due_date", @schema.iso_date())
+  let sharing = @schema.optional_field("sharing", version_sharing())
+  let wiki_page_title = @schema.optional_field(
+    "wiki_page_title",
+    @schema.string(),
+  )
+  let create_name = @schema.required("name", @schema.string())
   let read = [
     (
       "list",
-      @schema.object(p => VersionAction::List(p))
-      |> @schema.field("project_id", project_ref())
-      |> @schema.Obj::done,
+      @schema.record([project_id.as_member()], v => {
+        VersionAction::List(v.get(project_id))
+      }),
     ),
     (
       "show",
-      @schema.object(id => VersionAction::Show(id))
-      |> @schema.field("id", record_id())
-      |> @schema.Obj::done,
+      @schema.record([id.as_member()], v => VersionAction::Show(v.get(id))),
     ),
   ]
   let write = [
     (
       "create",
-      @schema.object(p => {
-        name => {
-          description => {
-            status => {
-              due_date => {
-                sharing => {
-                  wiki_page_title => {
-                    VersionAction::Create(p, {
-                      name,
-                      description,
-                      status,
-                      due_date,
-                      sharing,
-                      wiki_page_title,
-                    })
-                  }
-                }
-              }
-            }
-          }
-        }
-      })
-      |> @schema.field("project_id", project_ref())
-      |> @schema.field("name", @schema.string())
-      |> @schema.optional("description", @schema.string())
-      |> @schema.optional("status", version_status())
-      |> @schema.optional("due_date", @schema.iso_date())
-      |> @schema.optional("sharing", version_sharing())
-      |> @schema.optional("wiki_page_title", @schema.string())
-      |> @schema.Obj::done,
+      @schema.record(
+        [
+          project_id.as_member(),
+          create_name.as_member(),
+          description.as_member(),
+          status.as_member(),
+          due_date.as_member(),
+          sharing.as_member(),
+          wiki_page_title.as_member(),
+        ],
+        v => {
+          VersionAction::Create(v.get(project_id), {
+            name: v.get(create_name),
+            description: v.get(description),
+            status: v.get(status),
+            due_date: v.get(due_date),
+            sharing: v.get(sharing),
+            wiki_page_title: v.get(wiki_page_title),
+          })
+        },
+      ),
     ),
     (
       "update",
-      @schema.object(id => {
-        name => {
-          description => {
-            status => {
-              due_date => {
-                sharing => {
-                  wiki_page_title => {
-                    VersionAction::Update(id, {
-                      name,
-                      description,
-                      status,
-                      due_date,
-                      sharing,
-                      wiki_page_title,
-                    })
-                  }
-                }
-              }
-            }
-          }
-        }
-      })
-      |> @schema.field("id", record_id())
-      |> @schema.optional("name", @schema.string())
-      |> @schema.optional("description", @schema.string())
-      |> @schema.optional("status", version_status())
-      |> @schema.optional("due_date", @schema.iso_date())
-      |> @schema.optional("sharing", version_sharing())
-      |> @schema.optional("wiki_page_title", @schema.string())
-      |> @schema.Obj::done,
+      @schema.record(
+        [
+          id.as_member(),
+          name.as_member(),
+          description.as_member(),
+          status.as_member(),
+          due_date.as_member(),
+          sharing.as_member(),
+          wiki_page_title.as_member(),
+        ],
+        v => {
+          VersionAction::Update(v.get(id), {
+            name: v.get(name),
+            description: v.get(description),
+            status: v.get(status),
+            due_date: v.get(due_date),
+            sharing: v.get(sharing),
+            wiki_page_title: v.get(wiki_page_title),
+          })
+        },
+      ),
     ),
     (
       "delete",
-      @schema.object(id => VersionAction::Delete(id))
-      |> @schema.field("id", record_id())
-      |> @schema.Obj::done,
+      @schema.record([id.as_member()], v => VersionAction::Delete(v.get(id))),
     ),
   ]
   match mode {
