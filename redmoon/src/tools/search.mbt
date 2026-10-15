@@ -62,30 +62,12 @@ fn search_input() -> @schema.Schema[@redmine.SearchQuery] {
 }
 
 ///|
-fn search_result_json(result : @redmine.SearchResult) -> Json {
-  let description : Json = match result.description {
-    Some(text) => Json(text)
-    None => Json::null()
-  }
-  {
-    "id": result.id,
-    "title": result.title,
-    "type": result.kind,
-    "url": result.url,
-    "description": description,
-    "datetime": result.datetime,
-  }
-}
-
-///|
 /// `redmine_search`: full-text search across the resources Redmine indexes.
 pub fn search_tool(port : &SearchPort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_search",
     description="Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.\nRequires `q`; narrow with `scope` and the per-resource flags.\nPass the arguments under the single key `search`: `{\"search\": {\"q\": \"login\"}}`.",
     input=@schema.keyed([("search", search_input())]),
-    handler=async fn(query) {
-      respond(() => Json::array(port.search(query).map(search_result_json)))
-    },
+    handler=async fn(query) { respond(() => port.search(query)) },
   )
 }
