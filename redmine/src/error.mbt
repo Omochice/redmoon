@@ -3,7 +3,7 @@
 /// `Response` is a non-2xx answer carrying Redmine's own messages;
 /// `Transport` is any failure without an HTTP status (connection, TLS, decoding).
 /// Neither case holds request headers, the request URL, or the API key.
-pub suberror RedmineError {
+pub(all) suberror RedmineError {
   Response(status~ : Int32, errors~ : Array[String])
   Transport(message~ : String)
 } derive(Debug, ToJson)
