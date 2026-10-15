@@ -132,7 +132,129 @@ async test "a stray argument is reported with its action path" {
 }
 
 ///|
-async test "live: a relation is listed and shown through the tool" {
+async test "create maps every argument to the port, delay included" {
+  let fake = fake_relations()
+  let called = call_tool(
+    [relations_tool(fake, Full)],
+    "redmine_issue_relations",
+    {
+      "create": {
+        "issue_id": 1,
+        "issue_to_id": 2,
+        "relation_type": "blocks",
+        "delay": 3,
+      },
+    },
+  )
+  assert_eq(called.is_error, false)
+  assert_eq(fake.creates, [(1, 2, Blocks, Some(3))])
+  assert_eq(
+    called.text,
+    "{\"id\":100,\"issue_id\":1,\"issue_to_id\":2,\"relation_type\":\"blocks\",\"delay\":3}",
+  )
+}
+
+///|
+async test "create without a delay passes none to the port" {
+  let fake = fake_relations()
+  let called = call_tool(
+    [relations_tool(fake, Full)],
+    "redmine_issue_relations",
+    {
+      "create": {
+        "issue_id": 5,
+        "issue_to_id": 6,
+        "relation_type": "copied_from",
+      },
+    },
+  )
+  assert_eq(called.is_error, false)
+  assert_eq(fake.creates, [(5, 6, CopiedFrom, None)])
+}
+
+///|
+async test "every relation type name reaches its SDK value" {
+  let names : Array[(String, @redmine.RelationType)] = [
+    ("relates", Relates),
+    ("duplicates", Duplicates),
+    ("duplicated", Duplicated),
+    ("blocks", Blocks),
+    ("blocked", Blocked),
+    ("precedes", Precedes),
+    ("follows", Follows),
+    ("copied_to", CopiedTo),
+    ("copied_from", CopiedFrom),
+  ]
+  let fake = fake_relations()
+  let tools = [relations_tool(fake, Full)]
+  for name in names {
+    ignore(
+      call_tool(tools, "redmine_issue_relations", {
+        "create": { "issue_id": 1, "issue_to_id": 2, "relation_type": name.0 },
+      }),
+    )
+  }
+  assert_eq(fake.creates.map(c => c.2), names.map(n => n.1))
+}
+
+///|
+async test "an unknown relation type is rejected with the allowed names" {
+  let called = call_tool(
+    [relations_tool(fake_relations(), Full)],
+    "redmine_issue_relations",
+    {
+      "create": { "issue_id": 1, "issue_to_id": 2, "relation_type": "related" },
+    },
+  )
+  assert_eq(called.is_error, true)
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.relation_type: must be one of relates, duplicates, duplicated, blocks, blocked, precedes, follows, copied_to, copied_from\"]}",
+  )
+}
+
+///|
+async test "delete passes the relation id to the port and answers ok" {
+  let fake = fake_relations()
+  let called = call_tool(
+    [relations_tool(fake, Full)],
+    "redmine_issue_relations",
+    { "delete": { "id": 7 } },
+  )
+  assert_eq(called.is_error, false)
+  assert_eq(fake.deletes, [7])
+  assert_eq(called.text, "{\"ok\":true}")
+}
+
+///|
+async test "readonly refuses a create as an unknown action" {
+  let called = call_tool(
+    [relations_tool(fake_relations(), Readonly)],
+    "redmine_issue_relations",
+    { "create": { "issue_id": 1, "issue_to_id": 2, "relation_type": "blocks" } },
+  )
+  assert_eq(called.is_error, true)
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `create`, one of: list, show\"]}",
+  )
+}
+
+///|
+async test "tools/list advertises the write actions only in full mode" {
+  let factory : ToolFactory = mode => relations_tool(fake_relations(), mode)
+  let advertised_full = list_tools(build_tools([factory], Full)).stringify()
+  let advertised_read_only = list_tools(build_tools([factory], Readonly)).stringify()
+  assert_eq(
+    advertised_full, "{\"tools\":[{\"name\":\"redmine_issue_relations\",\"description\":\"Create, read, and delete Redmine issue relations. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"issue_to_id\":{\"type\":\"integer\",\"minimum\":1},\"relation_type\":{\"type\":\"string\",\"enum\":[\"relates\",\"duplicates\",\"duplicated\",\"blocks\",\"blocked\",\"precedes\",\"follows\",\"copied_to\",\"copied_from\"]},\"delay\":{\"type\":\"integer\"}},\"required\":[\"issue_id\",\"issue_to_id\",\"relation_type\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+  )
+  assert_eq(
+    advertised_read_only, "{\"tools\":[{\"name\":\"redmine_issue_relations\",\"description\":\"List and show Redmine issue relations. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+  )
+}
+
+///|
+async test "live: a relation is created, listed, shown and deleted through the tool" {
   guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
     return
   }
@@ -140,18 +262,63 @@ async test "live: a relation is listed and shown through the tool" {
     return
   }
   let redmine = @redmine.Redmine::new(endpoint~, api_key~)
-  let offline = @redmine.Redmine::new(endpoint="http://127.0.0.1:1", api_key~)
-  let denied = call_tool(
-    [relations_tool(offline, Full)],
-    "redmine_issue_relations",
-    { "list": { "issue_id": 1 } },
+  let subject = "redmoon-relations-\{@env.now()}"
+  let first = redmine.create_issue(
+    @redmine.IssueCreate::new(
+      project_id=1,
+      tracker_id=1,
+      status_id=1,
+      priority_id=2,
+      subject="\{subject}-a",
+    ),
   )
-  assert_eq(denied.is_error, true)
-  assert_true(denied.text.contains("\"status\":0"))
-  let called = call_tool(
-    [relations_tool(redmine, Full)],
-    "redmine_issue_relations",
-    { "list": { "issue_id": 1 } },
+  let second = redmine.create_issue(
+    @redmine.IssueCreate::new(
+      project_id=1,
+      tracker_id=1,
+      status_id=1,
+      priority_id=2,
+      subject="\{subject}-b",
+    ),
   )
-  assert_eq(called.is_error, false)
+  let tools = [relations_tool(redmine, Full)]
+  let outcome : Error? = try {
+    exercise_relation(tools, first.id, second.id)
+    None
+  } catch {
+    error => Some(error)
+  }
+  redmine.delete_issue(first.id)
+  redmine.delete_issue(second.id)
+  if outcome is Some(error) {
+    raise error
+  }
+}
+
+///|
+async fn exercise_relation(
+  tools : Array[@mcp.Tool],
+  from : Int32,
+  to : Int32,
+) -> Unit {
+  let created = call_tool(tools, "redmine_issue_relations", {
+    "create": { "issue_id": from, "issue_to_id": to, "relation_type": "blocks" },
+  })
+  assert_eq(created.is_error, false)
+  let relation_id = match @json.parse(created.text) {
+    { "id": Number(id, ..), .. } => id.to_int()
+    _ => fail("the created relation has no id: \{created.text}")
+  }
+  let listed = call_tool(tools, "redmine_issue_relations", {
+    "list": { "issue_id": from },
+  })
+  assert_true(listed.text.contains("\"issue_to_id\":\{to}"))
+  let shown = call_tool(tools, "redmine_issue_relations", {
+    "show": { "id": relation_id },
+  })
+  assert_true(shown.text.contains("\"relation_type\":\"blocks\""))
+  let deleted = call_tool(tools, "redmine_issue_relations", {
+    "delete": { "id": relation_id },
+  })
+  assert_eq(deleted.text, "{\"ok\":true}")
 }
