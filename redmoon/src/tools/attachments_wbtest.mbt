@@ -473,7 +473,7 @@ async test "live: attach, show and download through the tool" {
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let issue = redmine
     |> @issues.create(
       @issues.Create::new(

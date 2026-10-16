@@ -191,7 +191,7 @@ async test "live: a search finds an issue created for the test" {
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let subject = "redmoon-search-\{@env.now()}"
   let created = redmine
     |> @issues.create(

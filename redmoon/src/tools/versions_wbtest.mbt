@@ -295,7 +295,7 @@ async test "live: versions go through the tool" {
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let tools = [versions_tool(redmine, Full)]
   let name = "redmoon-tool-\{@async.now()}"
   let created = call_tool(tools, "redmine_versions", {

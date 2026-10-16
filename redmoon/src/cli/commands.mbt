@@ -76,7 +76,7 @@ pub async fn run_serve(
   store : &CredentialStore,
 ) -> Unit {
   let credential = resolve_api_key(endpoint, store)
-  let redmine = @redmine.Redmine::new(
+  let redmine = @redmine.new(
     endpoint=credential.endpoint,
     api_key=credential.api_key,
   )

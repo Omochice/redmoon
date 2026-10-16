@@ -8,7 +8,7 @@ pub fn redmine() -> @redmine.Redmine? raise @redmine.RedmineError {
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return None
   }
-  Some(@redmine.Redmine::new(endpoint~, api_key~))
+  Some(@redmine.new(endpoint~, api_key~))
 }
 
 ///|

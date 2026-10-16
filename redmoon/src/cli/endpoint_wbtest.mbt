@@ -79,6 +79,6 @@ test "an accepted endpoint is accepted by the SDK" {
       "HTTPS://host:443/", "http://host:8080",
     ] {
     let canonical = canonicalize_endpoint(raw)
-    ignore(@redmine.Redmine::new(endpoint=canonical, api_key="k"))
+    ignore(@redmine.new(endpoint=canonical, api_key="k"))
   }
 }

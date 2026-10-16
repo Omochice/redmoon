@@ -1,9 +1,6 @@
 ///|
 async test "a refused connection raises Transport without the API key" {
-  let redmine = Redmine::new(
-    endpoint="http://127.0.0.1:1",
-    api_key="s3cr3t-key",
-  )
+  let redmine = new(endpoint="http://127.0.0.1:1", api_key="s3cr3t-key")
   try send(redmine, Get, ["enumerations", "issue_priorities.json"]) catch {
     Transport(message~) => assert_false(message.contains("s3cr3t-key"))
     _ => fail("expected Transport")
@@ -14,9 +11,7 @@ async test "a refused connection raises Transport without the API key" {
 
 ///|
 test "an unusable endpoint raises Transport without echoing it" {
-  try
-    Redmine::new(endpoint="ftp://user:secret@example.com", api_key="k")
-  catch {
+  try new(endpoint="ftp://user:secret@example.com", api_key="k") catch {
     Transport(message~) => assert_false(message.contains("secret"))
     _ => fail("unexpected error")
   } noraise {

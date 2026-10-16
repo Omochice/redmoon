@@ -114,14 +114,14 @@ async test "live: enumerations come from a real Redmine" {
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let tools = [enumerations_tool(redmine)]
   let called = call_tool(tools, "redmine_enumerations", {
     "list_issue_priorities": {},
   })
   assert_eq(called.is_error, false)
   assert_true(called.text.contains("\"name\":\"Normal\""))
-  let offline = @redmine.Redmine::new(endpoint="http://127.0.0.1:1", api_key~)
+  let offline = @redmine.new(endpoint="http://127.0.0.1:1", api_key~)
   let denied = call_tool([enumerations_tool(offline)], "redmine_enumerations", {
     "list_issue_priorities": {},
   })

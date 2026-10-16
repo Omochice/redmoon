@@ -1,9 +1,6 @@
 ///|
 test "the first download request goes to the endpoint, not the reported host" {
-  let redmine = @redmine.Redmine::new(
-    endpoint="https://r.example/redmine",
-    api_key="k",
-  )
+  let redmine = @redmine.new(endpoint="https://r.example/redmine", api_key="k")
   let attachment : Attachment = {
     id: 1,
     filename: "a.txt",

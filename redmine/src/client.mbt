@@ -1,5 +1,7 @@
 ///|
 /// A client for one Redmine instance.
+/// Each resource package takes it as the first argument of its functions, so
+/// operations read as a pipeline: `redmine |> @issues.show(42)`.
 pub struct Redmine {
   priv endpoint : @wire.Endpoint
   priv api_key : String
@@ -10,11 +12,8 @@ const INVALID_ENDPOINT : String = "endpoint must be http(s)://host[:port][/path]
 
 ///|
 /// Creates a client for the Redmine at `endpoint`, e.g. `https://example.com/redmine`.
-/// Raises `Transport` when `endpoint` is not an http(s) URL.
-pub fn Redmine::new(
-  endpoint~ : String,
-  api_key~ : String,
-) -> Redmine raise RedmineError {
+/// Raises `Transport` when `endpoint` is not an http(s) URL; the endpoint is not echoed in the message.
+pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError {
   guard @wire.Endpoint::parse(endpoint) is Some(endpoint) else {
     raise Transport(message=INVALID_ENDPOINT)
   }
@@ -22,9 +21,9 @@ pub fn Redmine::new(
 }
 
 ///|
-/// Sends one request to the Redmine API and returns the response body as JSON, `null` when it is empty.
-/// `segments` are appended to the endpoint's path and percent-encoded; `null` members are removed from the answer.
-/// This is the escape hatch for endpoints the SDK has no function for; prefer the resource packages.
+/// Low-level escape hatch for endpoints the resource packages do not cover yet.
+/// Sends one request and returns the response body as JSON, `null` when it is empty.
+/// `segments` are appended to the endpoint's path and percent-encoded, and `null` members are removed from the answer.
 /// Raises `Response` on a non-2xx answer and `Transport` on any other failure.
 pub async fn send(
   redmine : Redmine,

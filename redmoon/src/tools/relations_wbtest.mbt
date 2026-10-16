@@ -262,7 +262,7 @@ async test "live: a relation is created, listed, shown and deleted through the t
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let subject = "redmoon-relations-\{@env.now()}"
   let first = redmine
     |> @issues.create(

@@ -39,10 +39,7 @@ fn request(id : Int32, rpc_method : String, params : Json) -> Json {
 
 ///|
 async test "the server lists the registered tools" {
-  let redmine = @redmine.Redmine::new(
-    endpoint="http://localhost:3000",
-    api_key="unused",
-  )
+  let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   let responses = exchange(build_server(redmine, false), [
     request(2, "tools/list", {}),
   ])
@@ -67,7 +64,7 @@ async test "live: redmine_enumerations reaches the real Redmine" {
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let responses = exchange(build_server(redmine, true), [
     request(2, "tools/call", {
       "name": "redmine_enumerations",

@@ -826,7 +826,7 @@ async test "live: issues are created, shown, updated, commented and deleted thro
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
     return
   }
-  let redmine = @redmine.Redmine::new(endpoint~, api_key~)
+  let redmine = @redmine.new(endpoint~, api_key~)
   let tools = [issues_tool(redmine, Full)]
   let subject = "redmoon-issues-tool-\{@env.now()}"
   let created = call_tool(tools, "redmine_issues", {

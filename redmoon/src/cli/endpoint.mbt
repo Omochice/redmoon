@@ -53,7 +53,7 @@ pub fn canonicalize_endpoint(raw : String) -> String raise CliError {
   let canonical = canonical.trim_end(chars="/").to_owned()
   // Validity is delegated to the SDK rather than re-implemented, so that login
   // can never accept an endpoint that serve rejects.
-  try ignore(@redmine.Redmine::new(endpoint=canonical, api_key="")) catch {
+  try ignore(@redmine.new(endpoint=canonical, api_key="")) catch {
     _ => raise invalid
   } noraise {
     _ => ()
