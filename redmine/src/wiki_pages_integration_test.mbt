@@ -55,3 +55,19 @@ async test "live: a missing wiki page raises Response 404" {
     _ => fail("expected an error")
   }
 }
+
+///|
+async test "live: a title with dots and spaces is shown by the title it was created with" {
+  guard wiki_live() is Some(redmine) else { return }
+  let project = @redmine.Identifier("demo")
+  let title = "Release v1.0 \{wiki_unique_title("round")}"
+  redmine.create_wiki_page(project, title, "body")
+  defer redmine.delete_wiki_page(project, title)
+  assert_eq(redmine.show_wiki_page(project, title).text, "body")
+  let stored = title.replace_all(old=" ", new="_").replace_all(old=".", new="")
+  assert_true(
+    redmine
+    .list_wiki_pages(project)
+    .any(fn(page) { page.title.to_lower() == stored.to_lower() }),
+  )
+}

@@ -156,16 +156,25 @@ pub async fn Redmine::delete_wiki_page(
 }
 
 ///|
-/// Redmine routes cannot carry these characters in a title; it stores `_` for them.
+/// Mirrors `Wiki.titleize`: whitespace runs become one `_` and `,./?;|:` are dropped,
+/// because Redmine stores the converted title and a differently spelled one is a different page.
 fn wiki_title_segment(title : String) -> String {
-  title
-  .replace_all(old=".", new="_")
-  .replace_all(old="/", new="_")
-  .replace_all(old="?", new="_")
-  .replace_all(old=";", new="_")
-  .replace_all(old=":", new="_")
-  .replace_all(old="|", new="_")
-  .replace_all(old=" ", new="_")
+  let out = StringBuilder()
+  let mut in_space = false
+  for c in title {
+    if c is (' ' | '\t' | '\n' | '\r' | '\u000B' | '\u000C') {
+      if !in_space {
+        out.write_char('_')
+        in_space = true
+      }
+    } else {
+      in_space = false
+      if !",./?;|:".contains_char(c) {
+        out.write_char(c)
+      }
+    }
+  }
+  out.to_string()
 }
 
 ///|
