@@ -1,9 +1,10 @@
 ///|
 test "wiki page segments convert the title and select the version" {
-  assert_eq(wiki_page_segments(Identifier("demo"), "My Page.v2/x"), [
-    "projects", "demo", "wiki", "My_Pagev2x.json",
-  ])
-  assert_eq(wiki_page_segments(Id(1), "Home", version=3), [
+  assert_eq(
+    page_segments(@redmine.ProjectRef::Identifier("demo"), "My Page.v2/x"),
+    ["projects", "demo", "wiki", "My_Pagev2x.json"],
+  )
+  assert_eq(page_segments(@redmine.ProjectRef::Id(1), "Home", version=3), [
     "projects", "1", "wiki", "Home", "3.json",
   ])
 }
@@ -11,11 +12,11 @@ test "wiki page segments convert the title and select the version" {
 ///|
 test "wiki page body leaves unset fields out" {
   assert_eq(
-    wiki_page_body("hello").stringify(),
+    page_body("hello").stringify(),
     "{\"wiki_page\":{\"text\":\"hello\"}}",
   )
   assert_eq(
-    wiki_page_body("hello", comments="why", version=2, parent_title="A B").stringify(),
+    page_body("hello", comments="why", version=2, parent_title="A B").stringify(),
     "{\"wiki_page\":{\"text\":\"hello\",\"comments\":\"why\",\"version\":2,\"parent_title\":\"A_B\"}}",
   )
 }
@@ -27,7 +28,7 @@ test "wiki page summaries decode a Redmine index" {
       #|{"wiki_pages":[{"title":"Home","version":3,"project":{"id":1,"name":"Demo"},"created_on":"2026-10-15T18:06:44Z","updated_on":"2026-10-15T18:06:44Z","parent":{"title":"Root"}},{"title":"Root","version":1,"created_on":"2026-10-15T18:06:44Z","updated_on":"2026-10-15T18:06:44Z"}]}
     ),
   )
-  let pages : Array[WikiPageSummary] = decode_field(json, "wiki_pages") catch {
+  let pages : Array[PageSummary] = @decode.decode_field(json, "wiki_pages") catch {
     _ => fail("decode")
   }
   assert_eq(pages.length(), 2)
@@ -42,7 +43,7 @@ test "a wiki page decodes with and without comments" {
       #|{"wiki_page":{"title":"Home","text":"hello","version":1,"author":{"id":1,"name":"Redmine Admin"},"comments":null,"project":{"id":1,"name":"Demo"},"created_on":"2026-10-15T18:06:44Z","updated_on":"2026-10-15T18:06:44Z"}}
     ),
   )
-  let page : WikiPage = decode_field(@wire.strip_nulls(json), "wiki_page") catch {
+  let page : Page = @decode.decode_field(@wire.strip_nulls(json), "wiki_page") catch {
     _ => fail("decode")
   }
   assert_eq(page.comments, None)
@@ -61,7 +62,7 @@ test "wiki titles are converted the way Redmine's titleize does" {
 
 ///|
 test "wiki page body converts parent_title like a page title" {
-  let body = wiki_page_body("t", parent_title="Release v1.0")
+  let body = page_body("t", parent_title="Release v1.0")
   assert_eq(
     body.stringify(),
     "{\"wiki_page\":{\"text\":\"t\",\"parent_title\":\"Release_v10\"}}",

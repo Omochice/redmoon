@@ -6,6 +6,7 @@ import {
   "omochice/redmine/enumerations",
   "omochice/redmine/relations",
   "omochice/redmine/versions",
+  "omochice/redmine/wiki",
   "omochice/redmoon/build",
   "omochice/schema",
 }

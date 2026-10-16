@@ -1,127 +1,131 @@
 ///|
 /// A wiki page as listed for a project.
-pub(all) struct WikiPageSummary {
+pub(all) struct PageSummary {
   title : String
   version : Int32
   created_on : String
   updated_on : String
-  parent : WikiParent?
+  parent : Parent?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend WikiPageSummary with @json.FromJson::{from_json}
+pub extend PageSummary with @json.FromJson::{from_json}
 
 ///|
-pub extend WikiPageSummary with ToJson::{to_json}
+pub extend PageSummary with ToJson::{to_json}
 
 ///|
-pub extend WikiPageSummary with Eq::{equal, not_equal}
+pub extend PageSummary with Eq::{equal, not_equal}
 
 ///|
-pub extend WikiPageSummary with @debug.Debug::{to_repr}
+pub extend PageSummary with @debug.Debug::{to_repr}
 
 ///|
 /// The parent of a wiki page, by title.
-pub(all) struct WikiParent {
+pub(all) struct Parent {
   title : String
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend WikiParent with @json.FromJson::{from_json}
+pub extend Parent with @json.FromJson::{from_json}
 
 ///|
-pub extend WikiParent with ToJson::{to_json}
+pub extend Parent with ToJson::{to_json}
 
 ///|
-pub extend WikiParent with Eq::{equal, not_equal}
+pub extend Parent with Eq::{equal, not_equal}
 
 ///|
-pub extend WikiParent with @debug.Debug::{to_repr}
+pub extend Parent with @debug.Debug::{to_repr}
 
 ///|
 /// A wiki page with its text, at one version.
-pub(all) struct WikiPage {
+pub(all) struct Page {
   title : String
   version : Int32
   text : String
-  author : IdName
+  author : @redmine.IdName
   comments : String?
   created_on : String
   updated_on : String
-  attachments : Array[WikiAttachment]?
+  attachments : Array[Attachment]?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend WikiPage with @json.FromJson::{from_json}
+pub extend Page with @json.FromJson::{from_json}
 
 ///|
-pub extend WikiPage with ToJson::{to_json}
+pub extend Page with ToJson::{to_json}
 
 ///|
-pub extend WikiPage with Eq::{equal, not_equal}
+pub extend Page with Eq::{equal, not_equal}
 
 ///|
-pub extend WikiPage with @debug.Debug::{to_repr}
+pub extend Page with @debug.Debug::{to_repr}
 
 ///|
 /// A file attached to a wiki page.
-pub(all) struct WikiAttachment {
+pub(all) struct Attachment {
   id : Int32
   filename : String
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend WikiAttachment with @json.FromJson::{from_json}
+pub extend Attachment with @json.FromJson::{from_json}
 
 ///|
-pub extend WikiAttachment with ToJson::{to_json}
+pub extend Attachment with ToJson::{to_json}
 
 ///|
-pub extend WikiAttachment with Eq::{equal, not_equal}
+pub extend Attachment with Eq::{equal, not_equal}
 
 ///|
-pub extend WikiAttachment with @debug.Debug::{to_repr}
+pub extend Attachment with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the wiki pages of `project`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::list_wiki_pages(
-  self : Redmine,
-  project : ProjectRef,
-) -> Array[WikiPageSummary] raise RedmineError {
-  let json = self.get(["projects", project.segment(), "wiki", "index.json"])
-  decode_field(json, "wiki_pages")
+pub async fn list(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
+) -> Array[PageSummary] raise @redmine.RedmineError {
+  let json = redmine
+    |> @redmine.send(Get, ["projects", project.segment(), "wiki", "index.json"])
+  @decode.decode_field(json, "wiki_pages")
 }
 
 ///|
 /// Shows a wiki page, at `version` when given and at the latest otherwise.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::show_wiki_page(
-  self : Redmine,
-  project : ProjectRef,
+pub async fn show(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
   title : String,
   version? : Int32,
-) -> WikiPage raise RedmineError {
-  let json = self.get(wiki_page_segments(project, title, version?))
-  decode_field(json, "wiki_page")
+) -> Page raise @redmine.RedmineError {
+  let json = redmine
+    |> @redmine.send(Get, page_segments(project, title, version?))
+  @decode.decode_field(json, "wiki_page")
 }
 
 ///|
 /// Creates the wiki page `title`, or replaces its text when it already exists.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::create_wiki_page(
-  self : Redmine,
-  project : ProjectRef,
+pub async fn create(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
   title : String,
   text : String,
   comments? : String,
   parent_title? : String,
-) -> Unit raise RedmineError {
-  let _ = send(
-    self,
-    Put,
-    wiki_page_segments(project, title),
-    body=wiki_page_body(text, comments?, parent_title?),
+) -> Unit raise @redmine.RedmineError {
+  ignore(
+    redmine
+    |> @redmine.send(
+      Put,
+      page_segments(project, title),
+      body=page_body(text, comments?, parent_title?),
+    ),
   )
 }
 
@@ -129,32 +133,34 @@ pub async fn Redmine::create_wiki_page(
 /// Replaces the text of the wiki page `title`.
 /// With `version`, Redmine answers 409 when the page has changed since that version.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::update_wiki_page(
-  self : Redmine,
-  project : ProjectRef,
+pub async fn update(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
   title : String,
   text : String,
   comments? : String,
   version? : Int32,
   parent_title? : String,
-) -> Unit raise RedmineError {
-  let _ = send(
-    self,
-    Put,
-    wiki_page_segments(project, title),
-    body=wiki_page_body(text, comments?, version?, parent_title?),
+) -> Unit raise @redmine.RedmineError {
+  ignore(
+    redmine
+    |> @redmine.send(
+      Put,
+      page_segments(project, title),
+      body=page_body(text, comments?, version?, parent_title?),
+    ),
   )
 }
 
 ///|
 /// Deletes the wiki page `title`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::delete_wiki_page(
-  self : Redmine,
-  project : ProjectRef,
+pub async fn delete(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
   title : String,
-) -> Unit raise RedmineError {
-  let _ = send(self, Delete, wiki_page_segments(project, title))
+) -> Unit raise @redmine.RedmineError {
+  ignore(redmine |> @redmine.send(Delete, page_segments(project, title)))
 }
 
 ///|
@@ -180,8 +186,8 @@ fn wiki_title_segment(title : String) -> String {
 }
 
 ///|
-fn wiki_page_segments(
-  project : ProjectRef,
+fn page_segments(
+  project : @redmine.ProjectRef,
   title : String,
   version? : Int32,
 ) -> Array[String] {
@@ -200,7 +206,7 @@ fn wiki_page_segments(
 }
 
 ///|
-fn wiki_page_body(
+fn page_body(
   text : String,
   comments? : String,
   version? : Int32,
