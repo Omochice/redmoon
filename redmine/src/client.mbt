@@ -3,8 +3,7 @@
 /// Each resource package takes it as the first argument of its functions, so
 /// operations read as a pipeline: `redmine |> @issues.show(42)`.
 pub struct Redmine {
-  priv endpoint : @wire.Endpoint
-  priv api_key : String
+  priv connection : @core.Connection
 }
 
 ///|
@@ -14,10 +13,10 @@ const INVALID_ENDPOINT : String = "endpoint must be http(s)://host[:port][/path]
 /// Creates a client for the Redmine at `endpoint`, e.g. `https://example.com/redmine`.
 /// Raises `Transport` when `endpoint` is not an http(s) URL; the endpoint is not echoed in the message.
 pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError {
-  guard @wire.Endpoint::parse(endpoint) is Some(endpoint) else {
+  guard @core.connect(endpoint, api_key) is Some(connection) else {
     raise Transport(message=INVALID_ENDPOINT)
   }
-  { endpoint, api_key, }
+  { connection, }
 }
 
 ///|
@@ -40,53 +39,19 @@ pub async fn send(
 
 ///|
 /// Turns a finished exchange into its JSON body, `null` when the body is empty.
-/// Low level: it exists for requests made through `open_client`; `send` already applies it.
-/// Raises `Response` on a non-2xx status and `Transport` when the body is not JSON.
-pub fn interpret_response(
-  status : Int32,
-  text : String,
-) -> Json raise RedmineError {
-  guard status >= 200 && status < 300 else {
-    raise Response(status~, errors=@wire.errors_from_body(text))
+fn interpret_response(status : Int32, text : String) -> Json raise RedmineError {
+  match @core.interpret(status, text) {
+    Body(json) => json
+    Rejected(status~, errors~) => raise Response(status~, errors~)
+    Malformed(message~) => raise Transport(message~)
   }
-  guard text != "" else { return Json::null() }
-  let json = @json.parse(text) catch {
-    error => raise Transport(message="invalid JSON in response: \{error}")
-  }
-  @wire.strip_nulls(json)
 }
 
 ///|
-/// The `scheme://host[:port]` the client talks to.
-/// Low level: it lets `open_client` callers build requests for the same server.
-pub fn origin(redmine : Redmine) -> String {
-  redmine.endpoint.origin
-}
-
-///|
-/// The request path of `segments` below the endpoint's base path, percent-encoded.
-/// Low level: `send` builds this itself.
-pub fn request_path(redmine : Redmine, segments : Array[String]) -> String {
-  redmine.endpoint.path(segments)
-}
-
-///|
-/// Opens a connection to `origin` for a request `send` cannot express, such as a streamed body.
-/// The API key is attached only when `origin` is the endpoint's own, because a download may be
-/// redirected to a third party. The caller closes the client.
-pub async fn open_client(
-  redmine : Redmine,
-  origin : String,
-  accept? : String,
-) -> @http.Client {
-  let headers : Map[@http.CaseInsensitiveString, String] = Map([])
-  if @wire.same_origin(origin, redmine.endpoint.origin) {
-    headers["X-Redmine-API-Key"] = redmine.api_key
-  }
-  if accept is Some(accept) {
-    headers["Accept"] = accept
-  }
-  @http.Client(origin, headers~)
+/// The connection behind this client, for the SDK's own resource packages.
+/// Its type lives in an internal package, so nothing can be done with the result outside them.
+pub fn connection(redmine : Redmine) -> @core.Connection {
+  redmine.connection
 }
 
 ///|
@@ -97,13 +62,14 @@ async fn Redmine::exchange(
   query : Array[(String, String)],
   body : Json?,
 ) -> (Int32, String) {
-  let client = open_client(
-    self,
-    self.endpoint.origin,
+  let conn = self.connection
+  let client = @core.open_client(
+    conn,
+    @core.origin(conn),
     accept="application/json",
   )
   defer client.close()
-  let path = self.endpoint.path(segments)
+  let path = @core.request_path(conn, segments)
   let target = if query.is_empty() {
     path
   } else {

@@ -14,7 +14,10 @@ fn content_location(
   guard @wire.parse_absolute_url(attachment.content_url) is Some(content) else {
     raise @redmine.Transport(message="attachment has an invalid `content_url`")
   }
-  { origin: @redmine.origin(redmine), target: content.target, }
+  {
+    origin: @core.origin(@redmine.connection(redmine)),
+    target: content.target,
+  }
 }
 
 ///|
@@ -70,13 +73,14 @@ async fn post_upload(
   size : Int64,
   filename : String,
 ) -> (Int32, String) {
-  let client = @redmine.open_client(
-    redmine,
-    @redmine.origin(redmine),
+  let conn = @redmine.connection(redmine)
+  let client = @core.open_client(
+    conn,
+    @core.origin(conn),
     accept="application/json",
   )
   defer client.close()
-  let path = @redmine.request_path(redmine, ["uploads.json"])
+  let path = @core.request_path(conn, ["uploads.json"])
   client.request(
     Post,
     "\{path}?\{@wire.encode_query([("filename", filename)])}",

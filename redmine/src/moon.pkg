@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
+  "omochice/redmine/internal/core",
   "omochice/redmine/internal/wire",
 }
 

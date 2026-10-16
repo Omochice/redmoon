@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/async/http",
+  "moonbitlang/core/json",
+  "omochice/redmine/internal/wire",
+}
+
+supported_targets = "+native"

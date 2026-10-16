@@ -47,7 +47,10 @@ pub async fn download(
   let attachment = redmine |> show(id)
   let mut location = content_location(redmine, attachment)
   for followed = 0; followed <= MAX_REDIRECTS; followed = followed + 1 {
-    let client = @redmine.open_client(redmine, location.origin) catch {
+    let client = @core.open_client(
+      @redmine.connection(redmine),
+      location.origin,
+    ) catch {
       error => raise @redmine.Transport(message="\{error}")
     }
     let next = {
@@ -83,9 +86,11 @@ pub async fn upload(
   let (status, text) = post_upload(redmine, body, size, filename) catch {
     error => raise @redmine.Transport(message="\{error}")
   }
-  let upload : Json = @decode.decode_field(
-    @redmine.interpret_response(status, text),
-    "upload",
-  )
+  let body = match @core.interpret(status, text) {
+    Body(json) => json
+    Rejected(status~, errors~) => raise @redmine.Response(status~, errors~)
+    Malformed(message~) => raise @redmine.Transport(message~)
+  }
+  let upload : Json = @decode.decode_field(body, "upload")
   @decode.decode_field(upload, "token")
 }
