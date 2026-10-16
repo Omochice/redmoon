@@ -523,3 +523,79 @@ async test "live: attach, show and download through the tool" {
     assert_false(@fs.exists(small))
   })
 }
+
+///|
+struct StalledDownload {
+  started : Ref[Bool]
+}
+
+///|
+impl AttachmentPort for StalledDownload with fn show_attachment(_, _) {
+  abort("unused")
+}
+
+///|
+impl AttachmentPort for StalledDownload with fn download_attachment(
+  self,
+  _,
+  consume,
+) {
+  let (reader, writer) = @io.pipe()
+  @async.with_task_group(async fn(group) {
+    group.spawn_bg(async fn() {
+      writer.write(b"abc")
+      @async.sleep(60000)
+    })
+    self.started.val = true
+    consume(fake_attachment(5), reader)
+  })
+}
+
+///|
+impl AttachmentPort for StalledDownload with fn upload_file(_, _, _, _) {
+  abort("unused")
+}
+
+///|
+impl AttachmentPort for StalledDownload with fn attach_uploads(_, _, _) {
+  abort("unused")
+}
+
+///|
+async test "cancelling a download writes no response and leaves no partial file" {
+  with_scratch_dir(async fn(dir) {
+    let target = "\{dir}/out.bin"
+    let started = Ref(false)
+    let tools = [
+      attachments_tool(
+        StalledDownload::{ started, },
+        LocalFile::new(),
+        Readonly,
+      ),
+    ]
+    let output = run_session(new_server(tools), async fn(w) {
+      w.write(initialize_line())
+      w.write(
+        request_line(2, "tools/call", {
+          "name": "redmine_attachments",
+          "arguments": { "download": { "id": 7, "path": target } },
+        }),
+      )
+      @async.sleep(100)
+      w.write(
+        (
+          {
+            "jsonrpc": "2.0",
+            "method": "notifications/cancelled",
+            "params": { "requestId": 2 },
+          } : Json).stringify() +
+        "\n",
+      )
+      w.write(request_line(3, "ping", {}))
+    })
+    assert_true(started.val)
+    assert_false(output.contains("\"id\":2"))
+    assert_true(output.contains("\"id\":3"))
+    assert_false(@fs.exists(target))
+  })
+}
