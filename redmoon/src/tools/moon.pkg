@@ -4,6 +4,7 @@ import {
   "omochice/mcp",
   "omochice/redmine",
   "omochice/redmine/enumerations",
+  "omochice/redmine/relations",
   "omochice/redmoon/build",
   "omochice/schema",
 }

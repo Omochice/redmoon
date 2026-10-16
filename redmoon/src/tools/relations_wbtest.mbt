@@ -1,7 +1,7 @@
 ///|
 struct FakeRelations {
   failure : @redmine.RedmineError?
-  creates : Array[(Int32, Int32, @redmine.RelationType, Int32?)]
+  creates : Array[(Int32, Int32, @relations.Type, Int32?)]
   deletes : Array[Int32]
 }
 
@@ -10,9 +10,9 @@ fn fake_relation(
   id : Int32,
   issue_id : Int32,
   issue_to_id : Int32,
-  relation_type : @redmine.RelationType,
+  relation_type : @relations.Type,
   delay : Int32?,
-) -> @redmine.Relation {
+) -> @relations.Relation {
   { id, issue_id, issue_to_id, relation_type, delay, }
 }
 
@@ -174,7 +174,7 @@ async test "create without a delay passes none to the port" {
 
 ///|
 async test "every relation type name reaches its SDK value" {
-  let names : Array[(String, @redmine.RelationType)] = [
+  let names : Array[(String, @relations.Type)] = [
     ("relates", Relates),
     ("duplicates", Duplicates),
     ("duplicated", Duplicated),

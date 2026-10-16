@@ -1,6 +1,6 @@
 ///|
 /// The kind of link between two issues, spelled as Redmine spells it on the wire.
-pub(all) enum RelationType {
+pub(all) enum Type {
   Relates
   Duplicates
   Duplicated
@@ -13,13 +13,13 @@ pub(all) enum RelationType {
 } derive(Eq, Debug)
 
 ///|
-pub extend RelationType with Eq::{equal, not_equal}
+pub extend Type with Eq::{equal, not_equal}
 
 ///|
-pub extend RelationType with @debug.Debug::{to_repr}
+pub extend Type with @debug.Debug::{to_repr}
 
 ///|
-fn RelationType::to_wire(self : RelationType) -> String {
+fn Type::to_wire(self : Type) -> String {
   match self {
     Relates => "relates"
     Duplicates => "duplicates"
@@ -34,7 +34,7 @@ fn RelationType::to_wire(self : RelationType) -> String {
 }
 
 ///|
-fn RelationType::from_wire(wire : String) -> RelationType? {
+fn Type::from_wire(wire : String) -> Type? {
   match wire {
     "relates" => Some(Relates)
     "duplicates" => Some(Duplicates)
@@ -50,20 +50,18 @@ fn RelationType::from_wire(wire : String) -> RelationType? {
 }
 
 ///|
-pub extend RelationType with @json.FromJson::{from_json}
+pub extend Type with @json.FromJson::{from_json}
 
 ///|
-pub impl @json.FromJson for RelationType with fn from_json(json, path) {
+pub impl @json.FromJson for Type with fn from_json(json, path) {
   guard json is String(wire) else {
-    raise @json.JsonDecodeError(
-      (path, "RelationType::from_json: expected string"),
-    )
+    raise @json.JsonDecodeError((path, "Type::from_json: expected string"))
   }
-  match RelationType::from_wire(wire) {
+  match Type::from_wire(wire) {
     Some(relation_type) => relation_type
     None =>
       raise @json.JsonDecodeError(
-        (path, "RelationType::from_json: unknown relation type"),
+        (path, "Type::from_json: unknown relation type"),
       )
   }
 }
@@ -71,10 +69,10 @@ pub impl @json.FromJson for RelationType with fn from_json(json, path) {
 ///|
 
 ///|
-pub extend RelationType with ToJson::{to_json}
+pub extend Type with ToJson::{to_json}
 
 ///|
-pub impl ToJson for RelationType with fn to_json(self) -> Json {
+pub impl ToJson for Type with fn to_json(self) -> Json {
   ToJson::to_json(self.to_wire())
 }
 
@@ -84,7 +82,7 @@ pub(all) struct Relation {
   id : Int32
   issue_id : Int32
   issue_to_id : Int32
-  relation_type : RelationType
+  relation_type : Type
   delay : Int32?
 } derive(FromJson, ToJson, Eq, Debug)
 
@@ -103,59 +101,60 @@ pub extend Relation with @debug.Debug::{to_repr}
 ///|
 /// Lists every relation of the issue `issue_id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::list_relations(
-  self : Redmine,
+pub async fn list(
+  redmine : @redmine.Redmine,
   issue_id : Int32,
-) -> Array[Relation] raise RedmineError {
-  let json = self.get(["issues", issue_id.to_string(), "relations.json"])
-  decode_field(json, "relations")
+) -> Array[Relation] raise @redmine.RedmineError {
+  let json = redmine
+    |> @redmine.send(Get, ["issues", issue_id.to_string(), "relations.json"])
+  @decode.decode_field(json, "relations")
 }
 
 ///|
 /// Returns the relation with the given `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::show_relation(
-  self : Redmine,
+pub async fn show(
+  redmine : @redmine.Redmine,
   id : Int32,
-) -> Relation raise RedmineError {
-  let json = self.get(["relations", "\{id}.json"])
-  decode_field(json, "relation")
+) -> Relation raise @redmine.RedmineError {
+  let json = redmine |> @redmine.send(Get, ["relations", "\{id}.json"])
+  @decode.decode_field(json, "relation")
 }
 
 ///|
 /// Creates a relation from `issue_id` to `issue_to_id` and returns it.
 /// Raises `RedmineError` on a non-2xx answer (e.g. the relation already exists) or a transport failure.
-pub async fn Redmine::create_relation(
-  self : Redmine,
+pub async fn create(
+  redmine : @redmine.Redmine,
   issue_id : Int32,
   issue_to_id~ : Int32,
-  relation_type~ : RelationType,
+  relation_type~ : Type,
   delay? : Int32,
-) -> Relation raise RedmineError {
-  let json = send(
-    self,
-    Post,
-    ["issues", issue_id.to_string(), "relations.json"],
-    body=relation_body(issue_to_id, relation_type, delay),
-  )
-  decode_field(json, "relation")
+) -> Relation raise @redmine.RedmineError {
+  let json = redmine
+    |> @redmine.send(
+      Post,
+      ["issues", issue_id.to_string(), "relations.json"],
+      body=relation_body(issue_to_id, relation_type, delay),
+    )
+  @decode.decode_field(json, "relation")
 }
 
 ///|
 /// Deletes the relation with the given `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::delete_relation(
-  self : Redmine,
+pub async fn delete(
+  redmine : @redmine.Redmine,
   id : Int32,
-) -> Unit raise RedmineError {
-  ignore(send(self, Delete, ["relations", "\{id}.json"]))
+) -> Unit raise @redmine.RedmineError {
+  ignore(redmine |> @redmine.send(Delete, ["relations", "\{id}.json"]))
 }
 
 ///|
 /// Builds the create body; `delay` is left out unless given so Redmine applies its own default.
 fn relation_body(
   issue_to_id : Int32,
-  relation_type : RelationType,
+  relation_type : Type,
   delay : Int32?,
 ) -> Json {
   let relation = @wire.present_members([

@@ -28,12 +28,9 @@ test "a relation type round-trips through its wire name" {
     CopiedFrom,
   ]
   for relation_type in all {
-    assert_eq(
-      RelationType::from_wire(relation_type.to_wire()),
-      Some(relation_type),
-    )
+    assert_eq(Type::from_wire(relation_type.to_wire()), Some(relation_type))
   }
-  assert_eq(RelationType::from_wire("parent"), None)
+  assert_eq(Type::from_wire("parent"), None)
 }
 
 ///|
@@ -41,7 +38,10 @@ test "a relation decodes from Redmine's response with a null delay" {
   let text =
     #|{"relation":{"id":1,"issue_id":2,"issue_to_id":3,"relation_type":"copied_to","delay":null}}
   let json = @json.parse(text) catch { _ => fail("fixture is not JSON") }
-  let relation : Relation = decode_field(@wire.strip_nulls(json), "relation") catch {
+  let relation : Relation = @decode.decode_field(
+    @wire.strip_nulls(json),
+    "relation",
+  ) catch {
     _ => fail("relation did not decode")
   }
   assert_eq(relation.id, 1)
@@ -56,7 +56,7 @@ test "an unknown relation type fails to decode" {
     _ => fail("fixture is not JSON")
   }
   try {
-    let _ : RelationType = @json.from_json(json)
+    let _ : Type = @json.from_json(json)
   } catch {
     _ => ()
   } noraise {

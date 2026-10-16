@@ -2,22 +2,22 @@
 priv enum RelationAction {
   List(Int32)
   Show(Int32)
-  Create(Int32, Int32, @redmine.RelationType, Int32?)
+  Create(Int32, Int32, @relations.Type, Int32?)
   Delete(Int32)
 }
 
 ///|
-fn relation_type_schema() -> @schema.Schema[@redmine.RelationType] {
+fn relation_type_schema() -> @schema.Schema[@relations.Type] {
   @schema.choice([
-    ("relates", @redmine.RelationType::Relates),
-    ("duplicates", @redmine.RelationType::Duplicates),
-    ("duplicated", @redmine.RelationType::Duplicated),
-    ("blocks", @redmine.RelationType::Blocks),
-    ("blocked", @redmine.RelationType::Blocked),
-    ("precedes", @redmine.RelationType::Precedes),
-    ("follows", @redmine.RelationType::Follows),
-    ("copied_to", @redmine.RelationType::CopiedTo),
-    ("copied_from", @redmine.RelationType::CopiedFrom),
+    ("relates", @relations.Type::Relates),
+    ("duplicates", @relations.Type::Duplicates),
+    ("duplicated", @relations.Type::Duplicated),
+    ("blocks", @relations.Type::Blocks),
+    ("blocked", @relations.Type::Blocked),
+    ("precedes", @relations.Type::Precedes),
+    ("follows", @relations.Type::Follows),
+    ("copied_to", @relations.Type::CopiedTo),
+    ("copied_from", @relations.Type::CopiedFrom),
   ])
 }
 
