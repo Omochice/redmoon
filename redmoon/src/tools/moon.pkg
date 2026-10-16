@@ -7,6 +7,7 @@ import {
   "omochice/redmine/enumerations",
   "omochice/redmine/relations",
   "omochice/redmine/search",
+  "omochice/redmine/time_entries",
   "omochice/redmine/versions",
   "omochice/redmine/wiki",
   "omochice/redmoon/build",

@@ -1,9 +1,9 @@
 ///|
 priv enum TimeEntryAction {
-  ListEntries(@redmine.TimeEntryListQuery)
+  ListEntries(@time_entries.ListQuery)
   ShowEntry(Int32)
-  CreateEntry(@redmine.TimeEntryCreate)
-  UpdateEntry(Int32, @redmine.TimeEntryUpdate)
+  CreateEntry(@time_entries.Create)
+  UpdateEntry(Int32, @time_entries.Update)
   DeleteEntry(Int32)
 }
 

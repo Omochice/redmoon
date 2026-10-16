@@ -1,73 +1,73 @@
 ///|
 /// A time entry logged against a project, optionally an issue.
-pub(all) struct TimeEntry {
+pub(all) struct Entry {
   id : Int32
-  project : IdName
-  issue : TimeEntryIssue?
-  user : IdName
-  activity : IdName
+  project : @redmine.IdName
+  issue : Issue?
+  user : @redmine.IdName
+  activity : @redmine.IdName
   hours : Double
   comments : String?
   spent_on : String
   created_on : String
   updated_on : String
-  custom_fields : Array[TimeEntryCustomField]?
+  custom_fields : Array[CustomField]?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend TimeEntry with @json.FromJson::{from_json}
+pub extend Entry with @json.FromJson::{from_json}
 
 ///|
-pub extend TimeEntry with ToJson::{to_json}
+pub extend Entry with ToJson::{to_json}
 
 ///|
-pub extend TimeEntry with Eq::{equal, not_equal}
+pub extend Entry with Eq::{equal, not_equal}
 
 ///|
-pub extend TimeEntry with @debug.Debug::{to_repr}
+pub extend Entry with @debug.Debug::{to_repr}
 
 ///|
 /// The issue a time entry is logged against, as Redmine references it.
-pub(all) struct TimeEntryIssue {
+pub(all) struct Issue {
   id : Int32
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend TimeEntryIssue with @json.FromJson::{from_json}
+pub extend Issue with @json.FromJson::{from_json}
 
 ///|
-pub extend TimeEntryIssue with ToJson::{to_json}
+pub extend Issue with ToJson::{to_json}
 
 ///|
-pub extend TimeEntryIssue with Eq::{equal, not_equal}
+pub extend Issue with Eq::{equal, not_equal}
 
 ///|
-pub extend TimeEntryIssue with @debug.Debug::{to_repr}
+pub extend Issue with @debug.Debug::{to_repr}
 
 ///|
 /// A custom field value attached to a time entry.
-pub(all) struct TimeEntryCustomField {
+pub(all) struct CustomField {
   id : Int32
   name : String
   value : Json?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend TimeEntryCustomField with @json.FromJson::{from_json}
+pub extend CustomField with @json.FromJson::{from_json}
 
 ///|
-pub extend TimeEntryCustomField with ToJson::{to_json}
+pub extend CustomField with ToJson::{to_json}
 
 ///|
-pub extend TimeEntryCustomField with Eq::{equal, not_equal}
+pub extend CustomField with Eq::{equal, not_equal}
 
 ///|
-pub extend TimeEntryCustomField with @debug.Debug::{to_repr}
+pub extend CustomField with @debug.Debug::{to_repr}
 
 ///|
 /// Filters for listing time entries; `None` leaves a filter out.
 /// `spent_on`, `from`, and `to` are ISO dates (`YYYY-MM-DD`).
-pub(all) struct TimeEntryListQuery {
+pub(all) struct ListQuery {
   project_id : Int32?
   user_id : Int32?
   spent_on : String?
@@ -76,20 +76,21 @@ pub(all) struct TimeEntryListQuery {
 } derive(Eq, Debug)
 
 ///|
-pub extend TimeEntryListQuery with Eq::{equal, not_equal}
+pub extend ListQuery with Eq::{equal, not_equal}
 
 ///|
-pub extend TimeEntryListQuery with @debug.Debug::{to_repr}
+pub extend ListQuery with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the time entries matching `query`, following every page unless `limit` caps the count.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::list_time_entries(
-  self : Redmine,
-  query : TimeEntryListQuery,
+pub async fn list(
+  redmine : @redmine.Redmine,
+  query : ListQuery,
   limit? : Int32,
-) -> Array[TimeEntry] raise RedmineError {
-  self.list_all(
+) -> Array[Entry] raise @redmine.RedmineError {
+  @paging.list_all(
+    redmine,
     ["time_entries.json"],
     key="time_entries",
     query=query.to_pairs(),
@@ -99,9 +100,7 @@ pub async fn Redmine::list_time_entries(
 
 ///|
 /// Maps the set filters to Redmine's query parameter names.
-fn TimeEntryListQuery::to_pairs(
-  self : TimeEntryListQuery,
-) -> Array[(String, String)] {
+fn ListQuery::to_pairs(self : ListQuery) -> Array[(String, String)] {
   let pairs : Array[(String, String)] = []
   if self.project_id is Some(id) {
     pairs.push(("project_id", id.to_string()))
@@ -123,7 +122,7 @@ fn TimeEntryListQuery::to_pairs(
 
 ///|
 /// The attributes of a time entry to log. `hours` is required by Redmine; `None` fields are left out of the request.
-pub(all) struct TimeEntryCreate {
+pub(all) struct Create {
   hours : Double
   issue_id : Int32?
   project_id : Int32?
@@ -133,17 +132,17 @@ pub(all) struct TimeEntryCreate {
 } derive(ToJson, Eq, Debug)
 
 ///|
-pub extend TimeEntryCreate with ToJson::{to_json}
+pub extend Create with ToJson::{to_json}
 
 ///|
-pub extend TimeEntryCreate with Eq::{equal, not_equal}
+pub extend Create with Eq::{equal, not_equal}
 
 ///|
-pub extend TimeEntryCreate with @debug.Debug::{to_repr}
+pub extend Create with @debug.Debug::{to_repr}
 
 ///|
 /// The attributes of a time entry to change; `None` fields are left out of the request.
-pub(all) struct TimeEntryUpdate {
+pub(all) struct Update {
   hours : Double?
   issue_id : Int32?
   project_id : Int32?
@@ -153,69 +152,67 @@ pub(all) struct TimeEntryUpdate {
 } derive(ToJson, Eq, Debug)
 
 ///|
-pub extend TimeEntryUpdate with ToJson::{to_json}
+pub extend Update with ToJson::{to_json}
 
 ///|
-pub extend TimeEntryUpdate with Eq::{equal, not_equal}
+pub extend Update with Eq::{equal, not_equal}
 
 ///|
-pub extend TimeEntryUpdate with @debug.Debug::{to_repr}
+pub extend Update with @debug.Debug::{to_repr}
 
 ///|
 /// Shows the time entry with `id`.
 /// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
-pub async fn Redmine::show_time_entry(
-  self : Redmine,
+pub async fn show(
+  redmine : @redmine.Redmine,
   id : Int32,
-) -> TimeEntry raise RedmineError {
-  let json = self.get(["time_entries", "\{id}.json"])
-  decode_field(json, "time_entry")
+) -> Entry raise @redmine.RedmineError {
+  let json = redmine |> @redmine.send(Get, ["time_entries", "\{id}.json"])
+  @decode.decode_field(json, "time_entry")
 }
 
 ///|
 /// Logs a time entry and returns it as Redmine stored it.
 /// Raises `RedmineError` on a non-2xx answer (422 for invalid attributes) or a transport failure.
-pub async fn Redmine::create_time_entry(
-  self : Redmine,
-  time_entry : TimeEntryCreate,
-) -> TimeEntry raise RedmineError {
-  let json = send(
-    self,
-    Post,
-    ["time_entries.json"],
-    body=time_entry_body(time_entry),
-  )
-  decode_field(json, "time_entry")
+pub async fn create(
+  redmine : @redmine.Redmine,
+  time_entry : Create,
+) -> Entry raise @redmine.RedmineError {
+  let json = redmine
+    |> @redmine.send(Post, ["time_entries.json"], body=entry_body(time_entry))
+  @decode.decode_field(json, "time_entry")
 }
 
 ///|
 /// Changes the time entry with `id`.
 /// Raises `RedmineError` on a non-2xx answer (404 when it does not exist, 422 for invalid attributes) or a transport failure.
-pub async fn Redmine::update_time_entry(
-  self : Redmine,
+pub async fn update(
+  redmine : @redmine.Redmine,
   id : Int32,
-  time_entry : TimeEntryUpdate,
-) -> Unit raise RedmineError {
-  let _ = send(
-    self,
-    Put,
-    ["time_entries", "\{id}.json"],
-    body=time_entry_body(time_entry),
+  time_entry : Update,
+) -> Unit raise @redmine.RedmineError {
+  ignore(
+    redmine
+    |> @redmine.send(
+      Put,
+      ["time_entries", "\{id}.json"],
+      body=entry_body(time_entry),
+    ),
   )
 }
 
 ///|
 /// Deletes the time entry with `id`.
 /// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
-pub async fn Redmine::delete_time_entry(
-  self : Redmine,
+pub async fn delete(
+  redmine : @redmine.Redmine,
   id : Int32,
-) -> Unit raise RedmineError {
-  let _ = send(self, Delete, ["time_entries", "\{id}.json"])
+) -> Unit raise @redmine.RedmineError {
+  ignore(redmine |> @redmine.send(Delete, ["time_entries", "\{id}.json"]))
 }
 
 ///|
 /// Wraps a time entry's attributes in the `{"time_entry": ...}` envelope Redmine expects.
-fn[T : ToJson] time_entry_body(attributes : T) -> Json {
+fn[T : ToJson] entry_body(attributes : T) -> Json {
   Json::object({ "time_entry": ToJson::to_json(attributes) })
 }

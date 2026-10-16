@@ -1,9 +1,9 @@
 ///|
 struct FakeTimeEntries {
-  lists : Array[@redmine.TimeEntryListQuery]
+  lists : Array[@time_entries.ListQuery]
   shows : Array[Int32]
-  creates : Array[@redmine.TimeEntryCreate]
-  updates : Array[(Int32, @redmine.TimeEntryUpdate)]
+  creates : Array[@time_entries.Create]
+  updates : Array[(Int32, @time_entries.Update)]
   deletes : Array[Int32]
   failure : @redmine.RedmineError?
 }
@@ -23,7 +23,7 @@ fn FakeTimeEntries::check(
 }
 
 ///|
-fn fake_time_entry(id : Int32) -> @redmine.TimeEntry {
+fn fake_time_entry(id : Int32) -> @time_entries.Entry {
   {
     id,
     project: { id: 1, name: "demo", },
