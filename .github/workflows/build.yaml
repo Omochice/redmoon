@@ -71,6 +71,12 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
         if: runner.os == 'Windows'
 
+      - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
+        if: matrix.toolchain == 'installer'
+        with:
+          version: 3.53.1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install MoonBit (Unix installer)
         if: matrix.toolchain == 'installer' && runner.os != 'Windows'
         run: |
@@ -91,11 +97,10 @@ jobs:
       # The checked-in file holds `None`; a release binary has to report the
       # commit it came from, and MoonBit cannot embed a file at build time.
       - name: Stamp the build information
-        run: .github/scripts/build-info.sh stamp
+        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task build-info:stamp
 
       - name: Build the executable
-        run: >
-          ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon build --target native --release redmoon/src/cmd/redmoon
+        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task build
 
       # The native backend names the executable after its package on every OS.
       - name: Stage the executable under the asset name
