@@ -2,24 +2,24 @@
 priv enum VersionAction {
   List(@redmine.ProjectRef)
   Show(Int32)
-  Create(@redmine.ProjectRef, @redmine.VersionCreate)
-  Update(Int32, @redmine.VersionUpdate)
+  Create(@redmine.ProjectRef, @versions.Create)
+  Update(Int32, @versions.Update)
   Delete(Int32)
 }
 
 ///|
-fn version_status() -> @schema.Schema[@redmine.VersionStatus] {
+fn version_status() -> @schema.Schema[@versions.Status] {
   @schema.choice([
-    ("open", @redmine.VersionStatus::Open),
+    ("open", @versions.Status::Open),
     ("locked", Locked),
     ("closed", Closed),
   ])
 }
 
 ///|
-fn version_sharing() -> @schema.Schema[@redmine.VersionSharing] {
+fn version_sharing() -> @schema.Schema[@versions.Sharing] {
   @schema.choice([
-    ("none", @redmine.VersionSharing::None),
+    ("none", @versions.Sharing::None),
     ("descendants", Descendants),
     ("hierarchy", Hierarchy),
     ("tree", Tree),

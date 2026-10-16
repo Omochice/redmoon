@@ -1,8 +1,8 @@
 ///|
 struct FakeVersions {
   calls : Array[String]
-  created : Array[(String, @redmine.VersionCreate)]
-  updated : Array[(Int32, @redmine.VersionUpdate)]
+  created : Array[(String, @versions.Create)]
+  updated : Array[(Int32, @versions.Update)]
   failure : @redmine.RedmineError?
 }
 
@@ -23,7 +23,7 @@ fn FakeVersions::record(
 }
 
 ///|
-fn fake_version(name : String) -> @redmine.Version {
+fn fake_version(name : String) -> @versions.Version {
   {
     id: 7,
     project: { id: 1, name: "Demo", },
