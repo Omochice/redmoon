@@ -264,24 +264,26 @@ async test "live: a relation is created, listed, shown and deleted through the t
   }
   let redmine = @redmine.Redmine::new(endpoint~, api_key~)
   let subject = "redmoon-relations-\{@env.now()}"
-  let first = redmine.create_issue(
-    @redmine.IssueCreate::new(
-      project_id=1,
-      tracker_id=1,
-      status_id=1,
-      priority_id=2,
-      subject="\{subject}-a",
-    ),
-  )
-  let second = redmine.create_issue(
-    @redmine.IssueCreate::new(
-      project_id=1,
-      tracker_id=1,
-      status_id=1,
-      priority_id=2,
-      subject="\{subject}-b",
-    ),
-  )
+  let first = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="\{subject}-a",
+      ),
+    )
+  let second = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="\{subject}-b",
+      ),
+    )
   let tools = [relations_tool(redmine, Full)]
   let outcome : Error? = try {
     exercise_relation(tools, first.id, second.id)
@@ -289,8 +291,8 @@ async test "live: a relation is created, listed, shown and deleted through the t
   } catch {
     error => Some(error)
   }
-  redmine.delete_issue(first.id)
-  redmine.delete_issue(second.id)
+  redmine |> @issues.delete(first.id)
+  redmine |> @issues.delete(second.id)
   if outcome is Some(error) {
     raise error
   }

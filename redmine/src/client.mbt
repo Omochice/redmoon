@@ -22,15 +22,6 @@ pub fn Redmine::new(
 }
 
 ///|
-async fn Redmine::get(
-  self : Redmine,
-  segments : Array[String],
-  query? : Array[(String, String)],
-) -> Json raise RedmineError {
-  send(self, Get, segments, query?)
-}
-
-///|
 /// Sends one request to the Redmine API and returns the response body as JSON, `null` when it is empty.
 /// `segments` are appended to the endpoint's path and percent-encoded; `null` members are removed from the answer.
 /// This is the escape hatch for endpoints the SDK has no function for; prefer the resource packages.
@@ -132,23 +123,4 @@ async fn Redmine::exchange(
   }
   let response = client.end_request()
   (response.code, client.read_all().text())
-}
-
-///|
-fn[T : @json.FromJson] decode(json : Json) -> T raise RedmineError {
-  @json.from_json(json) catch {
-    error => raise Transport(message="unexpected response shape: \{error}")
-  }
-}
-
-///|
-/// Decodes `json[key]`, unwrapping Redmine's `{"<key>": ...}` envelope.
-fn[T : @json.FromJson] decode_field(
-  json : Json,
-  key : String,
-) -> T raise RedmineError {
-  guard json is Object(members) && members.get(key) is Some(value) else {
-    raise Transport(message="response has no `\{key}`")
-  }
-  decode(value)
 }

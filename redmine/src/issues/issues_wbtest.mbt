@@ -47,12 +47,12 @@ test "date filters add the forward-looking operators" {
 
 ///|
 test "an empty list query sends nothing" {
-  @debug.debug_inspect(IssueListQuery::new().to_query(), content="[]")
+  @debug.debug_inspect(ListQuery::new().to_query(), content="[]")
 }
 
 ///|
 test "a list query encodes every condition in a fixed order" {
-  let query = IssueListQuery::new(
+  let query = ListQuery::new(
     includes=[Relations, Attachments, Relations],
     project_id=1,
     tracker_id=2,
@@ -95,7 +95,7 @@ test "status and assignee filters encode ids and keywords" {
 
 ///|
 test "create body carries only the fields that are set" {
-  let body = IssueCreate::new(
+  let body = Create::new(
     project_id=1,
     tracker_id=1,
     status_id=1,
@@ -110,7 +110,7 @@ test "create body carries only the fields that are set" {
 
 ///|
 test "create body carries every optional field" {
-  let body = IssueCreate::new(
+  let body = Create::new(
     project_id=1,
     tracker_id=1,
     status_id=1,
@@ -142,12 +142,12 @@ test "create body carries every optional field" {
 
 ///|
 test "an empty update sends an empty issue" {
-  assert_eq(IssueUpdate::new().to_body().stringify(), "{\"issue\":{}}")
+  assert_eq(Update::new().to_body().stringify(), "{\"issue\":{}}")
 }
 
 ///|
 test "update body sends plain fields as given" {
-  let body = IssueUpdate::new(
+  let body = Update::new(
     subject="s",
     description="d",
     notes="n",
@@ -169,7 +169,7 @@ test "update body sends plain fields as given" {
 
 ///|
 test "update body sets clearable fields" {
-  let body = IssueUpdate::new(
+  let body = Update::new(
     assigned_to_id=Set(1),
     category_id=Set(2),
     parent_issue_id=Set(3),
@@ -185,7 +185,7 @@ test "update body sets clearable fields" {
 
 ///|
 test "update body clears with null, except the assignee which needs a blank string" {
-  let body = IssueUpdate::new(
+  let body = Update::new(
     assigned_to_id=Clear,
     category_id=Clear,
     parent_issue_id=Clear,
@@ -201,9 +201,7 @@ test "update body clears with null, except the assignee which needs a blank stri
 
 ///|
 test "include values use Redmine's names and drop repeats" {
-  let names = [Journals, AllowedStatuses, Children, Journals].map(
-    IssueInclude::name,
-  )
+  let names = [Journals, AllowedStatuses, Children, Journals].map(Include::name)
   assert_eq(include_value(names), "journals,allowed_statuses,children")
 }
 
@@ -212,7 +210,7 @@ test "a listed issue decodes" {
   let text =
     #|{"id":3,"project":{"id":1,"name":"Demo"},"tracker":{"id":1,"name":"Bug"},"status":{"id":1,"name":"New","is_closed":false},"priority":{"id":2,"name":"Normal"},"author":{"id":1,"name":"Redmine Admin"},"subject":"s","description":null,"start_date":null,"due_date":null,"done_ratio":0,"is_private":false,"estimated_hours":null,"total_estimated_hours":null,"spent_hours":0.0,"total_spent_hours":0.0,"created_on":"2026-10-15T18:08:53Z","updated_on":"2026-10-15T18:08:53Z","closed_on":null}
   let json = @wire.strip_nulls(@json.parse(text))
-  let issue : Issue = decode(json)
+  let issue : Issue = @decode.decode(json)
   assert_eq(issue.id, 3)
   assert_eq(issue.subject, "s")
   assert_eq(issue.status.is_closed, Some(false))
@@ -234,7 +232,7 @@ test "a shown issue decodes every include" {
     #|"watchers":[{"id":1,"name":"Redmine Admin"}],
     #|"allowed_statuses":[{"id":1,"name":"New","is_closed":false}]}
   let json = @wire.strip_nulls(@json.parse(text))
-  let issue : Issue = decode(json)
+  let issue : Issue = @decode.decode(json)
   assert_eq(issue.parent, Some({ id: 9, }))
   assert_eq(issue.estimated_hours, Some(1.5))
   assert_eq(

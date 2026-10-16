@@ -193,15 +193,16 @@ async test "live: a search finds an issue created for the test" {
   }
   let redmine = @redmine.Redmine::new(endpoint~, api_key~)
   let subject = "redmoon-search-\{@env.now()}"
-  let created = redmine.create_issue(
-    @redmine.IssueCreate::new(
-      project_id=1,
-      tracker_id=1,
-      status_id=1,
-      priority_id=2,
-      subject~,
-    ),
-  )
+  let created = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject~,
+      ),
+    )
   let outcome : Error? = try {
     let called = call_tool([search_tool(redmine)], "redmine_search", {
       "search": { "q": subject, "issues": true },
@@ -212,7 +213,7 @@ async test "live: a search finds an issue created for the test" {
   } catch {
     error => Some(error)
   }
-  redmine.delete_issue(created.id)
+  redmine |> @issues.delete(created.id)
   if outcome is Some(error) {
     raise error
   }

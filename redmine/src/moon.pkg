@@ -1,16 +1,10 @@
 import {
-  "omochice/redmine/internal/wire",
   "moonbitlang/async/http",
-  "moonbitlang/core/cmp",
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
+  "omochice/redmine/internal/wire",
 }
-
-import {
-  "moonbitlang/async",
-  "moonbitlang/core/env",
-} for "test"
 
 import {
   "moonbitlang/async",

@@ -1,36 +1,36 @@
 ///|
 /// The value of an issue custom field: one string, or several for a multi-value field.
-pub(all) enum IssueCustomFieldValue {
+pub(all) enum CustomFieldValue {
   Single(String)
   Multiple(Array[String])
 } derive(Eq, Debug)
 
 ///|
-pub extend IssueCustomFieldValue with Eq::{equal, not_equal}
+pub extend CustomFieldValue with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueCustomFieldValue with @debug.Debug::{to_repr}
+pub extend CustomFieldValue with @debug.Debug::{to_repr}
 
 ///|
-pub extend IssueCustomFieldValue with @json.FromJson::{from_json}
+pub extend CustomFieldValue with @json.FromJson::{from_json}
 
 ///|
-pub impl @json.FromJson for IssueCustomFieldValue with fn from_json(json, path) {
+pub impl @json.FromJson for CustomFieldValue with fn from_json(json, path) {
   match json {
     String(value) => Single(value)
     Array(_) => Multiple(@json.from_json(json, path~))
     _ =>
       raise @json.JsonDecodeError(
-        (path, "IssueCustomFieldValue::from_json: expected string or array"),
+        (path, "CustomFieldValue::from_json: expected string or array"),
       )
   }
 }
 
 ///|
-pub extend IssueCustomFieldValue with ToJson::{to_json}
+pub extend CustomFieldValue with ToJson::{to_json}
 
 ///|
-pub impl ToJson for IssueCustomFieldValue with fn to_json(self) {
+pub impl ToJson for CustomFieldValue with fn to_json(self) {
   match self {
     Single(value) => Json(value)
     Multiple(values) => Json(values)
@@ -39,86 +39,86 @@ pub impl ToJson for IssueCustomFieldValue with fn to_json(self) {
 
 ///|
 /// A custom field as it appears on an issue.
-pub(all) struct IssueCustomField {
+pub(all) struct CustomField {
   id : Int32
   name : String
-  value : IssueCustomFieldValue?
+  value : CustomFieldValue?
   multiple : Bool?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend IssueCustomField with @json.FromJson::{from_json}
+pub extend CustomField with @json.FromJson::{from_json}
 
 ///|
-pub extend IssueCustomField with ToJson::{to_json}
+pub extend CustomField with ToJson::{to_json}
 
 ///|
-pub extend IssueCustomField with Eq::{equal, not_equal}
+pub extend CustomField with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueCustomField with @debug.Debug::{to_repr}
+pub extend CustomField with @debug.Debug::{to_repr}
 
 ///|
 /// An issue status; `is_closed` is absent where Redmine does not report it.
-pub(all) struct IssueStatus {
+pub(all) struct Status {
   id : Int32
   name : String
   is_closed : Bool?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend IssueStatus with @json.FromJson::{from_json}
+pub extend Status with @json.FromJson::{from_json}
 
 ///|
-pub extend IssueStatus with ToJson::{to_json}
+pub extend Status with ToJson::{to_json}
 
 ///|
-pub extend IssueStatus with Eq::{equal, not_equal}
+pub extend Status with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueStatus with @debug.Debug::{to_repr}
+pub extend Status with @debug.Debug::{to_repr}
 
 ///|
 /// The parent of an issue.
-pub(all) struct IssueParent {
+pub(all) struct Parent {
   id : Int32
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend IssueParent with @json.FromJson::{from_json}
+pub extend Parent with @json.FromJson::{from_json}
 
 ///|
-pub extend IssueParent with ToJson::{to_json}
+pub extend Parent with ToJson::{to_json}
 
 ///|
-pub extend IssueParent with Eq::{equal, not_equal}
+pub extend Parent with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueParent with @debug.Debug::{to_repr}
+pub extend Parent with @debug.Debug::{to_repr}
 
 ///|
 /// A child issue, as listed by `include=children`.
-pub(all) struct IssueChild {
+pub(all) struct Child {
   id : Int32
-  tracker : IdName
+  tracker : @redmine.IdName
   subject : String
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend IssueChild with @json.FromJson::{from_json}
+pub extend Child with @json.FromJson::{from_json}
 
 ///|
-pub extend IssueChild with ToJson::{to_json}
+pub extend Child with ToJson::{to_json}
 
 ///|
-pub extend IssueChild with Eq::{equal, not_equal}
+pub extend Child with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueChild with @debug.Debug::{to_repr}
+pub extend Child with @debug.Debug::{to_repr}
 
 ///|
 /// A file attached to an issue.
-pub(all) struct IssueAttachment {
+pub(all) struct Attachment {
   id : Int32
   filename : String
   filesize : Int32
@@ -126,25 +126,25 @@ pub(all) struct IssueAttachment {
   description : String?
   content_url : String
   thumbnail_url : String?
-  author : IdName
+  author : @redmine.IdName
   created_on : String
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend IssueAttachment with @json.FromJson::{from_json}
+pub extend Attachment with @json.FromJson::{from_json}
 
 ///|
-pub extend IssueAttachment with ToJson::{to_json}
+pub extend Attachment with ToJson::{to_json}
 
 ///|
-pub extend IssueAttachment with Eq::{equal, not_equal}
+pub extend Attachment with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueAttachment with @debug.Debug::{to_repr}
+pub extend Attachment with @debug.Debug::{to_repr}
 
 ///|
 /// A relation between issues, as listed by `include=relations`.
-pub(all) struct IssueRelation {
+pub(all) struct Relation {
   id : Int32?
   issue_id : Int32?
   issue_to_id : Int32?
@@ -153,16 +153,16 @@ pub(all) struct IssueRelation {
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
-pub extend IssueRelation with @json.FromJson::{from_json}
+pub extend Relation with @json.FromJson::{from_json}
 
 ///|
-pub extend IssueRelation with ToJson::{to_json}
+pub extend Relation with ToJson::{to_json}
 
 ///|
-pub extend IssueRelation with Eq::{equal, not_equal}
+pub extend Relation with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueRelation with @debug.Debug::{to_repr}
+pub extend Relation with @debug.Debug::{to_repr}
 
 ///|
 /// One field change recorded in a journal.
@@ -189,7 +189,7 @@ pub extend JournalDetail with @debug.Debug::{to_repr}
 /// A comment and field-change history entry of an issue.
 pub(all) struct Journal {
   id : Int32
-  user : IdName
+  user : @redmine.IdName
   notes : String?
   created_on : String
   private_notes : Bool
@@ -214,15 +214,15 @@ pub extend Journal with @debug.Debug::{to_repr}
 /// were asked for with the matching include.
 pub(all) struct Issue {
   id : Int32
-  project : IdName
-  tracker : IdName
-  status : IssueStatus
-  priority : IdName
-  author : IdName
-  assigned_to : IdName?
-  category : IdName?
-  fixed_version : IdName?
-  parent : IssueParent?
+  project : @redmine.IdName
+  tracker : @redmine.IdName
+  status : Status
+  priority : @redmine.IdName
+  author : @redmine.IdName
+  assigned_to : @redmine.IdName?
+  category : @redmine.IdName?
+  fixed_version : @redmine.IdName?
+  parent : Parent?
   subject : String
   description : String?
   start_date : String?
@@ -236,14 +236,14 @@ pub(all) struct Issue {
   created_on : String
   updated_on : String
   closed_on : String?
-  custom_fields : Array[IssueCustomField]?
+  custom_fields : Array[CustomField]?
   journals : Array[Journal]?
-  attachments : Array[IssueAttachment]?
-  relations : Array[IssueRelation]?
-  children : Array[IssueChild]?
+  attachments : Array[Attachment]?
+  relations : Array[Relation]?
+  children : Array[Child]?
   changesets : Array[Json]?
-  watchers : Array[IdName]?
-  allowed_statuses : Array[IssueStatus]?
+  watchers : Array[@redmine.IdName]?
+  allowed_statuses : Array[Status]?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|

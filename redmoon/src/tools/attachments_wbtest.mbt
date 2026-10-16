@@ -4,7 +4,7 @@ struct FakeAttachments {
   content : Bytes
   declared_size : Int32
   uploads : Array[(Int64, String)]
-  updates : Array[(Int32, @redmine.IssueUpdate)]
+  updates : Array[(Int32, @issues.Update)]
 }
 
 ///|
@@ -267,7 +267,7 @@ async test "attach uploads the file and updates the issue" {
   assert_eq(
     update.uploads,
     Some([
-      @redmine.UploadToken::new(
+      @issues.UploadToken::new(
         "token-1",
         filename="renamed.bin",
         description="d",
@@ -474,16 +474,17 @@ async test "live: attach, show and download through the tool" {
     return
   }
   let redmine = @redmine.Redmine::new(endpoint~, api_key~)
-  let issue = redmine.create_issue(
-    @redmine.IssueCreate::new(
-      project_id=1,
-      tracker_id=1,
-      status_id=1,
-      priority_id=2,
-      subject="attachments live \{@env.now()}",
-    ),
-  )
-  defer (redmine.delete_issue(issue.id) catch { _ => () })
+  let issue = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="attachments live \{@env.now()}",
+      ),
+    )
+  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
   let tools = [attachments_tool(redmine, LocalFile::new(), Full)]
   with_scratch_dir(async fn(dir) {
     let source = "\{dir}/source.bin"
@@ -497,7 +498,8 @@ async test "live: attach, show and download through the tool" {
       attached.text,
       "{\"issue_id\":\{issue.id},\"filename\":\"source.bin\",\"filesize\":\{content.length()}}",
     )
-    let shown_issue = redmine.show_issue(issue.id, includes=[Attachments])
+    let shown_issue = redmine
+      |> @issues.show(issue.id, includes=[@issues.Include::Attachments])
     let attachment_id = shown_issue.attachments.unwrap()[0].id
     let shown = call_tool(tools, "redmine_attachments", {
       "show": { "id": attachment_id },

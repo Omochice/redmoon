@@ -9,7 +9,7 @@ pub(open) trait AttachmentPort {
     async (@attachments.Attachment, &@io.Reader) -> Unit,
   ) -> Unit
   async fn upload_file(Self, &@io.Reader, Int64, String) -> String raise @redmine.RedmineError
-  async fn attach_uploads(Self, Int32, @redmine.IssueUpdate) -> Unit raise @redmine.RedmineError
+  async fn attach_uploads(Self, Int32, @issues.Update) -> Unit raise @redmine.RedmineError
 }
 
 ///|
@@ -42,5 +42,5 @@ pub impl AttachmentPort for @redmine.Redmine with fn attach_uploads(
   issue_id,
   update,
 ) {
-  self.update_issue(issue_id, update)
+  self |> @issues.update(issue_id, update)
 }

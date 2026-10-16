@@ -27,7 +27,7 @@ fn[A, B] pair(
 }
 
 ///|
-fn date_period() -> @schema.Schema[@redmine.DatePeriod] {
+fn date_period() -> @schema.Schema[@issues.DatePeriod] {
   @schema.choice([
     ("today", Today),
     ("yesterday", Yesterday),
@@ -46,15 +46,15 @@ fn date_period() -> @schema.Schema[@redmine.DatePeriod] {
 /// `from` and `to` are separate alternatives instead of one object with two
 /// optional bounds: every form is a strict object, so `{from}` cannot also
 /// match a call carrying `to` and silently drop the upper bound.
-fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
+fn past_date_filters() -> Array[@schema.Schema[@issues.PastDateFilter]] {
   let iso = @schema.iso_date
   [
     iso()
-    |> @schema.Schema::map(day => @redmine.PastDateFilter::On(day))
+    |> @schema.Schema::map(day => @issues.PastDateFilter::On(day))
     |> @schema.Schema::describe("That day."),
     date_period() |> @schema.Schema::map(period => Period(period)),
     days_ago()
-    |> @schema.Schema::map(days => @redmine.PastDateFilter::DaysAgo(days))
+    |> @schema.Schema::map(days => @issues.PastDateFilter::DaysAgo(days))
     |> @schema.Schema::describe("The single day that many days ago."),
     pair(@schema.required("from", iso()), @schema.optional("to", iso()))
     |> @schema.Schema::map(bounds => {
@@ -96,22 +96,22 @@ fn past_date_filters() -> Array[@schema.Schema[@redmine.PastDateFilter]] {
 ///|
 /// The filter of `created_on`, `updated_on` and `closed_on`. Redmine types
 /// them as `:date_past` and answers 422 to a forward-looking form.
-pub fn past_date_filter() -> @schema.Schema[@redmine.PastDateFilter] {
+pub fn past_date_filter() -> @schema.Schema[@issues.PastDateFilter] {
   @schema.union(past_date_filters())
 }
 
 ///|
 /// The filter of `start_date` and `due_date`: the past forms plus the
 /// forward-looking ones.
-pub fn date_filter() -> @schema.Schema[@redmine.DateFilter] {
-  let forward : Array[@schema.Schema[@redmine.DateFilter]] = [
+pub fn date_filter() -> @schema.Schema[@issues.DateFilter] {
+  let forward : Array[@schema.Schema[@issues.DateFilter]] = [
     @schema.choice([
       ("tomorrow", Tomorrow),
       ("nextWeek", NextWeek),
       ("nextMonth", NextMonth),
     ]),
     days_from_now()
-    |> @schema.Schema::map(days => @redmine.DateFilter::DaysFromNow(days))
+    |> @schema.Schema::map(days => @issues.DateFilter::DaysFromNow(days))
     |> @schema.Schema::describe("The single day that many days from now."),
     only("from", days_from_now())
     |> @schema.Schema::map(days => SinceDaysFromNow(days))
@@ -131,7 +131,7 @@ pub fn date_filter() -> @schema.Schema[@redmine.DateFilter] {
   @schema.union(
     [
       ..past_date_filters().map(filter => {
-        filter |> @schema.Schema::map(past => @redmine.DateFilter::Past(past))
+        filter |> @schema.Schema::map(past => @issues.DateFilter::Past(past))
       }),
       ..forward,
     ],

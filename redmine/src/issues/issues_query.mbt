@@ -1,19 +1,19 @@
 ///|
 /// An association a listed issue can carry.
-pub(all) enum IssueListInclude {
+pub(all) enum ListInclude {
   Attachments
   Relations
 } derive(Eq, Debug)
 
 ///|
-pub extend IssueListInclude with Eq::{equal, not_equal}
+pub extend ListInclude with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueListInclude with @debug.Debug::{to_repr}
+pub extend ListInclude with @debug.Debug::{to_repr}
 
 ///|
 /// An association a shown issue can carry.
-pub(all) enum IssueInclude {
+pub(all) enum Include {
   Children
   Attachments
   Relations
@@ -24,10 +24,10 @@ pub(all) enum IssueInclude {
 } derive(Eq, Debug)
 
 ///|
-pub extend IssueInclude with Eq::{equal, not_equal}
+pub extend Include with Eq::{equal, not_equal}
 
 ///|
-pub extend IssueInclude with @debug.Debug::{to_repr}
+pub extend Include with @debug.Debug::{to_repr}
 
 ///|
 /// Which issues to list by status.
@@ -60,8 +60,8 @@ pub extend AssigneeFilter with @debug.Debug::{to_repr}
 
 ///|
 /// Conditions for `Redmine::list_issues`; an unset condition does not filter.
-pub struct IssueListQuery {
-  includes : Array[IssueListInclude]
+pub struct ListQuery {
+  includes : Array[ListInclude]
   project_id : Int32?
   tracker_id : Int32?
   status_id : StatusFilter?
@@ -75,8 +75,8 @@ pub struct IssueListQuery {
 }
 
 ///|
-pub fn IssueListQuery::new(
-  includes~ : Array[IssueListInclude] = [],
+pub fn ListQuery::new(
+  includes~ : Array[ListInclude] = [],
   project_id? : Int32,
   tracker_id? : Int32,
   status_id? : StatusFilter,
@@ -87,7 +87,7 @@ pub fn IssueListQuery::new(
   created_on? : PastDateFilter,
   updated_on? : PastDateFilter,
   closed_on? : PastDateFilter,
-) -> IssueListQuery {
+) -> ListQuery {
   {
     includes,
     project_id,
@@ -104,7 +104,7 @@ pub fn IssueListQuery::new(
 }
 
 ///|
-fn IssueListInclude::name(self : IssueListInclude) -> String {
+fn ListInclude::name(self : ListInclude) -> String {
   match self {
     Attachments => "attachments"
     Relations => "relations"
@@ -112,7 +112,7 @@ fn IssueListInclude::name(self : IssueListInclude) -> String {
 }
 
 ///|
-fn IssueInclude::name(self : IssueInclude) -> String {
+fn Include::name(self : Include) -> String {
   match self {
     Children => "children"
     Attachments => "attachments"
@@ -155,12 +155,10 @@ fn include_value(names : Array[String]) -> String {
 }
 
 ///|
-fn IssueListQuery::to_query(self : IssueListQuery) -> Array[(String, String)] {
+fn ListQuery::to_query(self : ListQuery) -> Array[(String, String)] {
   let pairs = []
   if !self.includes.is_empty() {
-    pairs.push(
-      ("include", include_value(self.includes.map(IssueListInclude::name))),
-    )
+    pairs.push(("include", include_value(self.includes.map(ListInclude::name))))
   }
   if self.project_id is Some(id) {
     pairs.push(("project_id", id.to_string()))

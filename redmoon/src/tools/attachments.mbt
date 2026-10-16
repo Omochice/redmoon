@@ -162,8 +162,8 @@ async fn attach_file(
   }
   port.attach_uploads(
     issue_id,
-    @redmine.IssueUpdate::new(notes?, uploads=[
-      @redmine.UploadToken::new(token, filename=name, description?),
+    @issues.Update::new(notes?, uploads=[
+      @issues.UploadToken::new(token, filename=name, description?),
     ]),
   ) catch {
     error => return failure_of(error)

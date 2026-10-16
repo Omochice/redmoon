@@ -1,10 +1,10 @@
 ///|
 struct FakeIssues {
   failure : @redmine.RedmineError?
-  mut listed : (@redmine.IssueListQuery, Int32?)?
-  mut shown : (Int32, Array[@redmine.IssueInclude])?
-  mut created : @redmine.IssueCreate?
-  mut updated : (Int32, @redmine.IssueUpdate)?
+  mut listed : (@issues.ListQuery, Int32?)?
+  mut shown : (Int32, Array[@issues.Include])?
+  mut created : @issues.Create?
+  mut updated : (Int32, @issues.Update)?
   mut deleted : Int32?
   mut journal : (Int32, String?, Bool?)?
 }
@@ -23,7 +23,7 @@ fn FakeIssues::new(failure? : @redmine.RedmineError) -> FakeIssues {
 }
 
 ///|
-fn fake_issue(id : Int32, subject : String) -> @redmine.Issue {
+fn fake_issue(id : Int32, subject : String) -> @issues.Issue {
   {
     id,
     project: { id: 1, name: "Demo", },
@@ -120,7 +120,7 @@ async fn call_issues(
 }
 
 ///|
-async fn listed_with(arguments : Json) -> @redmine.IssueListQuery {
+async fn listed_with(arguments : Json) -> @issues.ListQuery {
   let fake = FakeIssues::new()
   let called = call_issues(fake, { "list": arguments })
   assert_eq(called.is_error, false, msg=called.text)
@@ -128,7 +128,7 @@ async fn listed_with(arguments : Json) -> @redmine.IssueListQuery {
 }
 
 ///|
-async fn created_with(arguments : Json) -> @redmine.IssueCreate {
+async fn created_with(arguments : Json) -> @issues.Create {
   let fake = FakeIssues::new()
   let called = call_issues(fake, { "create": arguments })
   assert_eq(called.is_error, false, msg=called.text)
@@ -136,7 +136,7 @@ async fn created_with(arguments : Json) -> @redmine.IssueCreate {
 }
 
 ///|
-async fn updated_with(arguments : Json) -> @redmine.IssueUpdate {
+async fn updated_with(arguments : Json) -> @issues.Update {
   let fake = FakeIssues::new()
   let called = call_issues(fake, { "update": arguments })
   assert_eq(called.is_error, false, msg=called.text)
@@ -335,7 +335,7 @@ async test "list keeps every date filter field" {
 
 ///|
 async test "every named period reaches the filter" {
-  let periods : Array[(String, @redmine.DatePeriod)] = [
+  let periods : Array[(String, @issues.DatePeriod)] = [
     ("today", Today),
     ("yesterday", Yesterday),
     ("thisWeek", ThisWeek),
@@ -364,7 +364,7 @@ async test "a two-ended range keeps both bounds" {
 
 ///|
 async test "the past forms map to their own filters" {
-  let cases : Array[(Json, @redmine.PastDateFilter)] = [
+  let cases : Array[(Json, @issues.PastDateFilter)] = [
     ("2026-07-01", On("2026-07-01")),
     ({ "days_ago": 0 }, DaysAgo(0)),
     ({ "from": "2026-07-01" }, Since("2026-07-01")),
@@ -381,7 +381,7 @@ async test "the past forms map to their own filters" {
 
 ///|
 async test "the future forms map to their own filters" {
-  let cases : Array[(Json, @redmine.DateFilter)] = [
+  let cases : Array[(Json, @issues.DateFilter)] = [
     ("tomorrow", Tomorrow),
     ("nextWeek", NextWeek),
     ("nextMonth", NextMonth),

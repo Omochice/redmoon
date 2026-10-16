@@ -1,20 +1,20 @@
 ///|
 priv enum IssueAction {
-  List(@redmine.IssueListQuery, limit~ : Int32?)
-  Show(Int32, includes~ : Array[@redmine.IssueInclude])
-  Create(@redmine.IssueCreate)
-  Update(Int32, @redmine.IssueUpdate)
+  List(@issues.ListQuery, limit~ : Int32?)
+  Show(Int32, includes~ : Array[@issues.Include])
+  Create(@issues.Create)
+  Update(Int32, @issues.Update)
   Delete(Int32)
   UpdateNote(Int32, notes~ : String?, private_notes~ : Bool?)
   DeleteNote(Int32)
 }
 
 ///|
-fn list_includes() -> @schema.Schema[Array[@redmine.IssueListInclude]] {
+fn list_includes() -> @schema.Schema[Array[@issues.ListInclude]] {
   @schema.array(
     @schema.choice([
-      ("attachments", @redmine.IssueListInclude::Attachments),
-      ("relations", @redmine.IssueListInclude::Relations),
+      ("attachments", @issues.ListInclude::Attachments),
+      ("relations", @issues.ListInclude::Relations),
     ]),
   ).describe(
     "Associations Redmine omits unless asked for. A listed issue carries only these two; `journals` are available through `show`.",
@@ -22,16 +22,16 @@ fn list_includes() -> @schema.Schema[Array[@redmine.IssueListInclude]] {
 }
 
 ///|
-fn show_includes() -> @schema.Schema[Array[@redmine.IssueInclude]] {
+fn show_includes() -> @schema.Schema[Array[@issues.Include]] {
   @schema.array(
     @schema.choice([
-      ("journals", @redmine.IssueInclude::Journals),
-      ("attachments", @redmine.IssueInclude::Attachments),
-      ("relations", @redmine.IssueInclude::Relations),
-      ("children", @redmine.IssueInclude::Children),
-      ("changesets", @redmine.IssueInclude::Changesets),
-      ("watchers", @redmine.IssueInclude::Watchers),
-      ("allowedStatuses", @redmine.IssueInclude::AllowedStatuses),
+      ("journals", @issues.Include::Journals),
+      ("attachments", @issues.Include::Attachments),
+      ("relations", @issues.Include::Relations),
+      ("children", @issues.Include::Children),
+      ("changesets", @issues.Include::Changesets),
+      ("watchers", @issues.Include::Watchers),
+      ("allowedStatuses", @issues.Include::AllowedStatuses),
     ]),
   ).describe(
     "Associations Redmine omits unless asked for. `journals` are the comments and the field-change history.",
@@ -39,17 +39,17 @@ fn show_includes() -> @schema.Schema[Array[@redmine.IssueInclude]] {
 }
 
 ///|
-fn status_filter() -> @schema.Schema[@redmine.StatusFilter] {
+fn status_filter() -> @schema.Schema[@issues.StatusFilter] {
   @schema.union([
-    record_id().map(id => @redmine.StatusFilter::Id(id)),
+    record_id().map(id => @issues.StatusFilter::Id(id)),
     @schema.choice([("open", Open), ("closed", Closed), ("*", All)]),
   ])
 }
 
 ///|
-fn assignee_filter() -> @schema.Schema[@redmine.AssigneeFilter] {
+fn assignee_filter() -> @schema.Schema[@issues.AssigneeFilter] {
   @schema.union([
-    record_id().map(id => @redmine.AssigneeFilter::User(id)),
+    record_id().map(id => @issues.AssigneeFilter::User(id)),
     @schema.choice([("me", Me)]),
   ])
 }
@@ -110,7 +110,7 @@ let list_input : @schema.Schema[IssueAction] = {
     ],
     v => {
       IssueAction::List(
-        @redmine.IssueListQuery::new(
+        @issues.ListQuery::new(
           includes=v.get(includes).unwrap_or([]),
           project_id?=v.get(project_id),
           tracker_id?=v.get(tracker_id),
@@ -178,7 +178,7 @@ let create_input : @schema.Schema[IssueAction] = {
     ],
     v => {
       IssueAction::Create(
-        @redmine.IssueCreate::new(
+        @issues.Create::new(
           project_id=v.get(project_id),
           tracker_id=v.get(tracker_id),
           status_id=v.get(status_id),
@@ -277,7 +277,7 @@ let update_input : @schema.Schema[IssueAction] = {
     v => {
       IssueAction::Update(
         v.get(issue_id),
-        @redmine.IssueUpdate::new(
+        @issues.Update::new(
           subject?=v.get(subject),
           description?=v.get(description),
           notes?=v.get(notes),
