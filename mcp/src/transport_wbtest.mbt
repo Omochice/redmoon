@@ -189,3 +189,44 @@ async test "a string request id is cancelled by a string requestId only" {
   assert_eq(output, "")
   assert_eq(finished.val, false)
 }
+
+///|
+async test "a request reusing an id in flight is rejected and the original still completes" {
+  let server = tools_server([sleepy_tool()])
+  ignore(send(server, initialize_request("2025-11-25")))
+  let output = run_session(server, async fn(w) {
+    w.write(line(legacy_call(5, "sleepy")))
+    w.write(line(legacy_call(5, "sleepy")))
+  })
+  let lines = output.split("\n").collect()
+  assert_eq(lines[0].contains("\"id\":5,\"error\":{\"code\":-32600"), true)
+  assert_eq(lines[0].contains("already in use"), true)
+  assert_eq(lines[1].contains("\"id\":5,\"result\""), true)
+  assert_eq(lines[1].contains("\"text\":\"done\""), true)
+  assert_eq(lines[2], "")
+}
+
+///|
+async test "a rejected duplicate id leaves the original cancellable" {
+  let started = Ref(false)
+  let finished = Ref(false)
+  let server = tools_server([forever_tool(started, finished)])
+  ignore(send(server, initialize_request("2025-11-25")))
+  let output = run_session(server, async fn(w) {
+    w.write(line(legacy_call(5, "forever")))
+    @async.sleep(50)
+    w.write(line(legacy_call(5, "forever")))
+    @async.sleep(50)
+    w.write(
+      line({
+        "jsonrpc": "2.0",
+        "method": "notifications/cancelled",
+        "params": { "requestId": 5 },
+      }),
+    )
+  })
+  let lines = output.split("\n").collect()
+  assert_eq(lines[0].contains("-32600"), true)
+  assert_eq(lines[1], "")
+  assert_eq(finished.val, false)
+}

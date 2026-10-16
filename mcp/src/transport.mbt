@@ -32,6 +32,17 @@ pub async fn Server::serve(
           }
         Call(id~, tool~, arguments~, era~) => {
           let key = id.stringify()
+          if in_flight.contains(key) {
+            send(
+              error_response(
+                id,
+                RpcError::new(
+                  invalid_request_code, "Invalid Request: request id is already in use by a request in flight",
+                ),
+              ),
+            )
+            continue
+          }
           in_flight[key] = group.spawn(async fn() {
             let response = self.respond(id~, tool~, arguments~, era~)
             if in_flight.contains(key) {
