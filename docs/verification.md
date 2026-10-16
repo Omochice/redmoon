@@ -1,68 +1,51 @@
 # Verification harness
 
-`compose.yaml` brings up a throwaway Redmine instance so redmoon and its SDK can be exercised against a real Redmine REST API.
+`compose.yaml`, driven by the tasks in `Taskfile.yml` ([ADR-015](./adr-015-task-runner.md)), brings up a throwaway Redmine instance so redmoon and its SDK can be exercised against a real Redmine REST API.
 It is a verification aid, not a deployment artifact.
 
 ## Start
 
 ```sh
-docker compose up -d
+task redmine:up
 ```
 
+The task runs `docker compose up -d` and waits until the login page answers.
 Redmine is served at <http://localhost:3000>.
 First sign-in is `admin` / `admin`, which forces a password change.
-The image runs migrations on first boot, so wait until the login page loads.
+The image runs migrations on first boot, so the wait can take a few minutes.
 
-## Enable the REST API and obtain an API key
+## Enable the REST API, seed the prerequisites, and obtain an API key
 
 The REST API is disabled by default, and redmoon authenticates with an API key.
-Both are database settings, so they are applied once against the running container:
+A fresh Redmine also has no trackers, statuses, or priorities, and an issue needs a project, so issue operations fail until these exist.
 
 ```sh
-docker compose exec redmine sh -c \
-  'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner \
-   "Setting.rest_api_enabled = %q(1); puts User.find_by_login(%q(admin)).api_key"'
+task redmine:seed
 ```
 
-`docker compose exec` runs outside the entrypoint that exports `SECRET_KEY_BASE`, so the command sets it explicitly; otherwise `rails runner` aborts with a missing-secret error.
-The command is safe to re-run.
-
-## Seed issue prerequisites
-
-A fresh Redmine has no trackers, statuses, or priorities, and an issue needs a project, so issue operations fail until these exist.
-Load the default configuration data and create one project (replace `<key>` with the API key from above):
-
-```sh
-docker compose exec redmine sh -c \
-  'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" REDMINE_LANG=en bundle exec rake redmine:load_default_data'
-
-curl -s -X POST -H "X-Redmine-API-Key: <key>" -H "Content-Type: application/json" \
-  -d '{"project":{"name":"Demo","identifier":"demo"}}' http://localhost:3000/projects.json
-```
-
+The task enables the REST API, loads the default configuration data, creates the project `demo`, and writes the admin API key to `_build/redmine-api-key`.
 The default data seeds tracker `1` (Bug), status `1` (New), and priority `2` (Normal), which the issue integration tests use.
+The key goes to a file instead of the terminal so that no log carries it, and `_build/` is already gitignored.
+`task redmine:up` and `task redmine:seed` are safe to re-run against an instance that is already prepared.
+
+The task runs `rails runner` through `docker compose exec`, which runs outside the entrypoint that exports `SECRET_KEY_BASE`, so the task sets it explicitly.
 
 ## Run the integration tests
 
-The tests that need a real Redmine run when both variables below are set, and are skipped otherwise ([ADR-009](./adr-009-testing-strategy.md)).
-
-| Variable                | Value                                      |
-| ----------------------- | ------------------------------------------ |
-| `REDMOON_TEST_ENDPOINT` | `http://localhost:3000`                    |
-| `REDMOON_TEST_API_KEY`  | the API key printed by the `rails` command |
+The tests that need a real Redmine run when `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY` are both set, and are skipped otherwise ([ADR-009](./adr-009-testing-strategy.md)).
 
 ```sh
-REDMOON_TEST_ENDPOINT=http://localhost:3000 \
-REDMOON_TEST_API_KEY=<key> \
-  moon test
+task test:integration
 ```
 
+The task sets `REDMOON_TEST_ENDPOINT` to `http://localhost:3000` and `REDMOON_TEST_API_KEY` to the contents of `_build/redmine-api-key`, then runs `moon test`.
+Arguments after `--` are passed on to `moon test`.
 CI performs the same steps in the `integration` job of `.github/workflows/ci.yaml`.
 
 ## Register the key with the CLI
 
 redmoon reads its API key only from the OS keyring ([ADR-008](./adr-008-keyring-module-and-credential-cli.md)).
-Register the printed key with the `login` subcommand to try the compiled binary against this instance:
+Register the key in `_build/redmine-api-key` with the `login` subcommand to try the compiled binary against this instance:
 
 ```sh
 redmoon login --endpoint http://localhost:3000
@@ -71,6 +54,6 @@ redmoon login --endpoint http://localhost:3000
 ## Stop
 
 ```sh
-docker compose down       # keep the data volumes
+task redmine:down         # keep the data volumes
 docker compose down -v    # discard all state
 ```
