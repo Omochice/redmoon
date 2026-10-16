@@ -78,3 +78,27 @@ async test "live: a search finds the issues carrying a unique word" {
   delete_probe_issue(redmine, first)
   delete_probe_issue(redmine, second)
 }
+
+///|
+async test "live: all_words false matches issues carrying only one of the words" {
+  guard relations_search_live_redmine() is Some(redmine) else { return }
+  let nonce = @env.now().to_string()
+  let word_a = "allwa\{nonce}"
+  let word_b = "allwb\{nonce}"
+  let first = create_probe_issue(redmine, word_a)
+  let second = create_probe_issue(redmine, word_b)
+  defer delete_probe_issue(redmine, first)
+  defer delete_probe_issue(redmine, second)
+  let q = "\{word_a} \{word_b}"
+  let any_word = redmine.search(
+    { ..search_query(q), all_words: Some(false), issues: Some(true), },
+    limit=10,
+  )
+  assert_true(any_word.any(fn(r) { r.id == first }))
+  assert_true(any_word.any(fn(r) { r.id == second }))
+  let every_word = redmine.search(
+    { ..search_query(q), all_words: Some(true), issues: Some(true), },
+    limit=10,
+  )
+  assert_false(every_word.any(fn(r) { r.id == first || r.id == second }))
+}
