@@ -19,6 +19,18 @@ test "equivalent endpoints map to one account" {
 }
 
 ///|
+test "every trailing slash is removed" {
+  inspect(
+    canonicalize_endpoint("http://localhost:3000//"),
+    content="http://localhost:3000",
+  )
+  inspect(
+    canonicalize_endpoint("http://example.com/redmine///"),
+    content="http://example.com/redmine",
+  )
+}
+
+///|
 test "default ports and the scheme case are normalized" {
   inspect(canonicalize_endpoint("HTTPS://host:443/"), content="https://host")
   inspect(canonicalize_endpoint("http://host:8080"), content="http://host:8080")
