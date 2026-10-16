@@ -1,5 +1,5 @@
 ///|
-fn search_query(q : String) -> SearchQuery {
+fn query(q : String) -> Query {
   {
     q,
     scope: None,
@@ -19,18 +19,18 @@ fn search_query(q : String) -> SearchQuery {
 
 ///|
 test "a bare search sends only the query" {
-  assert_eq(search_query_pairs(search_query("login")), [("q", "login")])
+  assert_eq(query_pairs(query("login")), [("q", "login")])
 }
 
 ///|
 test "a true flag is sent as 1 and a false flag is left out" {
   let query = {
-    ..search_query("login"),
+    ..query("login"),
     all_words: Some(true),
     titles_only: Some(false),
     issues: Some(true),
   }
-  assert_eq(search_query_pairs(query), [
+  assert_eq(query_pairs(query), [
     ("q", "login"),
     ("all_words", "1"),
     ("issues", "1"),
@@ -40,7 +40,7 @@ test "a true flag is sent as 1 and a false flag is left out" {
 ///|
 test "the scope and every type flag are sent under Redmine's names" {
   let query = {
-    ..search_query("login"),
+    ..query("login"),
     scope: Some("my_projects"),
     open_issues: Some(true),
     news: Some(true),
@@ -50,7 +50,7 @@ test "the scope and every type flag are sent under Redmine's names" {
     messages: Some(true),
     projects: Some(true),
   }
-  assert_eq(search_query_pairs(query), [
+  assert_eq(query_pairs(query), [
     ("q", "login"),
     ("scope", "my_projects"),
     ("open_issues", "1"),
@@ -65,18 +65,18 @@ test "the scope and every type flag are sent under Redmine's names" {
 
 ///|
 test "each attachment scope maps to its Redmine value" {
-  assert_eq(
-    search_query_pairs({ ..search_query("x"), attachments: Some(Excluded), }),
-    [("q", "x"), ("attachments", "0")],
-  )
-  assert_eq(
-    search_query_pairs({ ..search_query("x"), attachments: Some(Included), }),
-    [("q", "x"), ("attachments", "1")],
-  )
-  assert_eq(
-    search_query_pairs({ ..search_query("x"), attachments: Some(Only), }),
-    [("q", "x"), ("attachments", "only")],
-  )
+  assert_eq(query_pairs({ ..query("x"), attachments: Some(Excluded), }), [
+    ("q", "x"),
+    ("attachments", "0"),
+  ])
+  assert_eq(query_pairs({ ..query("x"), attachments: Some(Included), }), [
+    ("q", "x"),
+    ("attachments", "1"),
+  ])
+  assert_eq(query_pairs({ ..query("x"), attachments: Some(Only), }), [
+    ("q", "x"),
+    ("attachments", "only"),
+  ])
 }
 
 ///|
@@ -84,7 +84,7 @@ test "a result decodes from Redmine's response with a null description" {
   let text =
     #|{"results":[{"id":2,"title":"Bug #2 (New): login","type":"issue","url":"http://localhost:3000/issues/2","description":null,"datetime":"2026-10-15T18:08:53Z"}],"total_count":1,"offset":0,"limit":25}
   let json = @json.parse(text) catch { _ => fail("fixture is not JSON") }
-  let results : Array[SearchResult] = decode_field(
+  let results : Array[Match] = @decode.decode_field(
     @wire.strip_nulls(json),
     "results",
   ) catch {
@@ -98,18 +98,7 @@ test "a result decodes from Redmine's response with a null description" {
 }
 
 ///|
-test "a missing total_count counts as no matches" {
-  let json = @json.parse("{\"results\":[]}") catch {
-    _ => fail("fixture is not JSON")
-  }
-  let total = total_count_of(@wire.strip_nulls(json)) catch {
-    _ => fail("total_count did not decode")
-  }
-  assert_eq(total, 0)
-}
-
-///|
 test "all_words false is sent as an empty value because Redmine defaults it to true" {
-  let query = { ..search_query("login"), all_words: Some(false), }
-  assert_eq(search_query_pairs(query), [("q", "login"), ("all_words", "")])
+  let query = { ..query("login"), all_words: Some(false), }
+  assert_eq(query_pairs(query), [("q", "login"), ("all_words", "")])
 }

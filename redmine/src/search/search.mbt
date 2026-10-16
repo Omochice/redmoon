@@ -23,7 +23,7 @@ fn AttachmentScope::to_wire(self : AttachmentScope) -> String {
 
 ///|
 /// The parameters of a search. A `None` flag is left out of the request, which keeps Redmine's default for it.
-pub(all) struct SearchQuery {
+pub(all) struct Query {
   q : String
   scope : String?
   all_words : Bool?
@@ -40,14 +40,14 @@ pub(all) struct SearchQuery {
 } derive(Eq, Debug)
 
 ///|
-pub extend SearchQuery with Eq::{equal, not_equal}
+pub extend Query with Eq::{equal, not_equal}
 
 ///|
-pub extend SearchQuery with @debug.Debug::{to_repr}
+pub extend Query with @debug.Debug::{to_repr}
 
 ///|
 /// One match of a search. `kind` holds Redmine's `type` field, which MoonBit cannot name.
-pub(all) struct SearchResult {
+pub(all) struct Match {
   id : Int32
   title : String
   kind : String
@@ -57,20 +57,18 @@ pub(all) struct SearchResult {
 } derive(Eq, Debug)
 
 ///|
-pub extend SearchResult with Eq::{equal, not_equal}
+pub extend Match with Eq::{equal, not_equal}
 
 ///|
-pub extend SearchResult with @debug.Debug::{to_repr}
+pub extend Match with @debug.Debug::{to_repr}
 
 ///|
-pub extend SearchResult with @json.FromJson::{from_json}
+pub extend Match with @json.FromJson::{from_json}
 
 ///|
-pub impl @json.FromJson for SearchResult with fn from_json(json, path) {
+pub impl @json.FromJson for Match with fn from_json(json, path) {
   guard json is Object(members) else {
-    raise @json.JsonDecodeError(
-      (path, "SearchResult::from_json: expected object"),
-    )
+    raise @json.JsonDecodeError((path, "Match::from_json: expected object"))
   }
   {
     id: @wire.json_member(members, "id", path),
@@ -83,11 +81,11 @@ pub impl @json.FromJson for SearchResult with fn from_json(json, path) {
 }
 
 ///|
-pub extend SearchResult with ToJson::{to_json}
+pub extend Match with ToJson::{to_json}
 
 ///|
 /// `description` is written as `null` when absent, as the tool output has always carried it.
-pub impl ToJson for SearchResult with fn to_json(self) {
+pub impl ToJson for Match with fn to_json(self) {
   {
     "id": self.id,
     "title": self.title,
@@ -103,21 +101,22 @@ pub impl ToJson for SearchResult with fn to_json(self) {
 ///|
 /// Searches the resources Redmine indexes and returns the matches, up to `limit` when given.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::search(
-  self : Redmine,
-  query : SearchQuery,
+pub async fn search(
+  redmine : @redmine.Redmine,
+  query : Query,
   limit? : Int32,
-) -> Array[SearchResult] raise RedmineError {
-  self.list_all(
+) -> Array[Match] raise @redmine.RedmineError {
+  @paging.list_all(
+    redmine,
     ["search.json"],
     key="results",
-    query=search_query_pairs(query),
+    query=query_pairs(query),
     limit?,
   )
 }
 
 ///|
-fn search_query_pairs(query : SearchQuery) -> Array[(String, String)] {
+fn query_pairs(query : Query) -> Array[(String, String)] {
   let pairs : Array[(String, String)] = [("q", query.q)]
   if query.scope is Some(scope) {
     pairs.push(("scope", scope))
@@ -125,15 +124,15 @@ fn search_query_pairs(query : SearchQuery) -> Array[(String, String)] {
   if query.all_words is Some(all_words) {
     pairs.push(("all_words", if all_words { "1" } else { "" }))
   }
-  search_push_flag(pairs, "titles_only", query.titles_only)
-  search_push_flag(pairs, "open_issues", query.open_issues)
-  search_push_flag(pairs, "issues", query.issues)
-  search_push_flag(pairs, "news", query.news)
-  search_push_flag(pairs, "documents", query.documents)
-  search_push_flag(pairs, "changesets", query.changesets)
-  search_push_flag(pairs, "wiki_pages", query.wiki_pages)
-  search_push_flag(pairs, "messages", query.messages)
-  search_push_flag(pairs, "projects", query.projects)
+  push_flag(pairs, "titles_only", query.titles_only)
+  push_flag(pairs, "open_issues", query.open_issues)
+  push_flag(pairs, "issues", query.issues)
+  push_flag(pairs, "news", query.news)
+  push_flag(pairs, "documents", query.documents)
+  push_flag(pairs, "changesets", query.changesets)
+  push_flag(pairs, "wiki_pages", query.wiki_pages)
+  push_flag(pairs, "messages", query.messages)
+  push_flag(pairs, "projects", query.projects)
   if query.attachments is Some(scope) {
     pairs.push(("attachments", scope.to_wire()))
   }
@@ -142,7 +141,7 @@ fn search_query_pairs(query : SearchQuery) -> Array[(String, String)] {
 
 ///|
 /// Unlike `all_words`, a flag is sent only when true, because Redmine enables a flag as soon as its parameter is present.
-fn search_push_flag(
+fn push_flag(
   pairs : Array[(String, String)],
   name : String,
   flag : Bool?,

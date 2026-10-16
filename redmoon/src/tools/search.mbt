@@ -1,19 +1,19 @@
 ///|
-fn attachment_scope_schema() -> @schema.Schema[@redmine.AttachmentScope] {
+fn attachment_scope_schema() -> @schema.Schema[@search.AttachmentScope] {
   @schema.union([
     @schema.boolean().map(included => {
       if included {
-        @redmine.AttachmentScope::Included
+        @search.AttachmentScope::Included
       } else {
-        @redmine.AttachmentScope::Excluded
+        @search.AttachmentScope::Excluded
       }
     }),
-    @schema.literal("only").map(_ => @redmine.AttachmentScope::Only),
+    @schema.literal("only").map(_ => @search.AttachmentScope::Only),
   ])
 }
 
 ///|
-fn search_input() -> @schema.Schema[@redmine.SearchQuery] {
+fn search_input() -> @schema.Schema[@search.Query] {
   let q = @schema.required("q", @schema.string())
   let scope = @schema.optional("scope", @schema.string())
   let all_words = @schema.optional("all_words", @schema.boolean())
@@ -43,7 +43,7 @@ fn search_input() -> @schema.Schema[@redmine.SearchQuery] {
       projects.as_member(),
       attachments.as_member(),
     ],
-    v => @redmine.SearchQuery::{
+    v => @search.Query::{
       q: v.get(q),
       scope: v.get(scope),
       all_words: v.get(all_words),

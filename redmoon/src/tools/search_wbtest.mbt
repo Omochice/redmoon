@@ -1,7 +1,7 @@
 ///|
 struct FakeSearch {
   failure : @redmine.RedmineError?
-  queries : Array[@redmine.SearchQuery]
+  queries : Array[@search.Query]
 }
 
 ///|
@@ -41,7 +41,7 @@ fn fake_search(failure? : @redmine.RedmineError) -> FakeSearch {
 }
 
 ///|
-fn plain_query(q : String) -> @redmine.SearchQuery {
+fn plain_query(q : String) -> @search.Query {
   {
     q,
     scope: None,
