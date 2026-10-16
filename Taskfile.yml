@@ -1,0 +1,113 @@
+# ADR-015: every command that CI and developers share is defined here once.
+version: "3"
+
+vars:
+  REDMINE_URL: http://localhost:3000
+  # Under _build so the ignore rule that already covers build output also
+  # covers the credential; `moon clean` removes it and `redmine:seed` writes it again.
+  API_KEY_FILE: _build/redmine-api-key
+
+tasks:
+  check:
+    desc: Type-check every package and fail on warnings
+    cmds:
+      - moon check --deny-warn
+
+  test:
+    desc: "Run the unit tests; arguments after `--` go to `moon test`"
+    cmds:
+      - moon test {{.CLI_ARGS}}
+
+  fmt:
+    desc: Format MoonBit sources only; `nix fmt` also formats the non-MoonBit files and is the CI gate
+    cmds:
+      - moon fmt
+
+  build:
+    desc: Build the release executable for the native backend
+    cmds:
+      - moon build --target native --release redmoon/src/cmd/redmoon
+
+  # build-info.sh needs bash, diff and git. Task's interpreter has no diff, so the
+  # script stays a script. Windows runs it through the bash that Git for Windows
+  # ships, which the CI Windows job has; a Windows machine without it cannot run
+  # these two tasks.
+  build-info:stamp:
+    desc: Overwrite the build-info source with this checkout's commit
+    cmds:
+      - bash .github/scripts/build-info.sh stamp
+
+  build-info:verify:
+    desc: Fail unless the build-info source is committed in its None form
+    cmds:
+      - bash .github/scripts/build-info.sh verify
+
+  redmine:up:
+    desc: Start the throwaway Redmine and wait until /login answers
+    cmds:
+      - docker compose up -d
+      - |
+        for _ in $(seq 1 120); do
+          if curl -sf -o /dev/null {{.REDMINE_URL}}/login; then
+            exit 0
+          fi
+          if [ -n "$(docker compose ps --status exited -q)" ]; then
+            break
+          fi
+          sleep 5
+        done
+        echo "Redmine never answered on {{.REDMINE_URL}}" >&2
+        docker compose logs
+        exit 1
+
+  # Safe to repeat: each step checks before it changes anything. The key goes to a
+  # file rather than stdout so that a log never carries it and `test:integration`
+  # can read it without the caller passing it along.
+  redmine:seed:
+    desc: Enable the REST API, load the default data, create project demo, and save the admin API key
+    silent: true
+    cmds:
+      # `docker compose exec` runs outside the entrypoint that exports SECRET_KEY_BASE.
+      - |
+        key=$(docker compose exec -T redmine sh -c \
+          'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner \
+           "Setting.rest_api_enabled = %q(1); puts User.find_by_login(%q(admin)).api_key"' \
+          | tail -n 1)
+        if [ -z "$key" ]; then
+          echo "rails runner produced no API key" >&2
+          docker compose logs redmine
+          exit 1
+        fi
+        mkdir -p _build
+        printf '%s' "$key" > {{.API_KEY_FILE}}
+      # load_default_data aborts on a database that already has data.
+      - |
+        if ! docker compose exec -T redmine sh -c \
+          'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner "exit(Tracker.any? ? 0 : 1)"'; then
+          docker compose exec -T redmine sh -c \
+            'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" REDMINE_LANG=en bundle exec rake redmine:load_default_data'
+        fi
+      - |
+        key=$(cat {{.API_KEY_FILE}})
+        status=$(curl -sS -o /dev/null -w '%{http_code}' \
+          -H "X-Redmine-API-Key: $key" {{.REDMINE_URL}}/projects/demo.json)
+        if [ "$status" != 200 ]; then
+          curl -sS --fail-with-body -o /dev/null -X POST \
+            -H "X-Redmine-API-Key: $key" \
+            -H "Content-Type: application/json" \
+            -d '{"project":{"name":"Demo","identifier":"demo"}}' \
+            {{.REDMINE_URL}}/projects.json
+        fi
+
+  redmine:down:
+    desc: Stop the throwaway Redmine and keep its data volumes
+    cmds:
+      - docker compose down
+
+  test:integration:
+    desc: Run the tests against the seeded Redmine; arguments after `--` go to `moon test`
+    preconditions:
+      - sh: test -s {{.API_KEY_FILE}}
+        msg: "{{.API_KEY_FILE}} is missing; run `task redmine:seed` first"
+    cmds:
+      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.API_KEY_FILE}})" moon test {{.CLI_ARGS}}
