@@ -93,3 +93,31 @@ test "list is sorted and empty when nothing is stored" {
   )
   @debug.debug_inspect(run_list(fake([])), content="[]")
 }
+
+///|
+async test "login rejects credentials in the endpoint and stores nothing" {
+  let store = fake([])
+  try
+    run_login("https://user:pw@r.example.com", store, fn() { "abc123" })
+  catch {
+    e =>
+      inspect(
+        e,
+        content="credentials in the endpoint URL are not supported; enter the API key at the prompt",
+      )
+  } noraise {
+    _ => fail("credentials were accepted")
+  }
+  assert_true(store.entries.is_empty())
+}
+
+///|
+async test "login rejects a scheme the SDK cannot use and stores nothing" {
+  let store = fake([])
+  try run_login("ftp://r.example.com", store, fn() { "abc123" }) catch {
+    _ => ()
+  } noraise {
+    _ => fail("ftp was accepted")
+  }
+  assert_true(store.entries.is_empty())
+}

@@ -12,7 +12,7 @@ fn default_port(scheme : String) -> String? {
 /// host, no query, no fragment, no default port, no trailing slash.
 ///
 /// # Raises
-/// `Message` when `raw` is not an absolute URL with a host.
+/// `Message` when `raw` carries credentials or is not an endpoint the SDK accepts.
 pub fn canonicalize_endpoint(raw : String) -> String raise CliError {
   let invalid = Message("invalid endpoint URL: \{raw}")
   guard raw.find("://") is Some(scheme_end) else { raise invalid }
@@ -38,12 +38,28 @@ pub fn canonicalize_endpoint(raw : String) -> String raise CliError {
     Some(at) => (authority[:at + 1].to_owned(), authority[at + 1:])
     None => ("", authority)
   }
+  guard userinfo == "" else {
+    raise Message(
+      "credentials in the endpoint URL are not supported; enter the API key at the prompt",
+    )
+  }
   guard hostport != "" else { raise invalid }
   let host = match hostport.rev_find(":") {
     Some(colon) if Some(hostport[colon + 1:].to_owned()) == default_port(scheme) =>
       hostport[:colon]
     _ => hostport
   }
-  let canonical = "\{scheme}://\{userinfo}\{host.to_lower()}\{path}"
-  canonical.strip_suffix("/").map(StringView::to_owned).unwrap_or(canonical)
+  let canonical = "\{scheme}://\{host.to_lower()}\{path}"
+  let canonical = canonical
+    .strip_suffix("/")
+    .map(StringView::to_owned)
+    .unwrap_or(canonical)
+  // Validity is delegated to the SDK rather than re-implemented, so that login
+  // can never accept an endpoint that serve rejects.
+  try ignore(@redmine.Redmine::new(endpoint=canonical, api_key="")) catch {
+    _ => raise invalid
+  } noraise {
+    _ => ()
+  }
+  canonical
 }
