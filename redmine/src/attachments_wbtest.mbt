@@ -74,3 +74,11 @@ test "an attachment response is decoded" {
   assert_eq(attachment.description, Some(""))
   assert_eq(attachment.thumbnail_url, None)
 }
+
+///|
+test "same_origin strips only the default port, not trailing digits of the host" {
+  assert_true(same_origin("https://10.0.0.34:443", "https://10.0.0.34"))
+  assert_true(same_origin("http://10.0.0.80:80", "http://10.0.0.80"))
+  assert_false(same_origin("http://10.0.0.80:80", "http://10.0.0.8:80"))
+  assert_eq(normalize_origin("https://10.0.0.34:443"), "https://10.0.0.34")
+}

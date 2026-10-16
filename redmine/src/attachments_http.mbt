@@ -27,10 +27,9 @@ fn normalize_origin(origin : String) -> String {
   let scheme = origin[:scheme_end].to_lower().to_owned()
   let authority = origin[scheme_end + 3:].to_lower().to_owned()
   let suffix = ":" + default_port_of(scheme)
-  if authority.has_suffix(suffix) {
-    "\{scheme}://\{authority.trim_end(chars=suffix)}"
-  } else {
-    "\{scheme}://\{authority}"
+  match authority.strip_suffix(suffix) {
+    Some(host) => "\{scheme}://\{host}"
+    None => "\{scheme}://\{authority}"
   }
 }
 
