@@ -157,7 +157,7 @@ fn relation_body(
   relation_type : RelationType,
   delay : Int32?,
 ) -> Json {
-  let relation = present_members([
+  let relation = @wire.present_members([
     ("issue_to_id", Some(ToJson::to_json(issue_to_id))),
     ("relation_type", Some(ToJson::to_json(relation_type))),
     ("delay", delay.map(ToJson::to_json)),

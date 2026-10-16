@@ -204,7 +204,7 @@ fn wiki_page_body(
   version? : Int32,
   parent_title? : String,
 ) -> Json {
-  let page = present_members([
+  let page = @wire.present_members([
     ("text", Some(Json(text))),
     ("comments", comments.map(ToJson::to_json)),
     ("version", version.map(ToJson::to_json)),

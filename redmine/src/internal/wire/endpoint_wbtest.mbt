@@ -1,12 +1,12 @@
 ///|
 test "parse splits origin and base path" {
-  let plain = Endpoint::parse("http://localhost:3000")
+  let plain = Endpoint::parse("http://localhost:3000").unwrap()
   inspect(plain.origin, content="http://localhost:3000")
   inspect(plain.base_path, content="")
-  let nested = Endpoint::parse("https://example.com/redmine/")
+  let nested = Endpoint::parse("https://example.com/redmine/").unwrap()
   inspect(nested.origin, content="https://example.com")
   inspect(nested.base_path, content="/redmine")
-  let upper = Endpoint::parse("HTTPS://example.com")
+  let upper = Endpoint::parse("HTTPS://example.com").unwrap()
   inspect(upper.origin, content="https://example.com")
 }
 
@@ -17,31 +17,16 @@ test "parse rejects unusable endpoints" {
       "ftp://example.com", "example.com", "http://", "https:///redmine", "https://user:pass@example.com",
       "https://example.com?x=1", "https://example.com/redmine#top",
     ] {
-    let rejected = try Endpoint::parse(endpoint) catch {
-      _ => true
-    } noraise {
-      _ => false
-    }
-    assert_true(rejected)
-  }
-}
-
-///|
-test "parse does not echo the endpoint in its error" {
-  try Endpoint::parse("ftp://user:secret@example.com") catch {
-    Transport(message~) => assert_false(message.contains("secret"))
-    _ => fail("unexpected error")
-  } noraise {
-    _ => fail("expected an error")
+    assert_true(Endpoint::parse(endpoint) is None)
   }
 }
 
 ///|
 test "path appends encoded segments to the base path" {
-  let plain = Endpoint::parse("https://example.com")
+  let plain = Endpoint::parse("https://example.com").unwrap()
   inspect(plain.path(["projects", "1.json"]), content="/projects/1.json")
   inspect(plain.path([]), content="/")
-  let nested = Endpoint::parse("https://example.com/redmine")
+  let nested = Endpoint::parse("https://example.com/redmine").unwrap()
   inspect(
     nested.path(["projects", "1.json"]),
     content="/redmine/projects/1.json",

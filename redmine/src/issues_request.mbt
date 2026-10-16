@@ -182,7 +182,7 @@ fn[T] Clearable::to_member(
 
 ///|
 fn UploadToken::to_json_object(self : UploadToken) -> Json {
-  present_members([
+  @wire.present_members([
     ("token", Some(Json(self.token))),
     ("filename", self.filename.map(ToJson::to_json)),
     ("description", self.description.map(ToJson::to_json)),
@@ -209,7 +209,7 @@ fn uploads_member(uploads : Array[UploadToken]?) -> Json? {
 
 ///|
 fn IssueCreate::to_body(self : IssueCreate) -> Json {
-  let issue = present_members([
+  let issue = @wire.present_members([
     ("project_id", Some(ToJson::to_json(self.project_id))),
     ("tracker_id", Some(ToJson::to_json(self.tracker_id))),
     ("status_id", Some(ToJson::to_json(self.status_id))),
@@ -238,7 +238,7 @@ fn IssueCreate::to_body(self : IssueCreate) -> Json {
 
 ///|
 fn IssueUpdate::to_body(self : IssueUpdate) -> Json {
-  let issue = present_members([
+  let issue = @wire.present_members([
     ("subject", self.subject.map(ToJson::to_json)),
     ("description", self.description.map(ToJson::to_json)),
     ("notes", self.notes.map(ToJson::to_json)),

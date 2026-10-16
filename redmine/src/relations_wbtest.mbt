@@ -41,7 +41,7 @@ test "a relation decodes from Redmine's response with a null delay" {
   let text =
     #|{"relation":{"id":1,"issue_id":2,"issue_to_id":3,"relation_type":"copied_to","delay":null}}
   let json = @json.parse(text) catch { _ => fail("fixture is not JSON") }
-  let relation : Relation = decode_field(strip_nulls(json), "relation") catch {
+  let relation : Relation = decode_field(@wire.strip_nulls(json), "relation") catch {
     _ => fail("relation did not decode")
   }
   assert_eq(relation.id, 1)

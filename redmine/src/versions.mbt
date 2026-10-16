@@ -229,7 +229,7 @@ fn version_body(
   sharing : VersionSharing?,
   wiki_page_title : String?,
 ) -> Json {
-  let version = present_members([
+  let version = @wire.present_members([
     ("name", name.map(ToJson::to_json)),
     ("description", description.map(ToJson::to_json)),
     ("status", status.map(ToJson::to_json)),

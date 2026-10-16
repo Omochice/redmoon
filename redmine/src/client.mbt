@@ -1,9 +1,12 @@
 ///|
 /// A client for one Redmine instance.
 pub struct Redmine {
-  priv endpoint : Endpoint
+  priv endpoint : @wire.Endpoint
   priv api_key : String
 }
+
+///|
+const INVALID_ENDPOINT : String = "endpoint must be http(s)://host[:port][/path]"
 
 ///|
 /// Creates a client for the Redmine at `endpoint`, e.g. `https://example.com/redmine`.
@@ -12,7 +15,10 @@ pub fn Redmine::new(
   endpoint~ : String,
   api_key~ : String,
 ) -> Redmine raise RedmineError {
-  { endpoint: Endpoint::parse(endpoint), api_key, }
+  guard @wire.Endpoint::parse(endpoint) is Some(endpoint) else {
+    raise Transport(message=INVALID_ENDPOINT)
+  }
+  { endpoint, api_key, }
 }
 
 ///|
@@ -42,13 +48,13 @@ async fn Redmine::send(
 /// Turns a finished exchange into its JSON body, `null` when the body is empty.
 fn interpret_response(status : Int32, text : String) -> Json raise RedmineError {
   guard status >= 200 && status < 300 else {
-    raise Response(status~, errors=errors_from_body(text))
+    raise Response(status~, errors=@wire.errors_from_body(text))
   }
   guard text != "" else { return Json::null() }
   let json = @json.parse(text) catch {
     error => raise Transport(message="invalid JSON in response: \{error}")
   }
-  strip_nulls(json)
+  @wire.strip_nulls(json)
 }
 
 ///|
@@ -60,7 +66,7 @@ async fn Redmine::open_client(
   accept? : String,
 ) -> @http.Client {
   let headers : Map[@http.CaseInsensitiveString, String] = Map([])
-  if same_origin(origin, self.endpoint.origin) {
+  if @wire.same_origin(origin, self.endpoint.origin) {
     headers["X-Redmine-API-Key"] = self.api_key
   }
   if accept is Some(accept) {
@@ -83,7 +89,7 @@ async fn Redmine::exchange(
   let target = if query.is_empty() {
     path
   } else {
-    "\{path}?\{encode_query(query)}"
+    "\{path}?\{@wire.encode_query(query)}"
   }
   match body {
     Some(json) => {

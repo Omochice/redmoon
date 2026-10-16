@@ -17,7 +17,7 @@ pub fn strip_nulls(json : Json) -> Json {
 
 ///|
 /// Decodes `members[key]`, treating an absent key as `null` so that optional fields decode to `None`.
-fn[T : @json.FromJson] json_member(
+pub fn[T : @json.FromJson] json_member(
   members : Map[String, Json],
   key : String,
   path : @json.JsonPath,
@@ -30,7 +30,7 @@ fn[T : @json.FromJson] json_member(
 
 ///|
 /// Builds a JSON object from the members that are present, in the given order.
-fn present_members(members : Array[(String, Json?)]) -> Json {
+pub fn present_members(members : Array[(String, Json?)]) -> Json {
   let object : Map[String, Json] = Map([])
   for entry in members {
     if entry.1 is Some(value) {

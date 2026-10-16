@@ -24,7 +24,7 @@ test "a version decodes from a Redmine response" {
       #|{"version":{"id":1,"project":{"id":1,"name":"Demo"},"name":"v1","description":"","status":"open","due_date":null,"sharing":"none","wiki_page_title":null,"estimated_hours":0.0,"spent_hours":0.0,"created_on":"2026-10-15T18:06:44Z","updated_on":"2026-10-15T18:06:44Z"}}
     ),
   )
-  let version : Version = decode_field(strip_nulls(json), "version") catch {
+  let version : Version = decode_field(@wire.strip_nulls(json), "version") catch {
     _ => fail("decode")
   }
   assert_eq(version.status, Open)

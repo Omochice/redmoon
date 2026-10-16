@@ -67,7 +67,7 @@ pub async fn Redmine::update_journal(
   notes? : String,
   private_notes? : Bool,
 ) -> Unit raise RedmineError {
-  let journal = present_members([
+  let journal = @wire.present_members([
     ("notes", notes.map(fn(v) { Json(v) })),
     ("private_notes", private_notes.map(fn(v) { Json(v) })),
   ])

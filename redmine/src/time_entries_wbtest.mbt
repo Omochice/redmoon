@@ -8,7 +8,7 @@ test "time entry list query names only the filters that are set" {
     to: Some("2026-10-31"),
   }
   inspect(
-    encode_query(query.to_pairs()),
+    @wire.encode_query(query.to_pairs()),
     content="project_id=1&from=2026-10-01&to=2026-10-31",
   )
 }
@@ -22,7 +22,7 @@ test "time entry list query with no filters sends no parameters" {
     from: None,
     to: None,
   }
-  inspect(encode_query(query.to_pairs()), content="")
+  inspect(@wire.encode_query(query.to_pairs()), content="")
 }
 
 ///|
@@ -65,7 +65,7 @@ test "update body with only hours sends just that field" {
 test "a time entry response decodes with an issue and null comments" {
   let text =
     #|{"time_entry":{"id":7,"project":{"id":1,"name":"Demo"},"issue":{"id":3},"user":{"id":1,"name":"Redmine Admin"},"activity":{"id":8,"name":"Design"},"hours":1.5,"comments":null,"spent_on":"2026-10-10","created_on":"2026-10-15T18:06:58Z","updated_on":"2026-10-15T18:06:58Z"}}
-  let json = strip_nulls(@json.parse(text))
+  let json = @wire.strip_nulls(@json.parse(text))
   let entry : TimeEntry = decode_field(json, "time_entry") catch {
     _ => abort("decode failed")
   }

@@ -211,7 +211,7 @@ test "include values use Redmine's names and drop repeats" {
 test "a listed issue decodes" {
   let text =
     #|{"id":3,"project":{"id":1,"name":"Demo"},"tracker":{"id":1,"name":"Bug"},"status":{"id":1,"name":"New","is_closed":false},"priority":{"id":2,"name":"Normal"},"author":{"id":1,"name":"Redmine Admin"},"subject":"s","description":null,"start_date":null,"due_date":null,"done_ratio":0,"is_private":false,"estimated_hours":null,"total_estimated_hours":null,"spent_hours":0.0,"total_spent_hours":0.0,"created_on":"2026-10-15T18:08:53Z","updated_on":"2026-10-15T18:08:53Z","closed_on":null}
-  let json = strip_nulls(@json.parse(text))
+  let json = @wire.strip_nulls(@json.parse(text))
   let issue : Issue = decode(json)
   assert_eq(issue.id, 3)
   assert_eq(issue.subject, "s")
@@ -233,7 +233,7 @@ test "a shown issue decodes every include" {
     #|"journals":[{"id":7,"user":{"id":1,"name":"Redmine Admin"},"notes":"hello","created_on":"2026-10-15T17:56:29Z","private_notes":false,"details":[{"property":"attr","name":"status_id","old_value":"1","new_value":"2"}]}],
     #|"watchers":[{"id":1,"name":"Redmine Admin"}],
     #|"allowed_statuses":[{"id":1,"name":"New","is_closed":false}]}
-  let json = strip_nulls(@json.parse(text))
+  let json = @wire.strip_nulls(@json.parse(text))
   let issue : Issue = decode(json)
   assert_eq(issue.parent, Some({ id: 9, }))
   assert_eq(issue.estimated_hours, Some(1.5))

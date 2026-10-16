@@ -1,0 +1,10 @@
+import {
+  "moonbitlang/core/encoding/percent",
+  "moonbitlang/core/json",
+}
+
+import {
+  "moonbitlang/core/debug",
+} for "wbtest"
+
+supported_targets = "+native"

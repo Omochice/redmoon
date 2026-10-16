@@ -73,12 +73,12 @@ pub impl @json.FromJson for SearchResult with fn from_json(json, path) {
     )
   }
   {
-    id: json_member(members, "id", path),
-    title: json_member(members, "title", path),
-    kind: json_member(members, "type", path),
-    url: json_member(members, "url", path),
-    description: json_member(members, "description", path),
-    datetime: json_member(members, "datetime", path),
+    id: @wire.json_member(members, "id", path),
+    title: @wire.json_member(members, "title", path),
+    kind: @wire.json_member(members, "type", path),
+    url: @wire.json_member(members, "url", path),
+    description: @wire.json_member(members, "description", path),
+    datetime: @wire.json_member(members, "datetime", path),
   }
 }
 

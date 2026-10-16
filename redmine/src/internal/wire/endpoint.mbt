@@ -1,6 +1,6 @@
 ///|
 /// The parsed form of the endpoint a client talks to.
-priv struct Endpoint {
+pub(all) struct Endpoint {
   /// `scheme://host[:port]`
   origin : String
   /// Empty, or starts with `/` and has no trailing `/`.
@@ -8,19 +8,13 @@ priv struct Endpoint {
 }
 
 ///|
-const INVALID_ENDPOINT : String = "endpoint must be http(s)://host[:port][/path]"
-
-///|
 /// Splits an endpoint into its origin and base path.
-/// The endpoint is not echoed in the error because it may carry credentials.
-fn Endpoint::parse(endpoint : String) -> Endpoint raise RedmineError {
-  guard endpoint.find("://") is Some(scheme_end) else {
-    raise Transport(message=INVALID_ENDPOINT)
-  }
+/// Returns `None` for anything but `http(s)://host[:port][/path]`; the endpoint
+/// is not echoed anywhere because it may carry credentials.
+pub fn Endpoint::parse(endpoint : String) -> Endpoint? {
+  guard endpoint.find("://") is Some(scheme_end) else { return None }
   let scheme = endpoint[:scheme_end].to_lower().to_owned()
-  guard scheme == "http" || scheme == "https" else {
-    raise Transport(message=INVALID_ENDPOINT)
-  }
+  guard scheme == "http" || scheme == "https" else { return None }
   let rest = endpoint[scheme_end + 3:]
   let (authority, path) = match rest.find("/") {
     Some(slash) => (rest[:slash], rest[slash:])
@@ -29,17 +23,17 @@ fn Endpoint::parse(endpoint : String) -> Endpoint raise RedmineError {
   guard authority != "" &&
     !authority.contains_any(chars="@?#") &&
     !path.contains_any(chars="?#") else {
-    raise Transport(message=INVALID_ENDPOINT)
+    return None
   }
-  {
+  Some({
     origin: "\{scheme}://\{authority}",
     base_path: path.trim_end(chars="/").to_owned(),
-  }
+  })
 }
 
 ///|
 /// Builds a request path by appending percent-encoded segments to the base path.
-fn Endpoint::path(self : Endpoint, segments : Array[String]) -> String {
+pub fn Endpoint::path(self : Endpoint, segments : Array[String]) -> String {
   let builder = StringBuilder()
   builder.write_string(self.base_path)
   for segment in segments {
@@ -54,7 +48,7 @@ fn Endpoint::path(self : Endpoint, segments : Array[String]) -> String {
 
 ///|
 /// Builds `key=value&...` with both sides percent-encoded; empty for no pairs.
-fn encode_query(pairs : Array[(String, String)]) -> String {
+pub fn encode_query(pairs : Array[(String, String)]) -> String {
   pairs
   .map(fn(pair) { "\{@percent.encode(pair.0)}=\{@percent.encode(pair.1)}" })
   .join("&")

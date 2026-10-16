@@ -42,7 +42,7 @@ test "a wiki page decodes with and without comments" {
       #|{"wiki_page":{"title":"Home","text":"hello","version":1,"author":{"id":1,"name":"Redmine Admin"},"comments":null,"project":{"id":1,"name":"Demo"},"created_on":"2026-10-15T18:06:44Z","updated_on":"2026-10-15T18:06:44Z"}}
     ),
   )
-  let page : WikiPage = decode_field(strip_nulls(json), "wiki_page") catch {
+  let page : WikiPage = decode_field(@wire.strip_nulls(json), "wiki_page") catch {
     _ => fail("decode")
   }
   assert_eq(page.comments, None)
