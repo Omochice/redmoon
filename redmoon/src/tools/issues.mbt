@@ -92,7 +92,7 @@ let list_input : @schema.Schema[IssueAction] = {
   let created_on = @schema.optional("created_on", past_date_filter())
   let updated_on = @schema.optional("updated_on", past_date_filter())
   let closed_on = @schema.optional("closed_on", past_date_filter())
-  let limit = @schema.optional("limit", @schema.integer())
+  let limit = @schema.optional("limit", @schema.integer(min=1))
   @schema.record(
     [
       includes.as_member(),
@@ -246,7 +246,10 @@ let update_input : @schema.Schema[IssueAction] = {
     "due_date",
     clearable(@schema.iso_date(), written_date_text("due_date", "is due", true)),
   )
-  let done_ratio = @schema.optional("done_ratio", @schema.integer())
+  let done_ratio = @schema.optional(
+    "done_ratio",
+    @schema.integer(min=0, max=100),
+  )
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
