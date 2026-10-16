@@ -153,6 +153,7 @@
           moonbit = moonbitToolchain;
           # keep-sorted end
           default = [
+            pkgs.go-task
             treefmt.config.build.wrapper
           ]
           ++ actions
