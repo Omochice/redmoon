@@ -76,7 +76,7 @@ test "tools/list in the modern shape" {
   let server = tools_server([greet_tool()])
   assert_eq(
     send(server, modern_request("tools/list")),
-    "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"resultType\":\"complete\",\"tools\":[{\"name\":\"greet\",\"description\":\"Greets someone\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"who\":{\"type\":\"string\",\"pattern\":\"\\\\S\"},\"times\":{\"type\":\"integer\",\"minimum\":1,\"default\":1}},\"required\":[\"who\"],\"additionalProperties\":false}}],\"_meta\":{\"io.modelcontextprotocol/serverInfo\":{\"name\":\"demo\",\"version\":\"1.2.3\"}}}}",
+    "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"resultType\":\"complete\",\"tools\":[{\"name\":\"greet\",\"description\":\"Greets someone\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"who\":{\"type\":\"string\",\"pattern\":\"\\\\S\"},\"times\":{\"type\":\"integer\",\"minimum\":1,\"default\":1}},\"required\":[\"who\"],\"additionalProperties\":false}}],\"ttlMs\":3600000,\"cacheScope\":\"public\",\"_meta\":{\"io.modelcontextprotocol/serverInfo\":{\"name\":\"demo\",\"version\":\"1.2.3\"}}}}",
   )
 }
 
@@ -219,4 +219,13 @@ async test "missing arguments are treated as an empty object" {
     call(tools_server([noargs]), request).contains("\"text\":\"ok\""),
     true,
   )
+}
+
+///|
+test "tools/list in the legacy shape carries no caching hints" {
+  let server = tools_server([greet_tool()])
+  ignore(send(server, initialize_request("2025-11-25")))
+  let text = send(server, { "jsonrpc": "2.0", "id": 3, "method": "tools/list" })
+  assert_eq(text.contains("ttlMs"), false)
+  assert_eq(text.contains("cacheScope"), false)
 }

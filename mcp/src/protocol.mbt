@@ -134,6 +134,7 @@ fn Server::discover(
         ("capabilities", capabilities),
       ]
       self.add_instructions(fields)
+      fields.append(caching_hints)
       Ok(self.result_for(Modern, fields))
     }
   }
@@ -146,12 +147,15 @@ fn Server::list_tools(
 ) -> Result[Json, RpcError] {
   match resolve_era(params, self.initialized) {
     Err(error) => Err(error)
-    Ok(era) =>
-      Ok(
-        self.result_for(era, [
-          ("tools", Json::array(self.tools.map(t => t.to_json()))),
-        ]),
-      )
+    Ok(era) => {
+      let fields : Array[(String, Json)] = [
+        ("tools", Json::array(self.tools.map(t => t.to_json()))),
+      ]
+      if era is Modern {
+        fields.append(caching_hints)
+      }
+      Ok(self.result_for(era, fields))
+    }
   }
 }
 
@@ -179,3 +183,15 @@ fn Server::plan_call(
   }
   Err(invalid_params("Unknown tool: \{name}"))
 }
+
+///|
+/// The tool list is fixed at startup, so an hour is a safe lifetime. Clients
+/// that validate against the 2026-07-28 schema reject list results without it.
+let cache_ttl_ms : Int32 = 3600000
+
+///|
+/// `public` because the list is identical for every user of this server.
+let caching_hints : Array[(String, Json)] = [
+  ("ttlMs", Json(cache_ttl_ms)),
+  ("cacheScope", "public"),
+]
