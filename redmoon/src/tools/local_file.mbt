@@ -33,24 +33,28 @@ async fn write_bounded(
 }
 
 ///|
+/// Runs from a `defer` because cancellation is a signal that `catch` cannot see.
+/// Best-effort, so a failed removal cannot hide the error that explains why the
+/// download stopped.
+async fn discard(file : @fs.File, path : String) -> Unit noraise {
+  file.close()
+  @fs.remove(path) catch {
+    _ => ()
+  }
+}
+
+///|
 pub impl FilePort for LocalFile with fn save(_, path, reader, max_size) {
   let file = @fs.create(path, allow_existing=false) catch {
     error => raise describe_failure(path, error)
   }
+  let mut complete = false
+  defer (if !complete { discard(file, path) })
   write_bounded(file, reader, max_size) catch {
-    error => {
-      file.close()
-      // Best-effort, so a failed removal cannot hide the error that explains
-      // why the download stopped.
-      @fs.remove(path) catch {
-        _ => ()
-      }
-      match error {
-        FileError(_) as e => raise e
-        _ => raise describe_failure(path, error)
-      }
-    }
+    FileError(_) as e => raise e
+    error => raise describe_failure(path, error)
   }
+  complete = true
   file.close()
   @fs.realpath(path) catch {
     error => raise describe_failure(path, error)
