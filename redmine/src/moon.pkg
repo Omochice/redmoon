@@ -1,7 +1,6 @@
 import {
   "omochice/redmine/internal/wire",
   "moonbitlang/async/http",
-  "moonbitlang/async/io",
   "moonbitlang/core/cmp",
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",

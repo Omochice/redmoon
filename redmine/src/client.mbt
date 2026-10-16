@@ -50,7 +50,12 @@ pub async fn send(
 
 ///|
 /// Turns a finished exchange into its JSON body, `null` when the body is empty.
-fn interpret_response(status : Int32, text : String) -> Json raise RedmineError {
+/// Low level: it exists for requests made through `open_client`; `send` already applies it.
+/// Raises `Response` on a non-2xx status and `Transport` when the body is not JSON.
+pub fn interpret_response(
+  status : Int32,
+  text : String,
+) -> Json raise RedmineError {
   guard status >= 200 && status < 300 else {
     raise Response(status~, errors=@wire.errors_from_body(text))
   }
@@ -62,16 +67,31 @@ fn interpret_response(status : Int32, text : String) -> Json raise RedmineError 
 }
 
 ///|
-/// Opens a connection to `origin`. The API key goes only to the endpoint's own
-/// origin, because attachment downloads may be redirected to a third party.
-async fn Redmine::open_client(
-  self : Redmine,
+/// The `scheme://host[:port]` the client talks to.
+/// Low level: it lets `open_client` callers build requests for the same server.
+pub fn origin(redmine : Redmine) -> String {
+  redmine.endpoint.origin
+}
+
+///|
+/// The request path of `segments` below the endpoint's base path, percent-encoded.
+/// Low level: `send` builds this itself.
+pub fn request_path(redmine : Redmine, segments : Array[String]) -> String {
+  redmine.endpoint.path(segments)
+}
+
+///|
+/// Opens a connection to `origin` for a request `send` cannot express, such as a streamed body.
+/// The API key is attached only when `origin` is the endpoint's own, because a download may be
+/// redirected to a third party. The caller closes the client.
+pub async fn open_client(
+  redmine : Redmine,
   origin : String,
   accept? : String,
 ) -> @http.Client {
   let headers : Map[@http.CaseInsensitiveString, String] = Map([])
-  if @wire.same_origin(origin, self.endpoint.origin) {
-    headers["X-Redmine-API-Key"] = self.api_key
+  if @wire.same_origin(origin, redmine.endpoint.origin) {
+    headers["X-Redmine-API-Key"] = redmine.api_key
   }
   if accept is Some(accept) {
     headers["Accept"] = accept
@@ -87,7 +107,11 @@ async fn Redmine::exchange(
   query : Array[(String, String)],
   body : Json?,
 ) -> (Int32, String) {
-  let client = self.open_client(self.endpoint.origin, accept="application/json")
+  let client = open_client(
+    self,
+    self.endpoint.origin,
+    accept="application/json",
+  )
   defer client.close()
   let path = self.endpoint.path(segments)
   let target = if query.is_empty() {

@@ -8,7 +8,7 @@ pub(all) struct Attachment {
   description : String?
   content_url : String
   thumbnail_url : String?
-  author : IdName
+  author : @redmine.IdName
   created_on : String
 } derive(FromJson, ToJson, Eq, Debug)
 
@@ -27,31 +27,32 @@ pub extend Attachment with @debug.Debug::{to_repr}
 ///|
 /// Returns the metadata of the attachment `id`.
 /// Raises `Response` with status 404 when it does not exist.
-pub async fn Redmine::show_attachment(
-  self : Redmine,
+pub async fn show(
+  redmine : @redmine.Redmine,
   id : Int32,
-) -> Attachment raise RedmineError {
-  decode_field(self.get(["attachments", "\{id}.json"]), "attachment")
+) -> Attachment raise @redmine.RedmineError {
+  let json = redmine |> @redmine.send(Get, ["attachments", "\{id}.json"])
+  @decode.decode_field(json, "attachment")
 }
 
 ///|
 /// Streams the content of the attachment `id` into `consume`, together with its metadata.
 /// The connection is closed when `consume` returns or raises, and the reader must not outlive it.
 /// Errors raised by `consume` propagate unchanged; every failure of the download itself is a `RedmineError`.
-pub async fn Redmine::download_attachment(
-  self : Redmine,
+pub async fn download(
+  redmine : @redmine.Redmine,
   id : Int32,
   consume : async (Attachment, &@io.Reader) -> Unit,
 ) -> Unit {
-  let attachment = self.show_attachment(id)
-  let mut location = self.attachment_content_location(attachment)
+  let attachment = redmine |> show(id)
+  let mut location = content_location(redmine, attachment)
   for followed = 0; followed <= MAX_REDIRECTS; followed = followed + 1 {
-    let client = self.open_client(location.origin) catch {
-      error => raise Transport(message="\{error}")
+    let client = @redmine.open_client(redmine, location.origin) catch {
+      error => raise @redmine.Transport(message="\{error}")
     }
     let next = {
       errdefer client.close()
-      attachment_fetch(client, location)
+      fetch(client, location)
     }
     match next {
       Some(next) => {
@@ -65,7 +66,7 @@ pub async fn Redmine::download_attachment(
       }
     }
   }
-  raise Transport(
+  raise @redmine.Transport(
     message="attachment download followed more than \{MAX_REDIRECTS} redirects",
   )
 }
@@ -73,15 +74,18 @@ pub async fn Redmine::download_attachment(
 ///|
 /// Uploads the `size` bytes of `body` and returns the token that attaches them
 /// to a record through the `uploads` field of an update.
-pub async fn Redmine::upload(
-  self : Redmine,
+pub async fn upload(
+  redmine : @redmine.Redmine,
   body : &@io.Reader,
   size : Int64,
   filename~ : String,
-) -> String raise RedmineError {
-  let (status, text) = self.attachment_post_upload(body, size, filename) catch {
-    error => raise Transport(message="\{error}")
+) -> String raise @redmine.RedmineError {
+  let (status, text) = post_upload(redmine, body, size, filename) catch {
+    error => raise @redmine.Transport(message="\{error}")
   }
-  let upload : Json = decode_field(interpret_response(status, text), "upload")
-  decode_field(upload, "token")
+  let upload : Json = @decode.decode_field(
+    @redmine.interpret_response(status, text),
+    "upload",
+  )
+  @decode.decode_field(upload, "token")
 }

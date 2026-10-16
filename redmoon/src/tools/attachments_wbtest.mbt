@@ -26,7 +26,7 @@ fn FakeAttachments::check(
 }
 
 ///|
-fn fake_attachment(filesize : Int32) -> @redmine.Attachment {
+fn fake_attachment(filesize : Int32) -> @attachments.Attachment {
   {
     id: 7,
     filename: "report.txt",

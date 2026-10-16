@@ -7,28 +7,28 @@ const MAX_REDIRECTS : Int32 = 20
 /// The first request goes to the configured endpoint, not to the host `content_url`
 /// names: behind a misconfigured reverse proxy Redmine reports its own idea of
 /// scheme and host, which can be plain http even when it was reached over https.
-fn Redmine::attachment_content_location(
-  self : Redmine,
+fn content_location(
+  redmine : @redmine.Redmine,
   attachment : Attachment,
-) -> @wire.Location raise RedmineError {
+) -> @wire.Location raise @redmine.RedmineError {
   guard @wire.parse_absolute_url(attachment.content_url) is Some(content) else {
-    raise Transport(message="attachment has an invalid `content_url`")
+    raise @redmine.Transport(message="attachment has an invalid `content_url`")
   }
-  { origin: self.endpoint.origin, target: content.target, }
+  { origin: @redmine.origin(redmine), target: content.target, }
 }
 
 ///|
 /// Requests `location` on `client`. Returns the next location when the answer is
 /// a redirect, and `None` when the body of a successful answer is ready to be read.
-async fn attachment_fetch(
+async fn fetch(
   client : @http.Client,
   location : @wire.Location,
-) -> @wire.Location? raise RedmineError {
+) -> @wire.Location? raise @redmine.RedmineError {
   let response = try {
     client.request(Get, location.target)
     client.end_request()
   } catch {
-    error => raise Transport(message="\{error}")
+    error => raise @redmine.Transport(message="\{error}")
   }
   let redirect = if @wire.is_redirect_status(response.code) {
     response.headers.get("Location")
@@ -37,7 +37,7 @@ async fn attachment_fetch(
   }
   if redirect is Some(target) {
     guard @wire.resolve_location(location, target) is Some(next) else {
-      raise Transport(
+      raise @redmine.Transport(
         message="refused to follow a redirect to an unsupported URL",
       )
     }
@@ -52,7 +52,10 @@ async fn attachment_fetch(
     } catch {
       _ => ""
     }
-    raise Response(status=response.code, errors=@wire.errors_from_body(text))
+    raise @redmine.Response(
+      status=response.code,
+      errors=@wire.errors_from_body(text),
+    )
   }
   None
 }
@@ -61,15 +64,19 @@ async fn attachment_fetch(
 const ERROR_BODY_LIMIT : Int32 = 65536
 
 ///|
-async fn Redmine::attachment_post_upload(
-  self : Redmine,
+async fn post_upload(
+  redmine : @redmine.Redmine,
   body : &@io.Reader,
   size : Int64,
   filename : String,
 ) -> (Int32, String) {
-  let client = self.open_client(self.endpoint.origin, accept="application/json")
+  let client = @redmine.open_client(
+    redmine,
+    @redmine.origin(redmine),
+    accept="application/json",
+  )
   defer client.close()
-  let path = self.endpoint.path(["uploads.json"])
+  let path = @redmine.request_path(redmine, ["uploads.json"])
   client.request(
     Post,
     "\{path}?\{@wire.encode_query([("filename", filename)])}",

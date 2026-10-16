@@ -1,12 +1,12 @@
 ///|
 /// The Redmine operations behind `redmine_attachments`.
 pub(open) trait AttachmentPort {
-  async fn show_attachment(Self, Int32) -> @redmine.Attachment raise @redmine.RedmineError
+  async fn show_attachment(Self, Int32) -> @attachments.Attachment raise @redmine.RedmineError
   /// Raises plain errors because the consumer's own failures pass through it.
   async fn download_attachment(
     Self,
     Int32,
-    async (@redmine.Attachment, &@io.Reader) -> Unit,
+    async (@attachments.Attachment, &@io.Reader) -> Unit,
   ) -> Unit
   async fn upload_file(Self, &@io.Reader, Int64, String) -> String raise @redmine.RedmineError
   async fn attach_uploads(Self, Int32, @redmine.IssueUpdate) -> Unit raise @redmine.RedmineError
@@ -14,7 +14,7 @@ pub(open) trait AttachmentPort {
 
 ///|
 pub impl AttachmentPort for @redmine.Redmine with fn show_attachment(self, id) {
-  self.show_attachment(id)
+  self |> @attachments.show(id)
 }
 
 ///|
@@ -23,7 +23,7 @@ pub impl AttachmentPort for @redmine.Redmine with fn download_attachment(
   id,
   consume,
 ) {
-  self.download_attachment(id, consume)
+  self |> @attachments.download(id, consume)
 }
 
 ///|
@@ -33,7 +33,7 @@ pub impl AttachmentPort for @redmine.Redmine with fn upload_file(
   size,
   filename,
 ) {
-  self.upload(reader, size, filename~)
+  self |> @attachments.upload(reader, size, filename~)
 }
 
 ///|
