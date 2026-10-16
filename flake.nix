@@ -201,10 +201,20 @@
         devShells = pkgs.lib.pipe devPackages [
           (pkgs.lib.attrsets.mapAttrs (
             name: buildInputs:
-            pkgs.mkShell {
-              buildInputs = buildInputs ++ pre-commit-check.enabledPackages;
-              inherit (pre-commit-check) shellHook;
-            }
+            pkgs.mkShell (
+              {
+                buildInputs =
+                  buildInputs
+                  ++ pre-commit-check.enabledPackages
+                  ++ pkgs.lib.optional pkgs.stdenv.hostPlatform.isDarwin pkgs.llvmPackages.lld;
+                inherit (pre-commit-check) shellHook;
+              }
+              # nixpkgs' ld64 cannot build compact unwind info for moonc's output and
+              # prints a warning per function; lld from the same LLVM release builds it.
+              // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+                NIX_CFLAGS_LINK = "-fuse-ld=lld";
+              }
+            )
           ))
         ];
         formatter = treefmt.config.build.wrapper;
