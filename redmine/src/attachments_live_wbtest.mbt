@@ -17,15 +17,15 @@ async test "live: upload, attach, show and download round-trip" {
   let reader = @io.MemoryReader(w => w.write(content))
   let token = redmine.upload(reader, content.length().to_int64(), filename~)
   assert_false(token.is_empty())
-  let created = redmine.send(Post, ["issues.json"], body={
+  let created = send(redmine, Post, ["issues.json"], body={
     "issue": { "project_id": 1, "subject": "attachments live \{filename}" },
   })
   let issue_id : Int32 = decode_field(decode_field(created, "issue"), "id")
-  defer ignore(redmine.send(Delete, ["issues", "\{issue_id}.json"]))
-  let _ = redmine.send(Put, ["issues", "\{issue_id}.json"], body={
+  defer ignore(send(redmine, Delete, ["issues", "\{issue_id}.json"]))
+  let _ = send(redmine, Put, ["issues", "\{issue_id}.json"], body={
     "issue": { "uploads": [{ "token": token, "filename": filename }] },
   })
-  let shown = redmine.send(Get, ["issues", "\{issue_id}.json"], query=[
+  let shown = send(redmine, Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
   let attachments : Array[Attachment] = decode_field(
@@ -56,15 +56,15 @@ async test "live: an error raised by consume propagates unchanged" {
   let reader = @io.MemoryReader(w => w.write(content))
   let filename = "attachments-live-consume-\{@env.now()}.txt"
   let token = redmine.upload(reader, 1L, filename~)
-  let created = redmine.send(Post, ["issues.json"], body={
+  let created = send(redmine, Post, ["issues.json"], body={
     "issue": { "project_id": 1, "subject": "attachments consume \{filename}" },
   })
   let issue_id : Int32 = decode_field(decode_field(created, "issue"), "id")
-  defer ignore(redmine.send(Delete, ["issues", "\{issue_id}.json"]))
-  let _ = redmine.send(Put, ["issues", "\{issue_id}.json"], body={
+  defer ignore(send(redmine, Delete, ["issues", "\{issue_id}.json"]))
+  let _ = send(redmine, Put, ["issues", "\{issue_id}.json"], body={
     "issue": { "uploads": [{ "token": token, "filename": filename }] },
   })
-  let shown = redmine.send(Get, ["issues", "\{issue_id}.json"], query=[
+  let shown = send(redmine, Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
   let attachments : Array[Attachment] = decode_field(

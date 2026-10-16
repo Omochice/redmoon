@@ -19,7 +19,8 @@ async fn time_entries_ensure_time_tracking(
   }
   let body_names = names.map(fn(name) { Json::string(name) })
   body_names.push(Json::string("time_tracking"))
-  let _ = redmine.send(
+  let _ = send(
+    redmine,
     Put,
     ["projects", "1.json"],
     body=Json::object({
@@ -40,7 +41,10 @@ async test "live: a time entry is created, listed, shown, updated, and deleted" 
   }
   let redmine = Redmine::new(endpoint~, api_key~)
   time_entries_ensure_time_tracking(redmine)
-  let activities = redmine.list_time_entry_activities()
+  let activities : Array[IdName] = decode_field(
+    send(redmine, Get, ["enumerations", "time_entry_activities.json"]),
+    "time_entry_activities",
+  )
   assert_false(activities.is_empty())
   let activity_id = activities[0].id
   let spent_on = "2031-06-15"

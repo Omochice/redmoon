@@ -179,7 +179,8 @@ pub async fn Redmine::create_time_entry(
   self : Redmine,
   time_entry : TimeEntryCreate,
 ) -> TimeEntry raise RedmineError {
-  let json = self.send(
+  let json = send(
+    self,
     Post,
     ["time_entries.json"],
     body=time_entry_body(time_entry),
@@ -195,7 +196,8 @@ pub async fn Redmine::update_time_entry(
   id : Int32,
   time_entry : TimeEntryUpdate,
 ) -> Unit raise RedmineError {
-  let _ = self.send(
+  let _ = send(
+    self,
     Put,
     ["time_entries", "\{id}.json"],
     body=time_entry_body(time_entry),
@@ -209,7 +211,7 @@ pub async fn Redmine::delete_time_entry(
   self : Redmine,
   id : Int32,
 ) -> Unit raise RedmineError {
-  let _ = self.send(Delete, ["time_entries", "\{id}.json"])
+  let _ = send(self, Delete, ["time_entries", "\{id}.json"])
 }
 
 ///|

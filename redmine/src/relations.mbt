@@ -132,7 +132,8 @@ pub async fn Redmine::create_relation(
   relation_type~ : RelationType,
   delay? : Int32,
 ) -> Relation raise RedmineError {
-  let json = self.send(
+  let json = send(
+    self,
     Post,
     ["issues", issue_id.to_string(), "relations.json"],
     body=relation_body(issue_to_id, relation_type, delay),
@@ -147,7 +148,7 @@ pub async fn Redmine::delete_relation(
   self : Redmine,
   id : Int32,
 ) -> Unit raise RedmineError {
-  ignore(self.send(Delete, ["relations", "\{id}.json"]))
+  ignore(send(self, Delete, ["relations", "\{id}.json"]))
 }
 
 ///|

@@ -1,0 +1,13 @@
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+  "omochice/redmine/internal/decode",
+}
+
+import {
+  "moonbitlang/async",
+  "omochice/redmine/internal/livetest",
+} for "test"
+
+supported_targets = "+native"

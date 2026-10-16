@@ -22,35 +22,35 @@ pub extend Enumeration with @debug.Debug::{to_repr}
 ///|
 /// Lists the time entry activities.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::list_time_entry_activities(
-  self : Redmine,
-) -> Array[Enumeration] raise RedmineError {
-  self.list_enumerations("time_entry_activities")
+pub async fn time_entry_activities(
+  redmine : @redmine.Redmine,
+) -> Array[Enumeration] raise @redmine.RedmineError {
+  list(redmine, "time_entry_activities")
 }
 
 ///|
 /// Lists the issue priorities.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::list_issue_priorities(
-  self : Redmine,
-) -> Array[Enumeration] raise RedmineError {
-  self.list_enumerations("issue_priorities")
+pub async fn issue_priorities(
+  redmine : @redmine.Redmine,
+) -> Array[Enumeration] raise @redmine.RedmineError {
+  list(redmine, "issue_priorities")
 }
 
 ///|
 /// Lists the document categories.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
-pub async fn Redmine::list_document_categories(
-  self : Redmine,
-) -> Array[Enumeration] raise RedmineError {
-  self.list_enumerations("document_categories")
+pub async fn document_categories(
+  redmine : @redmine.Redmine,
+) -> Array[Enumeration] raise @redmine.RedmineError {
+  list(redmine, "document_categories")
 }
 
 ///|
-async fn Redmine::list_enumerations(
-  self : Redmine,
+async fn list(
+  redmine : @redmine.Redmine,
   kind : String,
-) -> Array[Enumeration] raise RedmineError {
-  let json = self.get(["enumerations", kind + ".json"])
-  decode_field(json, kind)
+) -> Array[Enumeration] raise @redmine.RedmineError {
+  let json = redmine |> @redmine.send(Get, ["enumerations", kind + ".json"])
+  @decode.decode_field(json, kind)
 }

@@ -24,7 +24,8 @@ async fn create_probe_issue(
     "priority_id": ToJson::to_json(2),
     "subject": ToJson::to_json(subject),
   }
-  let json = redmine.send(
+  let json = send(
+    redmine,
     Post,
     ["issues.json"],
     body=Json::object({ "issue": Json::object(issue) }),
@@ -38,7 +39,7 @@ async fn delete_probe_issue(
   redmine : Redmine,
   id : Int32,
 ) -> Unit raise RedmineError {
-  ignore(redmine.send(Delete, ["issues", "\{id}.json"]))
+  ignore(send(redmine, Delete, ["issues", "\{id}.json"]))
 }
 
 ///|

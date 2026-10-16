@@ -4,7 +4,7 @@ struct FakeEnumerations {
 }
 
 ///|
-fn fake_enumeration(id : Int32, name : String) -> @redmine.Enumeration {
+fn fake_enumeration(id : Int32, name : String) -> @enumerations.Enumeration {
   { id, name, is_default: id == 9, active: true, }
 }
 

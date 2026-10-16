@@ -33,7 +33,7 @@ pub async fn Redmine::create_issue(
   self : Redmine,
   issue : IssueCreate,
 ) -> Issue raise RedmineError {
-  decode_field(self.send(Post, ["issues.json"], body=issue.to_body()), "issue")
+  decode_field(send(self, Post, ["issues.json"], body=issue.to_body()), "issue")
 }
 
 ///|
@@ -44,7 +44,7 @@ pub async fn Redmine::update_issue(
   id : Int32,
   update : IssueUpdate,
 ) -> Unit raise RedmineError {
-  ignore(self.send(Put, ["issues", "\{id}.json"], body=update.to_body()))
+  ignore(send(self, Put, ["issues", "\{id}.json"], body=update.to_body()))
 }
 
 ///|
@@ -54,7 +54,7 @@ pub async fn Redmine::delete_issue(
   self : Redmine,
   id : Int32,
 ) -> Unit raise RedmineError {
-  ignore(self.send(Delete, ["issues", "\{id}.json"]))
+  ignore(send(self, Delete, ["issues", "\{id}.json"]))
 }
 
 ///|
@@ -72,7 +72,8 @@ pub async fn Redmine::update_journal(
     ("private_notes", private_notes.map(fn(v) { Json(v) })),
   ])
   ignore(
-    self.send(
+    send(
+      self,
       Put,
       ["journals", "\{id}.json"],
       body=Json::object({ "journal": journal }),

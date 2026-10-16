@@ -173,7 +173,8 @@ pub async fn Redmine::create_version(
   project : ProjectRef,
   attributes : VersionCreate,
 ) -> Version raise RedmineError {
-  let json = self.send(
+  let json = send(
+    self,
     Post,
     ["projects", project.segment(), "versions.json"],
     body=version_body(
@@ -196,7 +197,8 @@ pub async fn Redmine::update_version(
   id : Int32,
   attributes : VersionUpdate,
 ) -> Unit raise RedmineError {
-  let _ = self.send(
+  let _ = send(
+    self,
     Put,
     ["versions", id.to_string() + ".json"],
     body=version_body(
@@ -217,7 +219,7 @@ pub async fn Redmine::delete_version(
   self : Redmine,
   id : Int32,
 ) -> Unit raise RedmineError {
-  let _ = self.send(Delete, ["versions", id.to_string() + ".json"])
+  let _ = send(self, Delete, ["versions", id.to_string() + ".json"])
 }
 
 ///|

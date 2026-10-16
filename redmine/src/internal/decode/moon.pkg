@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+supported_targets = "+native"

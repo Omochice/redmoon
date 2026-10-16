@@ -3,6 +3,7 @@ import {
   "moonbitlang/async/io",
   "omochice/mcp",
   "omochice/redmine",
+  "omochice/redmine/enumerations",
   "omochice/redmoon/build",
   "omochice/schema",
 }

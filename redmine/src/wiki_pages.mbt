@@ -117,7 +117,8 @@ pub async fn Redmine::create_wiki_page(
   comments? : String,
   parent_title? : String,
 ) -> Unit raise RedmineError {
-  let _ = self.send(
+  let _ = send(
+    self,
     Put,
     wiki_page_segments(project, title),
     body=wiki_page_body(text, comments?, parent_title?),
@@ -137,7 +138,8 @@ pub async fn Redmine::update_wiki_page(
   version? : Int32,
   parent_title? : String,
 ) -> Unit raise RedmineError {
-  let _ = self.send(
+  let _ = send(
+    self,
     Put,
     wiki_page_segments(project, title),
     body=wiki_page_body(text, comments?, version?, parent_title?),
@@ -152,7 +154,7 @@ pub async fn Redmine::delete_wiki_page(
   project : ProjectRef,
   title : String,
 ) -> Unit raise RedmineError {
-  let _ = self.send(Delete, wiki_page_segments(project, title))
+  let _ = send(self, Delete, wiki_page_segments(project, title))
 }
 
 ///|

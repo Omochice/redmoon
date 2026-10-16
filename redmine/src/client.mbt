@@ -27,18 +27,22 @@ async fn Redmine::get(
   segments : Array[String],
   query? : Array[(String, String)],
 ) -> Json raise RedmineError {
-  self.send(Get, segments, query?)
+  send(self, Get, segments, query?)
 }
 
 ///|
-async fn Redmine::send(
-  self : Redmine,
+/// Sends one request to the Redmine API and returns the response body as JSON, `null` when it is empty.
+/// `segments` are appended to the endpoint's path and percent-encoded; `null` members are removed from the answer.
+/// This is the escape hatch for endpoints the SDK has no function for; prefer the resource packages.
+/// Raises `Response` on a non-2xx answer and `Transport` on any other failure.
+pub async fn send(
+  redmine : Redmine,
   meth : @http.RequestMethod,
   segments : Array[String],
   query~ : Array[(String, String)] = [],
   body? : Json,
 ) -> Json raise RedmineError {
-  let (status, text) = self.exchange(meth, segments, query, body) catch {
+  let (status, text) = redmine.exchange(meth, segments, query, body) catch {
     error => raise Transport(message="\{error}")
   }
   interpret_response(status, text)

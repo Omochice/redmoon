@@ -310,7 +310,7 @@ async test "live: a time entry is created, listed, shown, updated, and deleted" 
   }
   let redmine = @redmine.Redmine::new(endpoint~, api_key~)
   let tools = [time_entries_tool(redmine, Full)]
-  let activity_id = redmine.list_time_entry_activities()[0].id
+  let activity_id = (redmine |> @enumerations.time_entry_activities())[0].id
   let created = call_tool(tools, "redmine_time_entries", {
     "create": {
       "hours": 0.5,
