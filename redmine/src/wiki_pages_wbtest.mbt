@@ -1,7 +1,7 @@
 ///|
-test "wiki page segments sanitize the title and select the version" {
+test "wiki page segments convert the title and select the version" {
   assert_eq(wiki_page_segments(Identifier("demo"), "My Page.v2/x"), [
-    "projects", "demo", "wiki", "My_Page_v2_x.json",
+    "projects", "demo", "wiki", "My_Pagev2x.json",
   ])
   assert_eq(wiki_page_segments(Id(1), "Home", version=3), [
     "projects", "1", "wiki", "Home", "3.json",
@@ -48,4 +48,22 @@ test "a wiki page decodes with and without comments" {
   assert_eq(page.comments, None)
   assert_eq(page.author, { id: 1, name: "Redmine Admin", })
   assert_eq(page.attachments, None)
+}
+
+///|
+test "wiki titles are converted the way Redmine's titleize does" {
+  assert_eq(wiki_title_segment("Release v1.0"), "Release_v10")
+  assert_eq(wiki_title_segment("a  b"), "a_b")
+  assert_eq(wiki_title_segment("a \t\nb"), "a_b")
+  assert_eq(wiki_title_segment("x,y"), "xy")
+  assert_eq(wiki_title_segment("a/b?c;d|e:f"), "abcdef")
+}
+
+///|
+test "wiki page body converts parent_title like a page title" {
+  let body = wiki_page_body("t", parent_title="Release v1.0")
+  assert_eq(
+    body.stringify(),
+    "{\"wiki_page\":{\"text\":\"t\",\"parent_title\":\"Release_v10\"}}",
+  )
 }
