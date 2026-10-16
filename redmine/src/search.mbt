@@ -122,7 +122,9 @@ fn search_query_pairs(query : SearchQuery) -> Array[(String, String)] {
   if query.scope is Some(scope) {
     pairs.push(("scope", scope))
   }
-  search_push_flag(pairs, "all_words", query.all_words)
+  if query.all_words is Some(all_words) {
+    pairs.push(("all_words", if all_words { "1" } else { "" }))
+  }
   search_push_flag(pairs, "titles_only", query.titles_only)
   search_push_flag(pairs, "open_issues", query.open_issues)
   search_push_flag(pairs, "issues", query.issues)
@@ -139,7 +141,7 @@ fn search_query_pairs(query : SearchQuery) -> Array[(String, String)] {
 }
 
 ///|
-/// A flag is sent only when true, because Redmine enables a flag as soon as its parameter is present.
+/// Unlike `all_words`, a flag is sent only when true, because Redmine enables a flag as soon as its parameter is present.
 fn search_push_flag(
   pairs : Array[(String, String)],
   name : String,

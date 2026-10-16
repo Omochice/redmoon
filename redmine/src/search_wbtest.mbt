@@ -104,3 +104,9 @@ test "a missing total_count counts as no matches" {
   }
   assert_eq(total, 0)
 }
+
+///|
+test "all_words false is sent as an empty value because Redmine defaults it to true" {
+  let query = { ..search_query("login"), all_words: Some(false), }
+  assert_eq(search_query_pairs(query), [("q", "login"), ("all_words", "")])
+}
