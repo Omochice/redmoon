@@ -1,6 +1,7 @@
 coverage:
   paths:
     - _build/coverage/cobertura.xml
+    - _build/coverage/keyring.xml
   exclude:
     - redmine/src/internal/livetest/**
     - mcp/src/example/**

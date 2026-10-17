@@ -4,6 +4,7 @@ vars:
   REDMINE_URL: http://localhost:3000
   API_KEY_FILE: _build/redmine-api-key
   COVERAGE_REPORT: _build/coverage/cobertura.xml
+  KEYRING_COVERAGE_REPORT: _build/coverage/keyring.xml
 
 tasks:
   registry:
@@ -30,6 +31,15 @@ tasks:
     deps: [registry]
     cmds:
       - REDMOON_TEST_KEYRING=1 moon test -p omochice/keyring {{.CLI_ARGS}}
+
+  test:keyring:coverage:
+    desc: Run the keyring tests including the store round trip with coverage and write {{.KEYRING_COVERAGE_REPORT}}
+    deps: [registry]
+    cmds:
+      - moon coverage clean
+      - REDMOON_TEST_KEYRING=1 moon test --enable-coverage -p omochice/keyring
+      - mkdir -p {{dir .KEYRING_COVERAGE_REPORT}}
+      - moon coverage report -f cobertura -p omochice/keyring -o {{.KEYRING_COVERAGE_REPORT}}
 
   test:coverage:
     desc: "Run the unit tests with coverage and write {{.COVERAGE_REPORT}}; arguments after `--` go to `moon test`"

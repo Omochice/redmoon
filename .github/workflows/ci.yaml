@@ -52,7 +52,12 @@ jobs:
 
       - run: nix develop --command task test
 
-      - run: nix develop --command task test:keyring
+      - run: nix develop --command task test:keyring:coverage
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-keyring
+          path: _build/coverage/keyring.xml
 
   integration:
     runs-on: ubuntu-latest
@@ -93,7 +98,7 @@ jobs:
         run: docker compose logs
 
   report:
-    needs: integration
+    needs: [integration, test-macos]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -111,8 +116,9 @@ jobs:
 
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: coverage
+          pattern: coverage*
           path: _build/coverage
+          merge-multiple: true
 
       - name: Expose Nix-provided octocov on PATH
         run: |
