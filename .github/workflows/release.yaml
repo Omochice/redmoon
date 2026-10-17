@@ -29,14 +29,14 @@ jobs:
     if: needs.release-please.outputs.released == 'true'
     permissions:
       contents: read
-    uses: ./.github/workflows/toolchain.yaml
+    uses: $/.github/workflows/toolchain.yaml
 
   build:
     needs: [release-please, toolchain]
     if: needs.release-please.outputs.released == 'true'
     permissions:
       contents: read
-    uses: ./.github/workflows/build.yaml
+    uses: $/.github/workflows/build.yaml
     with:
       version: ${{ needs.toolchain.outputs.version }}
 

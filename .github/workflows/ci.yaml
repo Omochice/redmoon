@@ -23,7 +23,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-nix
+      - uses: $/.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -39,7 +39,7 @@ jobs:
   toolchain:
     permissions:
       contents: read
-    uses: ./.github/workflows/toolchain.yaml
+    uses: $/.github/workflows/toolchain.yaml
 
   test-native:
     needs: toolchain
@@ -71,7 +71,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-nix
+      - uses: $/.github/actions/setup-nix
         if: matrix.toolchain == 'nix'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -114,7 +114,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-nix
+      - uses: $/.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -152,7 +152,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/setup-nix
+      - uses: $/.github/actions/setup-nix
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -179,7 +179,7 @@ jobs:
     needs: toolchain
     permissions:
       contents: read
-    uses: ./.github/workflows/build.yaml
+    uses: $/.github/workflows/build.yaml
     with:
       version: ${{ needs.toolchain.outputs.version }}
 
