@@ -22,6 +22,18 @@ pub extend Enumeration with @debug.Debug::{to_repr}
 ///|
 /// Lists the time entry activities.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let activities = redmine |> @enumerations.time_entry_activities()
+///   ignore(activities)
+/// }
+/// ```
 pub async fn time_entry_activities(
   redmine : @redmine.Redmine,
 ) -> Array[Enumeration] raise @redmine.RedmineError {
@@ -31,6 +43,18 @@ pub async fn time_entry_activities(
 ///|
 /// Lists the issue priorities.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let priorities = redmine |> @enumerations.issue_priorities()
+///   ignore(priorities)
+/// }
+/// ```
 pub async fn issue_priorities(
   redmine : @redmine.Redmine,
 ) -> Array[Enumeration] raise @redmine.RedmineError {
@@ -40,6 +64,18 @@ pub async fn issue_priorities(
 ///|
 /// Lists the document categories.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let categories = redmine |> @enumerations.document_categories()
+///   ignore(categories)
+/// }
+/// ```
 pub async fn document_categories(
   redmine : @redmine.Redmine,
 ) -> Array[Enumeration] raise @redmine.RedmineError {
