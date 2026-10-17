@@ -164,8 +164,13 @@ pub fn delete(service : String, account : String) -> Unit raise KeyringError {
 /// ```
 pub fn list(service : String) -> Array[String] raise KeyringError {
   check(ffi_list(@utf8.encode(service)))
+  parse_accounts(decode(take_result()))
+}
+
+///|
+fn parse_accounts(text : String) -> Array[String] {
   let accounts = []
-  for line in decode(take_result()).split("\n") {
+  for line in text.split("\n") {
     if line.length() > 0 {
       accounts.push(line.to_owned())
     }
