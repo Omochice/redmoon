@@ -138,11 +138,7 @@ pub async fn upload(
   let (status, text) = post_upload(redmine, body, size, filename) catch {
     error => raise @redmine.Transport(message="\{error}")
   }
-  let body = match @core.interpret(status, text) {
-    Body(json) => json
-    Rejected(status~, errors~) => raise @redmine.Response(status~, errors~)
-    Malformed(message~) => raise @redmine.Transport(message~)
-  }
+  let body = @redmine.unwrap(@core.interpret(status, text))
   let upload : Json = @decode.decode_field(body, "upload")
   @decode.decode_field(upload, "token")
 }

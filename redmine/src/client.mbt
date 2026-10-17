@@ -68,13 +68,15 @@ pub async fn send(
   let (status, text) = redmine.exchange(meth, segments, query, body) catch {
     error => raise Transport(message="\{error}")
   }
-  interpret_response(status, text)
+  unwrap(@core.interpret(status, text))
 }
 
 ///|
-/// Turns a finished exchange into its JSON body, `null` when the body is empty.
-fn interpret_response(status : Int32, text : String) -> Json raise RedmineError {
-  match @core.interpret(status, text) {
+/// Turns a classified exchange into its JSON body, raising the matching `RedmineError` otherwise.
+/// Public only so that the resource packages report failures the way `send` does; its
+/// parameter type lives in an internal package, so nothing outside the SDK can call it.
+pub fn unwrap(interpretation : @core.Interpretation) -> Json raise RedmineError {
+  match interpretation {
     Body(json) => json
     Rejected(status~, errors~) => raise Response(status~, errors~)
     Malformed(message~) => raise Transport(message~)
