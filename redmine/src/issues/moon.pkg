@@ -13,4 +13,8 @@ import {
   "omochice/redmine/internal/livetest",
 } for "test"
 
+import {
+  "omochice/redmine/attachments",
+} for "wbtest"
+
 supported_targets = "+native"
