@@ -1,6 +1,6 @@
 # Verification harness
 
-`compose.yaml`, driven by the tasks in `Taskfile.yml` ([ADR-015](./adr-015-task-runner.md)), brings up a throwaway Redmine instance so redmoon and its SDK can be exercised against a real Redmine REST API.
+`compose.yaml`, driven by the tasks in `Taskfile.yaml` ([ADR-015](./adr-015-task-runner.md)), brings up a throwaway Redmine instance so redmoon and its SDK can be exercised against a real Redmine REST API.
 It is a verification aid, not a deployment artifact.
 
 ## Start

@@ -66,7 +66,7 @@ On Windows there is no POSIX shell unless one is installed.
 
 ## Decision
 
-We will define the project's commands as Task tasks in a `Taskfile.yml` at the repository root, provide `go-task` in the nix devShell, and have every CI job call the tasks instead of repeating commands.
+We will define the project's commands as Task tasks in a `Taskfile.yaml` at the repository root, provide `go-task` in the nix devShell, and have every CI job call the tasks instead of repeating commands.
 
 ### 1. The tasks cover the commands that are repeated today
 
