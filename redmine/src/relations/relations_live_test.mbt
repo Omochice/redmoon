@@ -3,7 +3,9 @@ async test "live: a relation links two issues and is listed, shown and deleted" 
   guard @livetest.redmine() is Some(redmine) else { return }
   let nonce = @env.now().to_string()
   let first = @livetest.create_probe_issue(redmine, "relsearch\{nonce}a")
+  defer @livetest.delete_probe_issue(redmine, first)
   let second = @livetest.create_probe_issue(redmine, "relsearch\{nonce}b")
+  defer @livetest.delete_probe_issue(redmine, second)
   let relation = redmine
     |> @relations.create(
       first,
@@ -21,6 +23,4 @@ async test "live: a relation links two issues and is listed, shown and deleted" 
   assert_false(
     (redmine |> @relations.list(first)).any(fn(r) { r.id == relation.id }),
   )
-  @livetest.delete_probe_issue(redmine, first)
-  @livetest.delete_probe_issue(redmine, second)
 }
