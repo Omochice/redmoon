@@ -85,6 +85,18 @@ pub extend Attachment with @debug.Debug::{to_repr}
 ///|
 /// Lists the wiki pages of `project`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let pages = redmine |> @wiki.list(Identifier("demo"))
+///   ignore(pages)
+/// }
+/// ```
 pub async fn list(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
@@ -97,6 +109,21 @@ pub async fn list(
 ///|
 /// Shows a wiki page, at `version` when given and at the latest otherwise.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let page = (redmine |> @wiki.show(Identifier("demo"), "Getting started")) catch {
+///     @redmine.Response(status=404, ..) => return
+///     error => raise error
+///   }
+///   ignore(page)
+/// }
+/// ```
 pub async fn show(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
@@ -111,6 +138,23 @@ pub async fn show(
 ///|
 /// Creates the wiki page `title`, or replaces its text when it already exists.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @wiki.create(
+///     Identifier("demo"),
+///     "Getting started",
+///     "h1. Getting started",
+///     comments="First draft",
+///   )
+/// }
+/// ```
 pub async fn create(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
@@ -133,6 +177,23 @@ pub async fn create(
 /// Replaces the text of the wiki page `title`.
 /// With `version`, Redmine answers 409 when the page has changed since that version.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @wiki.update(
+///     Identifier("demo"),
+///     "Getting started",
+///     "h1. Getting started\n\nInstall the SDK.",
+///     version=3,
+///   )
+/// }
+/// ```
 pub async fn update(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
@@ -155,6 +216,17 @@ pub async fn update(
 ///|
 /// Deletes the wiki page `title`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine |> @wiki.delete(Identifier("demo"), "Getting started")
+/// }
+/// ```
 pub async fn delete(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
