@@ -107,6 +107,8 @@ pub async fn download(
 ///|
 /// Uploads the `size` bytes of `body` and returns the token that attaches them
 /// to a record through the `uploads` field of an update.
+/// `body` stays the caller's: close it when done, because a failed upload returns
+/// without draining it.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -117,6 +119,7 @@ pub async fn download(
 ///   )
 ///   let content = b"hello"
 ///   let reader = @io.MemoryReader(w => w.write(content))
+///   defer reader.close()
 ///   let token = redmine
 ///     |> @attachments.upload(
 ///       reader,
