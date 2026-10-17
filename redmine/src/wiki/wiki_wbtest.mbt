@@ -68,3 +68,19 @@ test "wiki page body converts parent_title like a page title" {
     "{\"wiki_page\":{\"text\":\"t\",\"parent_title\":\"Release_v10\"}}",
   )
 }
+
+///|
+test "the attachments of a wiki page carry the full metadata" {
+  let json = @json.parse(
+    (
+      #|{"wiki_page":{"title":"Home","text":"hello","version":1,"author":{"id":1,"name":"Redmine Admin"},"comments":null,"created_on":"2026-10-15T18:06:44Z","updated_on":"2026-10-15T18:06:44Z","attachments":[{"id":4,"filename":"f.txt","filesize":12,"content_type":"text/plain","description":"","content_url":"http://localhost:3000/attachments/download/4/f.txt","author":{"id":1,"name":"Redmine Admin"},"created_on":"2026-10-15T18:06:44Z"}]}}
+    ),
+  )
+  let page : Page = @decode.decode_field(@wire.strip_nulls(json), "wiki_page") catch {
+    _ => fail("decode")
+  }
+  let attachment = page.attachments.unwrap()[0]
+  assert_eq(attachment.filesize, 12)
+  assert_eq(attachment.content_type, Some("text/plain"))
+  assert_eq(attachment.author, { id: 1, name: "Redmine Admin", })
+}
