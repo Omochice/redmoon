@@ -80,6 +80,9 @@ jobs:
       - name: Run the integration tests with coverage
         run: nix develop --command task test:integration:coverage
 
+      - name: Replace NaN line rates octocov cannot parse
+        run: sed -i -E 's/line-rate="-?nan"/line-rate="1"/g' _build/coverage/cobertura.xml
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage
