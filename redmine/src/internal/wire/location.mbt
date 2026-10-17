@@ -30,6 +30,9 @@ pub fn normalize_origin(origin : String) -> String {
 }
 
 ///|
+/// Whether `a` and `b` name the same scheme, host and effective port, so that an explicit
+/// default port (`:443` for https) does not make an origin look foreign.
+/// Decides whether the API key may be sent.
 pub fn same_origin(a : String, b : String) -> Bool {
   normalize_origin(a) == normalize_origin(b)
 }
@@ -118,6 +121,8 @@ pub fn resolve_location(current : Location, location : String) -> Location? {
 }
 
 ///|
+/// Whether `status` is a redirect with a single target to follow.
+/// 300 is excluded because it offers a choice, 304 and 305 because they name no new location.
 pub fn is_redirect_status(status : Int32) -> Bool {
   status == 301 ||
   status == 302 ||

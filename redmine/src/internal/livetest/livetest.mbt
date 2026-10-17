@@ -31,6 +31,8 @@ pub async fn create_probe_issue(
 }
 
 ///|
+/// Deletes the probe issue `id`; tests call it from `defer` so that a failed assertion
+/// does not leave the issue behind.
 pub async fn delete_probe_issue(
   redmine : @redmine.Redmine,
   id : Int32,
