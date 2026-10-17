@@ -1,0 +1,23 @@
+coverage:
+  paths:
+    - _build/coverage/cobertura.xml
+  # Not product code: the live-test helpers, the MCP SDK's example server and the executables' entry points.
+  exclude:
+    - redmine/src/internal/livetest/**
+    - mcp/src/example/**
+    - redmoon/src/cmd/**
+testExecutionTime:
+  steps:
+    - Run the integration tests with coverage
+comment:
+  if: is_pull_request
+  updatePrevious: true
+summary:
+  if: true
+report:
+  if: is_default_branch
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}
+diff:
+  datastores:
+    - artifact://${GITHUB_REPOSITORY}

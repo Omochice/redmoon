@@ -133,12 +133,53 @@ jobs:
       - name: Mask the admin API key
         run: echo "::add-mask::$(cat _build/redmine-api-key)"
 
-      - name: Run the integration tests
-        run: nix develop --command task test:integration
+      - name: Run the integration tests with coverage
+        run: nix develop --command task test:integration:coverage
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage
+          path: _build/coverage/cobertura.xml
 
       - name: Dump the Redmine logs
         if: failure()
         run: docker compose logs
+
+  report:
+    needs: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage
+          path: _build/coverage
+
+      - name: Expose Nix-provided octocov on PATH
+        run: |
+          nix develop --command bash <<'EOF' >> "$GITHUB_PATH"
+          set -euo pipefail
+          octocov_path="$(command -v octocov)"
+          dirname "$octocov_path"
+          EOF
+
+      - name: Report coverage
+        uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2
+        with:
+          config: octocov.yaml
+          check-existence: true
 
   # The release matrix also runs here so a broken platform surfaces on the pull
   # request rather than at tag time, when the tag is already pushed.
@@ -159,6 +200,7 @@ jobs:
       - build
       - check
       - integration
+      - report
       - test-native
       # keep-sorted end
     permissions: {}
