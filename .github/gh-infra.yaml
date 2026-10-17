@@ -66,6 +66,9 @@ spec:
     squash_merge_commit_message: COMMIT_MESSAGES
     merge_commit_title: MERGE_MESSAGE
     merge_commit_message: PR_TITLE
+  variables:
+    - name: RELEASE_APP_ID
+      value: Iv23liwM30lqoERe9vXr
   release_immutability: true
   security:
     vulnerability_alerts: true
