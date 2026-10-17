@@ -12,6 +12,22 @@ const INVALID_ENDPOINT : String = "endpoint must be http(s)://host[:port][/path]
 ///|
 /// Creates a client for the Redmine at `endpoint`, e.g. `https://example.com/redmine`.
 /// Raises `Transport` when `endpoint` is not an http(s) URL; the endpoint is not echoed in the message.
+///
+/// ```mbt check
+/// test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com/redmine",
+///     api_key="...",
+///   )
+///   ignore(redmine)
+///   try @redmine.new(endpoint="ftp://redmine.example.com", api_key="...") catch {
+///     Transport(..) => ()
+///     error => fail(error.to_json().stringify())
+///   } noraise {
+///     _ => fail("an endpoint that is not http(s) must be rejected")
+///   }
+/// }
+/// ```
 pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError {
   guard @core.connect(endpoint, api_key) is Some(connection) else {
     raise Transport(message=INVALID_ENDPOINT)
@@ -24,6 +40,24 @@ pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError 
 /// Sends one request and returns the response body as JSON, `null` when it is empty.
 /// `segments` are appended to the endpoint's path and percent-encoded, and `null` members are removed from the answer.
 /// Raises `Response` on a non-2xx answer and `Transport` on any other failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let projects = redmine
+///     |> @redmine.send(Get, ["projects.json"], query=[("limit", "5")])
+///   ignore(projects)
+///   let created = redmine
+///     |> @redmine.send(Post, ["projects.json"], body={
+///       "project": { "name": "Demo", "identifier": "demo" },
+///     })
+///   ignore(created)
+/// }
+/// ```
 pub async fn send(
   redmine : Redmine,
   meth : @http.RequestMethod,
