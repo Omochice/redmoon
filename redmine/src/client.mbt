@@ -98,19 +98,8 @@ async fn Redmine::exchange(
   query : Array[(String, String)],
   body : Json?,
 ) -> (Int32, String) {
-  let conn = self.connection
-  let client = @core.open_client(
-    conn,
-    @core.origin(conn),
-    accept="application/json",
-  )
+  let (client, target) = @core.open_api(self.connection, segments, query~)
   defer client.close()
-  let path = @core.request_path(conn, segments)
-  let target = if query.is_empty() {
-    path
-  } else {
-    "\{path}?\{@wire.encode_query(query)}"
-  }
   match body {
     Some(json) => {
       let data = @utf8.encode(json.stringify())

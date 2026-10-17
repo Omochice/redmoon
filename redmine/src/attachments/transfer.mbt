@@ -73,22 +73,16 @@ async fn post_upload(
   size : Int64,
   filename : String,
 ) -> (Int32, String) {
-  let conn = @redmine.connection(redmine)
-  let client = @core.open_client(
-    conn,
-    @core.origin(conn),
-    accept="application/json",
+  let (client, target) = @core.open_api(
+    @redmine.connection(redmine),
+    ["uploads.json"],
+    query=[("filename", filename)],
   )
   defer client.close()
-  let path = @core.request_path(conn, ["uploads.json"])
-  client.request(
-    Post,
-    "\{path}?\{@wire.encode_query([("filename", filename)])}",
-    extra_headers={
-      "Content-Type": "application/octet-stream",
-      "Content-Length": size.to_string(),
-    },
-  )
+  client.request(Post, target, extra_headers={
+    "Content-Type": "application/octet-stream",
+    "Content-Length": size.to_string(),
+  })
   client.write_reader(body)
   let response = client.end_request()
   (response.code, client.read_all().text())

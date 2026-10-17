@@ -20,12 +20,6 @@ pub fn origin(conn : Connection) -> String {
 }
 
 ///|
-/// The request path of `segments` below the endpoint's base path, percent-encoded.
-pub fn request_path(conn : Connection, segments : Array[String]) -> String {
-  conn.endpoint.path(segments)
-}
-
-///|
 /// Opens a client for `origin`.
 /// The API key is attached only when `origin` is the endpoint's own, because a download may be
 /// redirected to a third party. The caller closes the client.
@@ -42,6 +36,29 @@ pub async fn open_client(
     headers["Accept"] = accept
   }
   @http.Client(origin, headers~)
+}
+
+///|
+/// Opens a JSON API client for the endpoint together with the request target of `segments`
+/// and `query`, so that every call to the API names its resource the same way.
+/// The caller closes the client.
+pub async fn open_api(
+  conn : Connection,
+  segments : Array[String],
+  query~ : Array[(String, String)] = [],
+) -> (@http.Client, String) {
+  let client = open_client(
+    conn,
+    conn.endpoint.origin,
+    accept="application/json",
+  )
+  let path = conn.endpoint.path(segments)
+  let target = if query.is_empty() {
+    path
+  } else {
+    "\{path}?\{@wire.encode_query(query)}"
+  }
+  (client, target)
 }
 
 ///|
