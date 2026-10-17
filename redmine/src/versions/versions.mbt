@@ -111,6 +111,20 @@ pub extend Version with @debug.Debug::{to_repr}
 
 ///|
 /// Attributes of a version to create; `due_date` is `YYYY-MM-DD`.
+///
+/// ```mbt check
+/// test {
+///   let create : @versions.Create = {
+///     name: "1.0",
+///     description: None,
+///     status: Some(Open),
+///     due_date: Some("2026-12-31"),
+///     sharing: None,
+///     wiki_page_title: None,
+///   }
+///   assert_eq(create.status, Some(@versions.Status::Open))
+/// }
+/// ```
 pub(all) struct Create {
   name : String
   description : String?
@@ -146,6 +160,18 @@ pub extend Update with @debug.Debug::{to_repr}
 ///|
 /// Lists the versions of `project`; Redmine answers them all in one response.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let versions = redmine |> @versions.list(Identifier("demo"))
+///   ignore(versions)
+/// }
+/// ```
 pub async fn list(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
@@ -158,6 +184,18 @@ pub async fn list(
 ///|
 /// Shows the version `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let version = redmine |> @versions.show(3)
+///   ignore(version)
+/// }
+/// ```
 pub async fn show(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -170,6 +208,26 @@ pub async fn show(
 ///|
 /// Creates a version in `project` and returns it.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let version = redmine
+///     |> @versions.create(Identifier("demo"), {
+///       name: "1.0",
+///       description: None,
+///       status: None,
+///       due_date: Some("2026-12-31"),
+///       sharing: None,
+///       wiki_page_title: None,
+///     })
+///   ignore(version)
+/// }
+/// ```
 pub async fn create(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
@@ -194,6 +252,25 @@ pub async fn create(
 ///|
 /// Changes the version `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @versions.update(3, {
+///     name: None,
+///     description: None,
+///     status: Some(Closed),
+///     due_date: None,
+///     sharing: None,
+///     wiki_page_title: None,
+///   })
+/// }
+/// ```
 pub async fn update(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -219,6 +296,17 @@ pub async fn update(
 ///|
 /// Deletes the version `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine |> @versions.delete(3)
+/// }
+/// ```
 pub async fn delete(
   redmine : @redmine.Redmine,
   id : Int32,
