@@ -29,3 +29,14 @@ test "an attachment response is decoded" {
   assert_eq(attachment.description, Some(""))
   assert_eq(attachment.thumbnail_url, None)
 }
+
+///|
+test "an attachment without a content type is decoded" {
+  let json = @json.parse(
+    (
+      #|{"id":4,"filename":"README","filesize":5,"content_type":null,"content_url":"http://localhost:3000/attachments/download/4/README","author":{"id":1,"name":"Redmine Admin"},"created_on":"2026-10-16T01:02:03Z"}
+    ),
+  )
+  let attachment : Attachment = @decode.decode(@wire.strip_nulls(json))
+  assert_eq(attachment.content_type, None)
+}
