@@ -24,21 +24,12 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/release-please-manifest.json
 
-  toolchain:
+  build:
     needs: release-please
     if: needs.release-please.outputs.released == 'true'
     permissions:
       contents: read
-    uses: $/.github/workflows/toolchain.yaml
-
-  build:
-    needs: [release-please, toolchain]
-    if: needs.release-please.outputs.released == 'true'
-    permissions:
-      contents: read
     uses: $/.github/workflows/build.yaml
-    with:
-      version: ${{ needs.toolchain.outputs.version }}
 
   publish:
     needs: [release-please, build]

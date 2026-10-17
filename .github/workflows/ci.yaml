@@ -36,53 +36,21 @@ jobs:
 
       - run: nix develop --command task test
 
-  toolchain:
-    permissions:
-      contents: read
-    uses: $/.github/workflows/toolchain.yaml
-
-  test-native:
-    needs: toolchain
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-15
-            toolchain: nix
-          - runner: ubuntu-24.04-arm
-            toolchain: installer
-    runs-on: ${{ matrix.runner }}
+  test-macos:
+    runs-on: macos-15
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      MOONBIT_INSTALL_VERSION: ${{ needs.toolchain.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - uses: $/.github/actions/setup-nix
-        if: matrix.toolchain == 'nix'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
-        if: matrix.toolchain == 'installer'
-        with:
-          version: 3.53.1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install MoonBit
-        if: matrix.toolchain == 'installer'
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-
-      - name: Print the toolchain version
-        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
-
-      - run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task test
+      - run: nix develop --command task test
 
   integration:
     runs-on: ubuntu-latest
@@ -156,12 +124,9 @@ jobs:
           check-existence: true
 
   build:
-    needs: toolchain
     permissions:
       contents: read
     uses: $/.github/workflows/build.yaml
-    with:
-      version: ${{ needs.toolchain.outputs.version }}
 
   status-check:
     timeout-minutes: 5
@@ -173,7 +138,7 @@ jobs:
       - check
       - integration
       - report
-      - test-native
+      - test-macos
       # keep-sorted end
     permissions: {}
     if: failure() || cancelled()

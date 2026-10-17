@@ -2,11 +2,6 @@ name: build
 
 on:
   workflow_call:
-    inputs:
-      version:
-        description: The MoonBit release name the installer accepts
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -19,49 +14,26 @@ jobs:
         include:
           - target: aarch64-apple-darwin
             runner: macos-15
-            toolchain: nix
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
-            toolchain: nix
-          - target: aarch64-unknown-linux-gnu
-            runner: ubuntu-24.04-arm
-            toolchain: installer
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      MOONBIT_INSTALL_VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - uses: $/.github/actions/setup-nix
-        if: matrix.toolchain == 'nix'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
-        if: matrix.toolchain == 'installer'
-        with:
-          version: 3.53.1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install MoonBit
-        if: matrix.toolchain == 'installer'
-        run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
-          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-
-      - name: Print the toolchain version
-        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
-
       - name: Stamp the build information
-        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task build-info:stamp
+        run: nix develop --command task build-info:stamp
 
       - name: Build the executable
-        run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task build
+        run: nix develop --command task build
 
       - name: Stage the executable under the asset name
         run: |
