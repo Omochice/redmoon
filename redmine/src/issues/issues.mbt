@@ -2,6 +2,23 @@
 /// Lists the issues matching `query`, fetching as many pages as needed.
 /// With `limit`, at most that many issues are returned.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let query = @issues.ListQuery::new(
+///     project_id=1,
+///     status_id=Open,
+///     assigned_to_id=Me,
+///   )
+///   let issues = redmine |> @issues.list(query, limit=10)
+///   ignore(issues)
+/// }
+/// ```
 pub async fn list(
   redmine : @redmine.Redmine,
   query : ListQuery,
@@ -19,6 +36,21 @@ pub async fn list(
 ///|
 /// Shows an issue with the given associations.
 /// Raises `RedmineError`, with status 404 when the issue does not exist.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let issue = (redmine |> @issues.show(42, includes=[Journals, Attachments])) catch {
+///     @redmine.Response(status=404, ..) => return
+///     error => raise error
+///   }
+///   ignore(issue)
+/// }
+/// ```
 pub async fn show(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -36,6 +68,27 @@ pub async fn show(
 ///|
 /// Creates an issue and returns it as Redmine stored it.
 /// Raises `RedmineError`, with status 422 when Redmine rejects a field.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let issue = redmine
+///     |> @issues.create(
+///       @issues.Create::new(
+///         project_id=1,
+///         tracker_id=1,
+///         status_id=1,
+///         priority_id=2,
+///         subject="Login page returns 500",
+///       ),
+///     )
+///   ignore(issue)
+/// }
+/// ```
 pub async fn create(
   redmine : @redmine.Redmine,
   issue : Create,
@@ -48,6 +101,21 @@ pub async fn create(
 ///|
 /// Applies `update` to an issue.
 /// Raises `RedmineError`, with status 404 when the issue does not exist.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @issues.update(
+///     42,
+///     @issues.Update::new(notes="Fixed in 1.2", assigned_to_id=Clear),
+///   )
+/// }
+/// ```
 pub async fn update(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -62,6 +130,17 @@ pub async fn update(
 ///|
 /// Deletes an issue.
 /// Raises `RedmineError`, with status 404 when the issue does not exist.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine |> @issues.delete(42)
+/// }
+/// ```
 pub async fn delete(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -73,6 +152,17 @@ pub async fn delete(
 /// Edits a comment of an issue: its text, its visibility, or both.
 /// Redmine drops a comment whose notes become empty and that records no field change.
 /// Raises `RedmineError`, with status 404 when the comment does not exist.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine |> @issues.update_journal(7, notes="Corrected comment")
+/// }
+/// ```
 pub async fn update_journal(
   redmine : @redmine.Redmine,
   id : Int32,

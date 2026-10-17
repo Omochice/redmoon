@@ -31,6 +31,15 @@ pub extend Include with @debug.Debug::{to_repr}
 
 ///|
 /// Which issues to list by status.
+///
+/// ```mbt check
+/// test {
+///   let open_in_project = @issues.ListQuery::new(project_id=1, status_id=Open)
+///   let one_status = @issues.ListQuery::new(status_id=Id(3))
+///   assert_eq(open_in_project.status_id, Some(@issues.StatusFilter::Open))
+///   assert_eq(one_status.status_id, Some(@issues.StatusFilter::Id(3)))
+/// }
+/// ```
 pub(all) enum StatusFilter {
   Id(Int32)
   Open
@@ -75,6 +84,19 @@ pub struct ListQuery {
 }
 
 ///|
+/// Conditions for `list`; an unset condition does not filter.
+///
+/// ```mbt check
+/// test {
+///   let query = @issues.ListQuery::new(project_id=1, status_id=Open, includes=[
+///     Attachments,
+///   ])
+///   assert_eq(query.project_id, Some(1))
+///   assert_eq(query.status_id, Some(@issues.StatusFilter::Open))
+///   assert_eq(query.includes, [@issues.ListInclude::Attachments])
+///   assert_true(query.tracker_id is None)
+/// }
+/// ```
 pub fn ListQuery::new(
   includes~ : Array[ListInclude] = [],
   project_id? : Int32,

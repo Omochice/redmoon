@@ -14,6 +14,20 @@ pub extend UploadToken with Eq::{equal, not_equal}
 pub extend UploadToken with @debug.Debug::{to_repr}
 
 ///|
+/// A token as `@attachments.upload` returns it, with the optional file details.
+///
+/// ```mbt check
+/// test {
+///   let token = @issues.UploadToken::new("7167.ed1ccdb093229ca1bd0b043618d88743")
+///   assert_eq(token.filename, None)
+///   let named = @issues.UploadToken::new(
+///     "7168.0f3c",
+///     filename="report.pdf",
+///     content_type="application/pdf",
+///   )
+///   assert_eq(named.filename, Some("report.pdf"))
+/// }
+/// ```
 pub fn UploadToken::new(
   token : String,
   filename? : String,
@@ -59,6 +73,23 @@ pub struct Create {
 }
 
 ///|
+/// The fields of an issue to create; only the required ones must be given.
+///
+/// ```mbt check
+/// test {
+///   let create = @issues.Create::new(
+///     project_id=1,
+///     tracker_id=1,
+///     status_id=1,
+///     priority_id=2,
+///     subject="Login page returns 500",
+///     due_date="2026-12-31",
+///   )
+///   assert_eq(create.subject, "Login page returns 500")
+///   assert_eq(create.due_date, Some("2026-12-31"))
+///   assert_true(create.description is None)
+/// }
+/// ```
 pub fn Create::new(
   project_id~ : Int32,
   tracker_id~ : Int32,
@@ -125,6 +156,20 @@ pub struct Update {
 }
 
 ///|
+/// The changes to apply to an issue; only the fields given are touched.
+///
+/// ```mbt check
+/// test {
+///   let update = @issues.Update::new(
+///     notes="Moved to the next release",
+///     assigned_to_id=Clear,
+///     fixed_version_id=Set(5),
+///   )
+///   assert_eq(update.assigned_to_id, Some(@redmine.Clearable::Clear))
+///   assert_eq(update.fixed_version_id, Some(@redmine.Clearable::Set(5)))
+///   assert_true(update.subject is None)
+/// }
+/// ```
 pub fn Update::new(
   subject? : String,
   description? : String,

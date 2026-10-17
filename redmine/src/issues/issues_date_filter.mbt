@@ -54,6 +54,19 @@ pub extend PastDateFilter with @debug.Debug::{to_repr}
 ///|
 /// A filter for the issue fields Redmine types as `:date` (`start_date`,
 /// `due_date`): every past-looking form plus the forward-looking ones.
+///
+/// ```mbt check
+/// test {
+///   let query = @issues.ListQuery::new(
+///     due_date=Past(Period(ThisWeek)),
+///     created_on=Since("2026-01-01"),
+///   )
+///   let upcoming = @issues.ListQuery::new(due_date=NextDays(7))
+///   assert_eq(query.due_date, Some(@issues.DateFilter::Past(Period(ThisWeek))))
+///   assert_eq(query.created_on, Some(@issues.PastDateFilter::Since("2026-01-01")))
+///   assert_eq(upcoming.due_date, Some(@issues.DateFilter::NextDays(7)))
+/// }
+/// ```
 pub(all) enum DateFilter {
   Past(PastDateFilter)
   Tomorrow
