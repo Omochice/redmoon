@@ -1,5 +1,15 @@
 ///|
 /// Failure to reach a credential store, or a store refusing one operation.
+///
+/// ```mbt check
+/// #skip("touches the OS credential store")
+/// test {
+///   @keyring.set("my-app", "alice", "secret") catch {
+///     NoStore(message) => println(message)
+///     Refused(code) => println("store refused the write: \{code}")
+///   }
+/// }
+/// ```
 pub suberror KeyringError {
   /// No credential store can be opened; the payload tells the user what to install or start.
   NoStore(String)
@@ -76,6 +86,16 @@ fn decode(bytes : Bytes) -> String raise KeyringError {
 ///
 /// # Raises
 /// `NoStore` when no credential store is reachable, `Refused` when the store rejects the read.
+///
+/// ```mbt check
+/// #skip("touches the OS credential store")
+/// test {
+///   match @keyring.get("my-app", "alice") {
+///     Some(token) => ignore(token)
+///     None => ()
+///   }
+/// }
+/// ```
 pub fn get(service : String, account : String) -> String? raise KeyringError {
   let status = ffi_get(@utf8.encode(service), @utf8.encode(account))
   if status == not_found {
@@ -91,6 +111,13 @@ pub fn get(service : String, account : String) -> String? raise KeyringError {
 ///
 /// # Raises
 /// `NoStore` when no credential store is reachable, `Refused` when the store rejects the write.
+///
+/// ```mbt check
+/// #skip("touches the OS credential store")
+/// test {
+///   @keyring.set("my-app", "alice", "secret")
+/// }
+/// ```
 pub fn set(
   service : String,
   account : String,
@@ -106,6 +133,13 @@ pub fn set(
 ///
 /// # Raises
 /// `NoStore` when no credential store is reachable, `Refused` when the store rejects the removal.
+///
+/// ```mbt check
+/// #skip("touches the OS credential store")
+/// test {
+///   @keyring.delete("my-app", "alice")
+/// }
+/// ```
 pub fn delete(service : String, account : String) -> Unit raise KeyringError {
   let status = ffi_delete(@utf8.encode(service), @utf8.encode(account))
   if status == not_found {
@@ -119,6 +153,15 @@ pub fn delete(service : String, account : String) -> Unit raise KeyringError {
 ///
 /// # Raises
 /// `NoStore` when no credential store is reachable, `Refused` when the store rejects the query.
+///
+/// ```mbt check
+/// #skip("touches the OS credential store")
+/// test {
+///   for account in @keyring.list("my-app") {
+///     ignore(account)
+///   }
+/// }
+/// ```
 pub fn list(service : String) -> Array[String] raise KeyringError {
   check(ffi_list(@utf8.encode(service)))
   let accounts = []
