@@ -29,7 +29,6 @@ jobs:
 
       - run: nix flake check
 
-      # ADR-010: the generated build-info file must never be committed stamped.
       - name: Verify the build-info source is committed in its None form
         run: nix develop --command task build-info:verify
 
@@ -42,9 +41,6 @@ jobs:
       contents: read
     uses: ./.github/workflows/toolchain.yaml
 
-  # ADR-002 promises the unit tests on every pull request for the platforms
-  # whose toolchain is not the nix one, and ADR-009 wants the keyring tests on
-  # a real store; macOS is here for the latter and the `check` job covers Linux.
   test-native:
     needs: toolchain
     strategy:
@@ -103,8 +99,6 @@ jobs:
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      # ADR-002: a version mismatch between the nix pin and the installer is
-      # visible in this log.
       - name: Print the toolchain version
         run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
 
@@ -181,8 +175,6 @@ jobs:
           config: octocov.yaml
           check-existence: true
 
-  # The release matrix also runs here so a broken platform surfaces on the pull
-  # request rather than at tag time, when the tag is already pushed.
   build:
     needs: toolchain
     permissions:

@@ -1,10 +1,7 @@
-# ADR-015: every command that CI and developers share is defined here once.
 version: "3"
 
 vars:
   REDMINE_URL: http://localhost:3000
-  # Under _build so the ignore rule that already covers build output also
-  # covers the credential; `moon clean` removes it and `redmine:seed` writes it again.
   API_KEY_FILE: _build/redmine-api-key
   COVERAGE_REPORT: _build/coverage/cobertura.xml
 
@@ -19,7 +16,6 @@ tasks:
     cmds:
       - moon test {{.CLI_ARGS}}
 
-  # Stale coverage files in _build are merged into the next report, so every run starts clean.
   test:coverage:
     desc: "Run the unit tests with coverage and write {{.COVERAGE_REPORT}}; arguments after `--` go to `moon test`"
     cmds:
@@ -43,10 +39,6 @@ tasks:
     cmds:
       - moon build --target native --release redmoon/src/cmd/redmoon
 
-  # build-info.sh needs bash, diff and git. Task's interpreter has no diff, so the
-  # script stays a script. Windows runs it through the bash that Git for Windows
-  # ships, which the CI Windows job has; a Windows machine without it cannot run
-  # these two tasks.
   build-info:stamp:
     desc: Overwrite the build-info source with this checkout's commit
     cmds:
@@ -75,14 +67,10 @@ tasks:
         docker compose logs
         exit 1
 
-  # Safe to repeat: each step checks before it changes anything. The key goes to a
-  # file rather than stdout so that a log never carries it and `test:integration`
-  # can read it without the caller passing it along.
   redmine:seed:
     desc: Enable the REST API, load the default data, create project demo, and save the admin API key
     silent: true
     cmds:
-      # `docker compose exec` runs outside the entrypoint that exports SECRET_KEY_BASE.
       - |
         key=$(docker compose exec -T redmine sh -c \
           'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner \
@@ -95,7 +83,6 @@ tasks:
         fi
         mkdir -p _build
         printf '%s' "$key" > {{.API_KEY_FILE}}
-      # load_default_data aborts on a database that already has data.
       - |
         if ! docker compose exec -T redmine sh -c \
           'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner "exit(Tracker.any? ? 0 : 1)"'; then

@@ -1,6 +1,3 @@
 rules:
-  # actionlint rejects the `$/` self-repository syntax in a reusable workflow
-  # call, and `nix flake check` runs actionlint without this repository's
-  # configuration, so the `./` form is the only one both linters accept.
   self-repository:
     disable: true

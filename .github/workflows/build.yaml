@@ -1,12 +1,8 @@
 name: build
 
-# Called by both `ci` and `release` so the target matrix is defined once and a
-# tag can never build a set the pull requests did not already exercise.
 on:
   workflow_call:
     inputs:
-      # Resolved by the caller so `ci` and `release` each run the lookup once
-      # instead of this workflow repeating it on every pull request.
       version:
         description: The MoonBit release name the installer accepts
         required: true
@@ -17,10 +13,6 @@ permissions:
 
 jobs:
   build:
-    # MoonBit does not cross-compile, so every asset is built on a runner of its
-    # own OS and architecture (ADR-002). The `toolchain` workflow says where the
-    # compiler comes from: nix where moonbit-overlay has a build, the official
-    # installer pinned to the same version elsewhere.
     strategy:
       fail-fast: false
       matrix:
@@ -45,16 +37,12 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    # The staging step needs `mkdir -p` and `cp`, which the Windows runner's
-    # default pwsh does not provide.
     defaults:
       run:
         shell: bash
     env:
       MOONBIT_INSTALL_VERSION: ${{ inputs.version }}
     steps:
-      # A checkout with CRLF endings would make the generated build-info file
-      # differ from the committed one on Windows.
       - name: Disable auto CRLF
         if: runner.os == 'Windows'
         run: git config --global core.autocrlf false
@@ -94,23 +82,18 @@ jobs:
       - name: Print the toolchain version
         run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
 
-      # The checked-in file holds `None`; a release binary has to report the
-      # commit it came from, and MoonBit cannot embed a file at build time.
       - name: Stamp the build information
         run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task build-info:stamp
 
       - name: Build the executable
         run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}task build
 
-      # The native backend names the executable after its package on every OS.
       - name: Stage the executable under the asset name
         run: |
           mkdir -p dist
           cp _build/native/release/build/omochice/redmoon/cmd/redmoon/redmoon.exe \
             "dist/redmoon-${{ matrix.target }}${{ matrix.ext }}"
 
-      # `--help` is as far as this goes because it proves the binary links and
-      # starts without depending on a credential store the runner may not have.
       - name: Smoke-run the artifact
         run: ./dist/redmoon-${{ matrix.target }}${{ matrix.ext }} --help
 

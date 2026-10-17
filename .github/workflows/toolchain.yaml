@@ -1,9 +1,5 @@
 name: toolchain
 
-# The runners without nix install MoonBit with the official installer, which
-# takes a version name. Reading it from the nix devShell keeps flake.lock the
-# only place the compiler version is pinned, so renovate bumping the lock moves
-# every runner together.
 on:
   workflow_call:
     outputs:
@@ -31,8 +27,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # `moonc -v` prints `v0.10.15+943464bfa (date)`; the installer's download
-      # path is the same string without the leading `v`.
       - name: Read the compiler version
         id: moonc
         run: |

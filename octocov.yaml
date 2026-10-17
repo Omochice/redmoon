@@ -1,7 +1,6 @@
 coverage:
   paths:
     - _build/coverage/cobertura.xml
-  # Not product code: the live-test helpers, the MCP SDK's example server and the executables' entry points.
   exclude:
     - redmine/src/internal/livetest/**
     - mcp/src/example/**

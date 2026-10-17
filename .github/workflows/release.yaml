@@ -1,9 +1,5 @@
 name: release
 
-# Not tag-triggered. The tag is created with the default GITHUB_TOKEN, and a tag
-# pushed by that token starts no further workflow, so a tag-triggered build would
-# never run. Building in the same run that cuts the release is what keeps a
-# published binary tied to a tagged commit.
 on:
   push:
     branches: [main]
@@ -28,8 +24,6 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/release-please-manifest.json
 
-  # Only the merge of a release pull request gets this far; every other push to
-  # main stops at the job above, which just refreshes the pending release PR.
   toolchain:
     needs: release-please
     if: needs.release-please.outputs.released == 'true'
@@ -58,29 +52,16 @@ jobs:
           path: dist
           merge-multiple: true
 
-      # One combined file rather than a checksum per asset, so a verifier needs
-      # a single download regardless of which binary it fetched.
       - name: Checksum every binary
         working-directory: dist
         run: sha256sum redmoon-* > SHA256SUMS
 
-      # Uploading to the release release-please already created, rather than
-      # creating one here: the changelog is its output, and this job only adds
-      # what it could not build.
-      #
-      # `release_immutability` is expected to be enabled on this repository, and
-      # a published immutable release rejects every asset upload. Attaching
-      # while the release is still a draft is the way in GitHub documents, which
-      # is why release-please is configured to draft it rather than publish it.
       - name: Attach the binaries to the draft release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.release-please.outputs.tag }}
         run: gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY"
 
-      # Publishing is what freezes the release, so nothing may follow it. The tag
-      # comes into existence here too: GitHub withholds it while a release is a
-      # draft, then creates it at the commit release-please recorded.
       - name: Publish the draft
         env:
           GH_TOKEN: ${{ github.token }}
