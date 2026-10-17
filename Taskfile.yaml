@@ -6,23 +6,34 @@ vars:
   COVERAGE_REPORT: _build/coverage/cobertura.xml
 
 tasks:
+  registry:
+    desc: Fetch the mooncakes registry index unless this machine already has it
+    status:
+      - test -d "${MOON_HOME:-$HOME/.moon}/registry/index"
+    cmds:
+      - moon update
+
   check:
     desc: Type-check every package and fail on warnings
+    deps: [registry]
     cmds:
       - moon check --deny-warn
 
   test:
     desc: "Run the unit tests; arguments after `--` go to `moon test`"
+    deps: [registry]
     cmds:
       - moon test {{.CLI_ARGS}}
 
   test:keyring:
     desc: "Run the keyring tests including the round trip through the OS credential store; arguments after `--` go to `moon test`"
+    deps: [registry]
     cmds:
       - REDMOON_TEST_KEYRING=1 moon test -p omochice/keyring {{.CLI_ARGS}}
 
   test:coverage:
     desc: "Run the unit tests with coverage and write {{.COVERAGE_REPORT}}; arguments after `--` go to `moon test`"
+    deps: [registry]
     cmds:
       - moon coverage clean
       - moon test --enable-coverage {{.CLI_ARGS}}
@@ -41,6 +52,7 @@ tasks:
 
   build:
     desc: Build the release executable for the native backend
+    deps: [registry]
     cmds:
       - moon build --target native --release redmoon/src/cmd/redmoon
 
@@ -113,6 +125,7 @@ tasks:
 
   test:integration:
     desc: Run the tests against the seeded Redmine; arguments after `--` go to `moon test`
+    deps: [registry]
     preconditions:
       - sh: test -s {{.API_KEY_FILE}}
         msg: "{{.API_KEY_FILE}} is missing; run `task redmine:seed` first"
