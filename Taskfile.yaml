@@ -30,16 +30,19 @@ tasks:
     desc: "Run the keyring tests including the round trip through the OS credential store; arguments after `--` go to `moon test`"
     deps: [registry]
     cmds:
-      - REDMOON_TEST_KEYRING=1 moon test -p omochice/keyring {{.CLI_ARGS}}
+      - REDMOON_TEST_KEYRING=1 moon test {{if .COVERAGE}}--enable-coverage {{end}}-p omochice/keyring {{.CLI_ARGS}}
 
   test:keyring:coverage:
     desc: Run the keyring tests including the store round trip with coverage and write {{.KEYRING_COVERAGE_REPORT}}
-    deps: [registry]
     cmds:
       - moon coverage clean
-      - REDMOON_TEST_KEYRING=1 moon test --enable-coverage -p omochice/keyring
-      - mkdir -p {{dir .KEYRING_COVERAGE_REPORT}}
-      - moon coverage report -f cobertura -p omochice/keyring -o {{.KEYRING_COVERAGE_REPORT}}
+      - task: test:keyring
+        vars:
+          COVERAGE: "true"
+      - task: coverage:report
+        vars:
+          PACKAGE: omochice/keyring
+          REPORT: "{{.KEYRING_COVERAGE_REPORT}}"
 
   test:coverage:
     desc: "Run the unit tests with coverage and write {{.COVERAGE_REPORT}}; arguments after `--` go to `moon test`"
@@ -50,10 +53,12 @@ tasks:
       - task: coverage:report
 
   coverage:report:
-    desc: Write {{.COVERAGE_REPORT}} from the coverage data the last instrumented test run left
+    desc: Write a cobertura report, {{.COVERAGE_REPORT}} unless REPORT is given, from the coverage data the last instrumented test run left, limited to PACKAGE when given
+    vars:
+      REPORT: "{{.REPORT | default .COVERAGE_REPORT}}"
     cmds:
-      - mkdir -p {{dir .COVERAGE_REPORT}}
-      - moon coverage report -f cobertura -o {{.COVERAGE_REPORT}}
+      - mkdir -p {{dir .REPORT}}
+      - moon coverage report -f cobertura {{if .PACKAGE}}-p {{.PACKAGE}} {{end}}-o {{.REPORT}}
 
   fmt:
     desc: Format MoonBit sources only; `nix fmt` also formats the non-MoonBit files and is the CI gate
