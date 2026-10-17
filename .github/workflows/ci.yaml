@@ -141,7 +141,6 @@ jobs:
 
   status-check:
     timeout-minutes: 5
-    name: Status Check
     runs-on: ubuntu-latest
     needs:
       # keep-sorted start
