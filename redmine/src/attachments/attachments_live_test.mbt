@@ -7,14 +7,11 @@ async test "live: upload, attach, show and download round-trip" {
   let token = redmine
     |> @attachments.upload(reader, content.length().to_int64(), filename~)
   assert_false(token.is_empty())
-  let created = @redmine.send(redmine, Post, ["issues.json"], body={
-    "issue": { "project_id": 1, "subject": "attachments live \{filename}" },
-  })
-  let issue_id : Int32 = @decode.decode_field(
-    @decode.decode_field(created, "issue"),
-    "id",
+  let issue_id = @livetest.create_probe_issue(
+    redmine,
+    "attachments live \{filename}",
   )
-  defer ignore(@redmine.send(redmine, Delete, ["issues", "\{issue_id}.json"]))
+  defer @livetest.delete_probe_issue(redmine, issue_id)
   let _ = @redmine.send(redmine, Put, ["issues", "\{issue_id}.json"], body={
     "issue": { "uploads": [{ "token": token, "filename": filename }] },
   })
@@ -50,14 +47,11 @@ async test "live: an error raised by consume propagates unchanged" {
   let reader = @io.MemoryReader(w => w.write(content))
   let filename = "attachments-live-consume-\{@env.now()}.txt"
   let token = redmine |> @attachments.upload(reader, 1L, filename~)
-  let created = @redmine.send(redmine, Post, ["issues.json"], body={
-    "issue": { "project_id": 1, "subject": "attachments consume \{filename}" },
-  })
-  let issue_id : Int32 = @decode.decode_field(
-    @decode.decode_field(created, "issue"),
-    "id",
+  let issue_id = @livetest.create_probe_issue(
+    redmine,
+    "attachments consume \{filename}",
   )
-  defer ignore(@redmine.send(redmine, Delete, ["issues", "\{issue_id}.json"]))
+  defer @livetest.delete_probe_issue(redmine, issue_id)
   let _ = @redmine.send(redmine, Put, ["issues", "\{issue_id}.json"], body={
     "issue": { "uploads": [{ "token": token, "filename": filename }] },
   })
