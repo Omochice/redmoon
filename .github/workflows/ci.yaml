@@ -52,6 +52,8 @@ jobs:
 
       - run: nix develop --command task test
 
+      - run: nix develop --command task test:keyring
+
   integration:
     runs-on: ubuntu-latest
     timeout-minutes: 30

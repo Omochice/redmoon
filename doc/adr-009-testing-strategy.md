@@ -35,9 +35,10 @@ An integration test builds the MCP server with the real Redmine client and a fak
 
 **Rationale**: this covers the whole path from a `tools/call` line to Redmine and back without adding a way to pass the key outside the keyring, which the product deliberately lacks.
 
-### 4. The keyring module is tested against the real store where one exists
+### 4. The keyring module is tested against the real store only on request
 
-On macOS and Windows the tests write, read, list, and delete an entry under a test service name; on Linux they run only when a Secret Service is available.
+The status mapping and the account-list parsing are plain unit tests.
+The round trip that writes, reads, lists, and deletes an entry in the OS store runs only when `REDMOON_TEST_KEYRING=1` is set, which `task test:keyring` and the macOS CI job do.
 
 **Rationale**: the C stubs are the part most likely to break, and only a real store exercises them.
 
@@ -53,13 +54,14 @@ On macOS and Windows the tests write, read, list, and delete an entry under a te
 
 1. **The compiled binary's own `serve` start-up is not exercised in CI**, since it reads the keyring.
 2. **Integration tests are skipped locally** unless the developer starts Redmine and sets the variables.
-3. **Keyring tests touch the developer's real store** on macOS and Windows.
+3. **The store round trip is skipped by a plain `moon test`**, so a stub regression shows up only where the opt-in runs.
 
 ### Mitigations
 
 - `serve` is a thin composition of tested parts: the keyring lookup, the endpoint canonicalization, and the server.
 - `docs/verification.md` gives the commands to start Redmine and export the variables, as denomine-mcp's does.
-- The keyring tests use a dedicated service name and delete their entries even on failure.
+- The macOS CI job runs the opt-in on every change.
+- The opt-in writes under a service name unique to the run and deletes its entry even on failure, so it neither collides with a concurrent run nor touches an existing entry.
 
 ## References
 

@@ -16,6 +16,11 @@ tasks:
     cmds:
       - moon test {{.CLI_ARGS}}
 
+  test:keyring:
+    desc: "Run the keyring tests including the round trip through the OS credential store; arguments after `--` go to `moon test`"
+    cmds:
+      - REDMOON_TEST_KEYRING=1 moon test -p omochice/keyring {{.CLI_ARGS}}
+
   test:coverage:
     desc: "Run the unit tests with coverage and write {{.COVERAGE_REPORT}}; arguments after `--` go to `moon test`"
     cmds:
