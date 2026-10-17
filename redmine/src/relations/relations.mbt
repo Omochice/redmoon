@@ -101,6 +101,18 @@ pub extend Relation with @debug.Debug::{to_repr}
 ///|
 /// Lists every relation of the issue `issue_id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let relations = redmine |> @relations.list(42)
+///   ignore(relations)
+/// }
+/// ```
 pub async fn list(
   redmine : @redmine.Redmine,
   issue_id : Int32,
@@ -113,6 +125,18 @@ pub async fn list(
 ///|
 /// Returns the relation with the given `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let relation = redmine |> @relations.show(5)
+///   ignore(relation)
+/// }
+/// ```
 pub async fn show(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -124,6 +148,19 @@ pub async fn show(
 ///|
 /// Creates a relation from `issue_id` to `issue_to_id` and returns it.
 /// Raises `RedmineError` on a non-2xx answer (e.g. the relation already exists) or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let relation = redmine
+///     |> @relations.create(42, issue_to_id=43, relation_type=Precedes, delay=2)
+///   ignore(relation)
+/// }
+/// ```
 pub async fn create(
   redmine : @redmine.Redmine,
   issue_id : Int32,
@@ -143,6 +180,17 @@ pub async fn create(
 ///|
 /// Deletes the relation with the given `id`.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine |> @relations.delete(5)
+/// }
+/// ```
 pub async fn delete(
   redmine : @redmine.Redmine,
   id : Int32,
