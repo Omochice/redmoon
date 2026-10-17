@@ -23,6 +23,27 @@ fn AttachmentScope::to_wire(self : AttachmentScope) -> String {
 
 ///|
 /// The parameters of a search. A `None` flag is left out of the request, which keeps Redmine's default for it.
+///
+/// ```mbt check
+/// test {
+///   let query : @search.Query = {
+///     q: "timeout",
+///     scope: None,
+///     all_words: None,
+///     titles_only: Some(true),
+///     open_issues: None,
+///     issues: Some(true),
+///     news: None,
+///     documents: None,
+///     changesets: None,
+///     wiki_pages: None,
+///     messages: None,
+///     projects: None,
+///     attachments: Some(Included),
+///   }
+///   assert_eq(query.attachments, Some(@search.AttachmentScope::Included))
+/// }
+/// ```
 pub(all) struct Query {
   q : String
   scope : String?
@@ -101,6 +122,33 @@ pub impl ToJson for Match with fn to_json(self) {
 ///|
 /// Searches the resources Redmine indexes and returns the matches, up to `limit` when given.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let query : @search.Query = {
+///     q: "timeout",
+///     scope: None,
+///     all_words: None,
+///     titles_only: None,
+///     open_issues: Some(true),
+///     issues: Some(true),
+///     news: None,
+///     documents: None,
+///     changesets: None,
+///     wiki_pages: None,
+///     messages: None,
+///     projects: None,
+///     attachments: None,
+///   }
+///   let matches = redmine |> @search.search(query, limit=20)
+///   ignore(matches)
+/// }
+/// ```
 pub async fn search(
   redmine : @redmine.Redmine,
   query : Query,
