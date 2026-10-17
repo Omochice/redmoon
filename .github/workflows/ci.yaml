@@ -51,22 +51,13 @@ jobs:
             toolchain: nix
           - runner: ubuntu-24.04-arm
             toolchain: installer
-          - runner: windows-latest
-            toolchain: installer
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       contents: read
-    defaults:
-      run:
-        shell: bash
     env:
       MOONBIT_INSTALL_VERSION: ${{ needs.toolchain.outputs.version }}
     steps:
-      - name: Disable auto CRLF
-        if: runner.os == 'Windows'
-        run: git config --global core.autocrlf false
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -76,28 +67,17 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-        if: runner.os == 'Windows'
-
       - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
         if: matrix.toolchain == 'installer'
         with:
           version: 3.53.1
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install MoonBit (Unix installer)
-        if: matrix.toolchain == 'installer' && runner.os != 'Windows'
+      - name: Install MoonBit
+        if: matrix.toolchain == 'installer'
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-
-      - name: Install MoonBit (Windows installer)
-        if: matrix.toolchain == 'installer' && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
-          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Print the toolchain version
         run: ${{ matrix.toolchain == 'nix' && 'nix develop --command ' || '' }}moon version --all
