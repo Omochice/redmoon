@@ -21,13 +21,13 @@ fn query(q : String) -> @search.Query {
 async test "live: a search finds the issues carrying a unique word" {
   guard @livetest.redmine() is Some(redmine) else { return }
   let nonce = @env.now().to_string()
-  let first = @livetest.create_probe_issue(redmine, "relsearch\{nonce}find")
+  let first = @livetest.create_probe_issue(redmine, "searchprobe\{nonce}find")
   defer @livetest.delete_probe_issue(redmine, first)
-  let second = @livetest.create_probe_issue(redmine, "relsearch\{nonce}find")
+  let second = @livetest.create_probe_issue(redmine, "searchprobe\{nonce}find")
   defer @livetest.delete_probe_issue(redmine, second)
   let found = redmine
     |> @search.search(
-      { ..query("relsearch\{nonce}"), issues: Some(true), },
+      { ..query("searchprobe\{nonce}"), issues: Some(true), },
       limit=10,
     )
   assert_true(found.any(fn(r) { r.id == first && r.kind == "issue" }))
