@@ -122,15 +122,15 @@ async fn download_attachment(
         )
       }
       let written = files.save(path, reader, max_size)
-      saved = Some(
-        (
-          {
-            "path": written,
-            "filename": attachment.filename,
-            "content_type": attachment.content_type,
-            "filesize": attachment.filesize,
-          } : Json),
-      )
+      let result : Map[String, Json] = {
+        "path": written,
+        "filename": attachment.filename,
+      }
+      if attachment.content_type is Some(content_type) {
+        result["content_type"] = Json(content_type)
+      }
+      result["filesize"] = Json(attachment.filesize)
+      saved = Some(Json::object(result))
     })
   catch {
     FileError(message~) => local_failure([message])

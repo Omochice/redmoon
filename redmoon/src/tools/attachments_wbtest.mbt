@@ -3,6 +3,7 @@ struct FakeAttachments {
   failure : @redmine.RedmineError?
   content : Bytes
   declared_size : Int32
+  content_type : String?
   uploads : Array[(Int64, String)]
   updates : Array[(Int32, @issues.Update)]
 }
@@ -12,8 +13,16 @@ fn FakeAttachments::new(
   failure? : @redmine.RedmineError,
   content~ : Bytes = b"hello",
   declared_size~ : Int32 = 5,
+  content_type~ : String = "text/plain",
 ) -> FakeAttachments {
-  { failure, content, declared_size, uploads: [], updates: [], }
+  {
+    failure,
+    content,
+    declared_size,
+    content_type: Some(content_type),
+    uploads: [],
+    updates: [],
+  }
 }
 
 ///|
@@ -26,12 +35,15 @@ fn FakeAttachments::check(
 }
 
 ///|
-fn fake_attachment(filesize : Int32) -> @attachments.Attachment {
+fn fake_attachment(
+  filesize : Int32,
+  content_type~ : String? = Some("text/plain"),
+) -> @attachments.Attachment {
   {
     id: 7,
     filename: "report.txt",
     filesize,
-    content_type: "text/plain",
+    content_type,
     description: None,
     content_url: "http://redmine.test/attachments/download/7/report.txt",
     thumbnail_url: None,
@@ -43,7 +55,7 @@ fn fake_attachment(filesize : Int32) -> @attachments.Attachment {
 ///|
 impl AttachmentPort for FakeAttachments with fn show_attachment(self, _) {
   self.check()
-  fake_attachment(self.declared_size)
+  fake_attachment(self.declared_size, content_type=self.content_type)
 }
 
 ///|
@@ -55,7 +67,10 @@ impl AttachmentPort for FakeAttachments with fn download_attachment(
   self.check()
   let reader = @io.MemoryReader(w => w.write(self.content))
   defer reader.close()
-  consume(fake_attachment(self.declared_size), reader)
+  consume(
+    fake_attachment(self.declared_size, content_type=self.content_type),
+    reader,
+  )
 }
 
 ///|
@@ -600,4 +615,19 @@ async test "cancelling a download writes no response and leaves no partial file"
     assert_true(output.contains("\"id\":3"))
     assert_false(@fs.exists(target))
   })
+}
+
+///|
+async test "download omits the content type when Redmine reports none" {
+  let attachments = FakeAttachments::new()
+  let called = call_tool(
+    attachments_for({ ..attachments, content_type: None, }, FakeFiles::new()),
+    "redmine_attachments",
+    { "download": { "id": 7, "path": "out/report.txt" } },
+  )
+  assert_eq(called.is_error, false)
+  assert_eq(
+    called.text,
+    "{\"path\":\"/abs/out/report.txt\",\"filename\":\"report.txt\",\"filesize\":5}",
+  )
 }

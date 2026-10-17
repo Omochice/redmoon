@@ -122,6 +122,8 @@ async test "live: show returns an attachment whose content type Redmine reports 
 }
 
 //|
+
+///|
 async test "live: download streams an attachment whose content type Redmine reports as null" {
   guard @livetest.redmine() is Some(redmine) else { return }
   let content = b"no extension body"

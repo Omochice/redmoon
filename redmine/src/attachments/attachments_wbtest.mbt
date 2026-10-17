@@ -5,7 +5,7 @@ test "the first download request goes to the endpoint, not the reported host" {
     id: 1,
     filename: "a.txt",
     filesize: 3,
-    content_type: "text/plain",
+    content_type: Some("text/plain"),
     description: None,
     content_url: "http://internal:3000/attachments/download/1/a.txt",
     thumbnail_url: None,

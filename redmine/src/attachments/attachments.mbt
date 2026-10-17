@@ -4,7 +4,7 @@ pub(all) struct Attachment {
   id : Int32
   filename : String
   filesize : Int32
-  content_type : String
+  content_type : String?
   description : String?
   content_url : String
   thumbnail_url : String?
