@@ -6,6 +6,7 @@ vars:
   # Under _build so the ignore rule that already covers build output also
   # covers the credential; `moon clean` removes it and `redmine:seed` writes it again.
   API_KEY_FILE: _build/redmine-api-key
+  COVERAGE_REPORT: _build/coverage/cobertura.xml
 
 tasks:
   check:
@@ -17,6 +18,20 @@ tasks:
     desc: "Run the unit tests; arguments after `--` go to `moon test`"
     cmds:
       - moon test {{.CLI_ARGS}}
+
+  # Stale coverage files in _build are merged into the next report, so every run starts clean.
+  test:coverage:
+    desc: "Run the unit tests with coverage and write {{.COVERAGE_REPORT}}; arguments after `--` go to `moon test`"
+    cmds:
+      - moon coverage clean
+      - moon test --enable-coverage {{.CLI_ARGS}}
+      - task: coverage:report
+
+  coverage:report:
+    desc: Write {{.COVERAGE_REPORT}} from the coverage data the last instrumented test run left
+    cmds:
+      - mkdir -p {{dir .COVERAGE_REPORT}}
+      - moon coverage report -f cobertura -o {{.COVERAGE_REPORT}}
 
   fmt:
     desc: Format MoonBit sources only; `nix fmt` also formats the non-MoonBit files and is the CI gate
@@ -110,4 +125,13 @@ tasks:
       - sh: test -s {{.API_KEY_FILE}}
         msg: "{{.API_KEY_FILE}} is missing; run `task redmine:seed` first"
     cmds:
-      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.API_KEY_FILE}})" moon test {{.CLI_ARGS}}
+      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.API_KEY_FILE}})" moon test {{if .COVERAGE}}--enable-coverage {{end}}{{.CLI_ARGS}}
+
+  test:integration:coverage:
+    desc: Run the tests against the seeded Redmine with coverage and write {{.COVERAGE_REPORT}}
+    cmds:
+      - moon coverage clean
+      - task: test:integration
+        vars:
+          COVERAGE: "true"
+      - task: coverage:report
