@@ -48,7 +48,7 @@ pub(all) struct Page {
   comments : String?
   created_on : String
   updated_on : String
-  attachments : Array[Attachment]?
+  attachments : Array[@attachments.Attachment]?
 } derive(FromJson, ToJson, Eq, Debug)
 
 ///|
@@ -62,25 +62,6 @@ pub extend Page with Eq::{equal, not_equal}
 
 ///|
 pub extend Page with @debug.Debug::{to_repr}
-
-///|
-/// A file attached to a wiki page.
-pub(all) struct Attachment {
-  id : Int32
-  filename : String
-} derive(FromJson, ToJson, Eq, Debug)
-
-///|
-pub extend Attachment with @json.FromJson::{from_json}
-
-///|
-pub extend Attachment with ToJson::{to_json}
-
-///|
-pub extend Attachment with Eq::{equal, not_equal}
-
-///|
-pub extend Attachment with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the wiki pages of `project`.
