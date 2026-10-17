@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "omochice/redmine",
+  "omochice/redmine/attachments",
   "omochice/redmine/internal/decode",
   "omochice/redmine/internal/paging",
   "omochice/redmine/internal/wire",
@@ -12,9 +13,5 @@ import {
   "moonbitlang/core/env",
   "omochice/redmine/internal/livetest",
 } for "test"
-
-import {
-  "omochice/redmine/attachments",
-} for "wbtest"
 
 supported_targets = "+native"

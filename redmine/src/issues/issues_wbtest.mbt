@@ -261,7 +261,7 @@ test "a shown issue decodes every include" {
 ///|
 test "an attachment of a shown issue is an attachments Attachment" {
   let text =
-    #|{"id":1,"project":{"id":1,"name":"Demo"},"tracker":{"id":1,"name":"Bug"},"status":{"id":1,"name":"New"},"priority":{"id":2,"name":"Normal"},"author":{"id":1,"name":"Redmine Admin"},"subject":"s","created_on":"2026-10-15T17:56:29Z","updated_on":"2026-10-15T17:56:29Z",
+    #|{"id":1,"project":{"id":1,"name":"Demo"},"tracker":{"id":1,"name":"Bug"},"status":{"id":1,"name":"New"},"priority":{"id":2,"name":"Normal"},"author":{"id":1,"name":"Redmine Admin"},"subject":"s","done_ratio":0,"is_private":false,"created_on":"2026-10-15T17:56:29Z","updated_on":"2026-10-15T17:56:29Z",
     #|"attachments":[{"id":4,"filename":"f.txt","filesize":12,"content_type":"text/plain","content_url":"http://localhost:3000/attachments/download/4/f.txt","author":{"id":1,"name":"Redmine Admin"},"created_on":"2026-10-15T17:56:29Z"}]}
   let issue : Issue = @decode.decode(@wire.strip_nulls(@json.parse(text)))
   let attachment : @attachments.Attachment = issue.attachments.unwrap()[0]

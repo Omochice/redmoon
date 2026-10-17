@@ -117,32 +117,6 @@ pub extend Child with Eq::{equal, not_equal}
 pub extend Child with @debug.Debug::{to_repr}
 
 ///|
-/// A file attached to an issue.
-pub(all) struct Attachment {
-  id : Int32
-  filename : String
-  filesize : Int32
-  content_type : String?
-  description : String?
-  content_url : String
-  thumbnail_url : String?
-  author : @redmine.IdName
-  created_on : String
-} derive(FromJson, ToJson, Eq, Debug)
-
-///|
-pub extend Attachment with @json.FromJson::{from_json}
-
-///|
-pub extend Attachment with ToJson::{to_json}
-
-///|
-pub extend Attachment with Eq::{equal, not_equal}
-
-///|
-pub extend Attachment with @debug.Debug::{to_repr}
-
-///|
 /// A relation between issues, as listed by `include=relations`.
 pub(all) struct Relation {
   id : Int32?
@@ -238,7 +212,7 @@ pub(all) struct Issue {
   closed_on : String?
   custom_fields : Array[CustomField]?
   journals : Array[Journal]?
-  attachments : Array[Attachment]?
+  attachments : Array[@attachments.Attachment]?
   relations : Array[Relation]?
   children : Array[Child]?
   changesets : Array[Json]?
