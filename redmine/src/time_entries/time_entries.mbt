@@ -67,6 +67,19 @@ pub extend CustomField with @debug.Debug::{to_repr}
 ///|
 /// Filters for listing time entries; `None` leaves a filter out.
 /// `spent_on`, `from`, and `to` are ISO dates (`YYYY-MM-DD`).
+///
+/// ```mbt check
+/// test {
+///   let query : @time_entries.ListQuery = {
+///     project_id: Some(1),
+///     user_id: None,
+///     spent_on: None,
+///     from: Some("2026-10-01"),
+///     to: Some("2026-10-31"),
+///   }
+///   assert_eq(query.from, Some("2026-10-01"))
+/// }
+/// ```
 pub(all) struct ListQuery {
   project_id : Int32?
   user_id : Int32?
@@ -84,6 +97,25 @@ pub extend ListQuery with @debug.Debug::{to_repr}
 ///|
 /// Lists the time entries matching `query`, following every page unless `limit` caps the count.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let query : @time_entries.ListQuery = {
+///     project_id: Some(1),
+///     user_id: None,
+///     spent_on: None,
+///     from: Some("2026-10-01"),
+///     to: Some("2026-10-31"),
+///   }
+///   let entries = redmine |> @time_entries.list(query, limit=50)
+///   ignore(entries)
+/// }
+/// ```
 pub async fn list(
   redmine : @redmine.Redmine,
   query : ListQuery,
@@ -122,6 +154,20 @@ fn ListQuery::to_pairs(self : ListQuery) -> Array[(String, String)] {
 
 ///|
 /// The attributes of a time entry to log. `hours` is required by Redmine; `None` fields are left out of the request.
+///
+/// ```mbt check
+/// test {
+///   let create : @time_entries.Create = {
+///     hours: 1.5,
+///     issue_id: Some(42),
+///     project_id: None,
+///     spent_on: Some("2026-10-17"),
+///     activity_id: None,
+///     comments: Some("Investigated the timeout"),
+///   }
+///   assert_eq(create.hours, 1.5)
+/// }
+/// ```
 pub(all) struct Create {
   hours : Double
   issue_id : Int32?
@@ -142,6 +188,20 @@ pub extend Create with @debug.Debug::{to_repr}
 
 ///|
 /// The attributes of a time entry to change; `None` fields are left out of the request.
+///
+/// ```mbt check
+/// test {
+///   let update : @time_entries.Update = {
+///     hours: Some(2.0),
+///     issue_id: None,
+///     project_id: None,
+///     spent_on: None,
+///     activity_id: None,
+///     comments: None,
+///   }
+///   assert_eq(update.hours, Some(2.0))
+/// }
+/// ```
 pub(all) struct Update {
   hours : Double?
   issue_id : Int32?
@@ -163,6 +223,21 @@ pub extend Update with @debug.Debug::{to_repr}
 ///|
 /// Shows the time entry with `id`.
 /// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let entry = (redmine |> @time_entries.show(9)) catch {
+///     @redmine.Response(status=404, ..) => return
+///     error => raise error
+///   }
+///   ignore(entry)
+/// }
+/// ```
 pub async fn show(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -174,6 +249,26 @@ pub async fn show(
 ///|
 /// Logs a time entry and returns it as Redmine stored it.
 /// Raises `RedmineError` on a non-2xx answer (422 for invalid attributes) or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   let entry = redmine
+///     |> @time_entries.create({
+///       hours: 1.5,
+///       issue_id: Some(42),
+///       project_id: None,
+///       spent_on: None,
+///       activity_id: None,
+///       comments: Some("Investigated the timeout"),
+///     })
+///   ignore(entry)
+/// }
+/// ```
 pub async fn create(
   redmine : @redmine.Redmine,
   time_entry : Create,
@@ -186,6 +281,25 @@ pub async fn create(
 ///|
 /// Changes the time entry with `id`.
 /// Raises `RedmineError` on a non-2xx answer (404 when it does not exist, 422 for invalid attributes) or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @time_entries.update(9, {
+///     hours: Some(2.0),
+///     issue_id: None,
+///     project_id: None,
+///     spent_on: None,
+///     activity_id: None,
+///     comments: None,
+///   })
+/// }
+/// ```
 pub async fn update(
   redmine : @redmine.Redmine,
   id : Int32,
@@ -204,6 +318,17 @@ pub async fn update(
 ///|
 /// Deletes the time entry with `id`.
 /// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine |> @time_entries.delete(9)
+/// }
+/// ```
 pub async fn delete(
   redmine : @redmine.Redmine,
   id : Int32,
