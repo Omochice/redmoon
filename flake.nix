@@ -64,7 +64,6 @@
             };
           in
           {
-            # release-please regenerates it on every release, so formatting it would only fight the generator.
             settings.global.excludes = [ "CHANGELOG.md" ];
             settings.formatter.moonfmt = pkgs.lib.mkIf (moonbitToolchain != [ ]) {
               command = pkgs.lib.getExe (
