@@ -40,7 +40,7 @@ fn request(id : Int32, rpc_method : String, params : Json) -> Json {
 ///|
 async test "the server lists the registered tools" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
-  let responses = exchange(build_server(redmine, false), [
+  let responses = exchange(build_server(redmine, false, []), [
     request(2, "tools/list", {}),
   ])
   guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {
@@ -53,6 +53,7 @@ async test "the server lists the registered tools" {
     }
   })
   assert_true(names.contains("redmine_enumerations"))
+  assert_false(names.contains("redmine_issue_templates"))
   assert_true(names.contains("redmoon_info"))
 }
 
@@ -65,7 +66,7 @@ async test "live: redmine_enumerations reaches the real Redmine" {
     return
   }
   let redmine = @redmine.new(endpoint~, api_key~)
-  let responses = exchange(build_server(redmine, true), [
+  let responses = exchange(build_server(redmine, true, []), [
     request(2, "tools/call", {
       "name": "redmine_enumerations",
       "arguments": { "list_issue_priorities": {} },
@@ -84,4 +85,18 @@ async test "live: redmine_enumerations reaches the real Redmine" {
   }
   assert_true(isError is False)
   assert_true(text.contains("Normal"))
+}
+
+///|
+async test "the issue templates plugin adds its tool in both modes" {
+  let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
+  for read_only in [false, true] {
+    let responses = exchange(
+      build_server(redmine, read_only, [IssueTemplates]),
+      [request(2, "tools/list", {})],
+    )
+    assert_true(
+      responses[1].stringify().contains("\"name\":\"redmine_issue_templates\""),
+    )
+  }
 }
