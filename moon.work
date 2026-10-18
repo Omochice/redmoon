@@ -2,6 +2,7 @@ members = [
   "./keyring",
   "./mcp",
   "./redmine",
+  "./redmine-plugins",
   "./redmoon",
   "./schema",
 ]
