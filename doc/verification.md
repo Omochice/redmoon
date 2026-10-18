@@ -14,6 +14,10 @@ Redmine is served at <http://localhost:3000>.
 First sign-in is `admin` / `admin`, which forces a password change.
 The image runs migrations on first boot, so the wait can take a few minutes.
 
+The image is built from `docker/redmine/Dockerfile`, which adds the [redmine_issue_templates](https://github.com/agileware-jp/redmine_issue_templates) plugin so that its API can be exercised as well.
+Its migrations run on boot because `compose.yaml` sets `REDMINE_PLUGINS_MIGRATE`.
+After changing the Dockerfile, run `docker compose build` before `task redmine:up`, because `docker compose up` reuses an image it has already built.
+
 ## Enable the REST API, seed the prerequisites, and obtain an API key
 
 The REST API is disabled by default, and redmoon authenticates with an API key.
@@ -25,6 +29,7 @@ task redmine:seed
 
 The task enables the REST API, loads the default configuration data, creates the project `demo`, and writes the admin API key to `_build/redmine-api-key`.
 The default data seeds tracker `1` (Bug), status `1` (New), and priority `2` (Normal), which the issue integration tests use.
+It also enables the issue templates module on `demo` and creates one shared project template and one global template for tracker `1`, plus the subproject `demo-child` that inherits the project template, through `docker/redmine/seed-issue-templates.rb`, because the plugin offers no API to create them.
 The key goes to a file instead of the terminal so that no log carries it, and `_build/` is already gitignored.
 `task redmine:up` and `task redmine:seed` are safe to re-run against an instance that is already prepared.
 

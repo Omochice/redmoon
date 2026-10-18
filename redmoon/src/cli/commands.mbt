@@ -73,6 +73,7 @@ pub fn resolve_api_key(
 pub async fn run_serve(
   endpoint : String,
   read_only : Bool,
+  plugins : Array[Plugin],
   store : &CredentialStore,
 ) -> Unit {
   let credential = resolve_api_key(endpoint, store)
@@ -80,5 +81,5 @@ pub async fn run_serve(
     endpoint=credential.endpoint,
     api_key=credential.api_key,
   )
-  build_server(redmine, read_only).serve_stdio()
+  build_server(redmine, read_only, plugins).serve_stdio()
 }

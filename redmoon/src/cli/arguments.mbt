@@ -1,7 +1,7 @@
 ///|
 /// The subcommand the user asked for, with its options.
 pub(all) enum Invocation {
-  Serve(endpoint~ : String, read_only~ : Bool)
+  Serve(endpoint~ : String, read_only~ : Bool, plugins~ : Array[Plugin])
   Login(endpoint~ : String)
   Logout(endpoint~ : String)
   List
@@ -30,7 +30,14 @@ fn command() -> @argparse.Command {
       @argparse.Command(
         "serve",
         about="Run the stdio MCP server for a Redmine endpoint.",
-        options=[endpoint_option()],
+        options=[
+          endpoint_option(),
+          @argparse.OptionArg(
+            "plugin",
+            about="Add the tools of a Redmine plugin the instance runs; repeatable. Known: \{known_plugin_names()}.",
+            action=Append,
+          ),
+        ],
         flags=[
           @argparse.FlagArg(
             "readonly",
@@ -68,7 +75,11 @@ pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise {
   let endpoint = sub.values.get("endpoint").map(values => values[0])
   match (name, endpoint) {
     ("serve", Some(endpoint)) =>
-      Serve(endpoint~, read_only=sub.flags.get("readonly").unwrap_or(false))
+      Serve(
+        endpoint~,
+        read_only=sub.flags.get("readonly").unwrap_or(false),
+        plugins=resolve_plugins(sub.values.get("plugin").unwrap_or([])),
+      )
     ("login", Some(endpoint)) => Login(endpoint~)
     ("logout", Some(endpoint)) => Logout(endpoint~)
     ("list", _) => List

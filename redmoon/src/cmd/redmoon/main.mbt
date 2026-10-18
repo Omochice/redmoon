@@ -5,7 +5,8 @@ extern "c" fn exit(code : Int32) = "exit"
 async fn run() -> Unit {
   let store = @cli.OsKeyring::{ }
   match @cli.parse_arguments() {
-    Serve(endpoint~, read_only~) => @cli.run_serve(endpoint, read_only, store)
+    Serve(endpoint~, read_only~, plugins~) =>
+      @cli.run_serve(endpoint, read_only, plugins, store)
     Login(endpoint~) => {
       let account = @cli.run_login(endpoint, store, async fn() {
         @tty.read_secret("Redmine API key: ")
