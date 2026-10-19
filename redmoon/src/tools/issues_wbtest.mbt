@@ -1057,7 +1057,7 @@ fn custom_field_value(issue : Json, id : Int32) -> Json raise {
 }
 
 ///|
-async test "live: an issue is created with a required custom field and its multi-value field is emptied" {
+async test "live: an issue is created with a required custom field and its multi-value field is emptied with null" {
   guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
     return
   }
@@ -1070,8 +1070,8 @@ async test "live: an issue is created with a required custom field and its multi
     is { "project": { "id": Number(project_id, ..), .. }, .. } else {
     fail("project demo-custom-fields is not seeded; run `task redmine:seed`")
   }
-  let severity = seeded_custom_field(redmine, "Severity")
-  let platforms = seeded_custom_field(redmine, "Platforms")
+  let severity = seeded_custom_field(redmine, "redmoon Severity")
+  let platforms = seeded_custom_field(redmine, "redmoon Platforms")
   let issue : Json = {
     "project_id": project_id,
     "tracker_id": 1,
@@ -1080,8 +1080,17 @@ async test "live: an issue is created with a required custom field and its multi
     "subject": "redmoon-custom-fields-\{@env.now()}",
   }
   let refused = call_tool(tools, "redmine_issues", { "create": issue })
-  assert_eq(refused.is_error, true, msg=refused.text)
-  assert_true(refused.text.contains("Severity"), msg=refused.text)
+  if !refused.is_error {
+    if @json.parse(refused.text) is { "id": Number(leaked, ..), .. } {
+      ignore(
+        call_tool(tools, "redmine_issues", {
+          "delete": { "id": leaked.to_int() },
+        }),
+      )
+    }
+    fail("created without the required field: \{refused.text}")
+  }
+  assert_true(refused.text.contains("\"status\":422"), msg=refused.text)
   let created = call_tool(tools, "redmine_issues", {
     "create": with_field(issue, "custom_fields", [
       { "id": severity, "value": "high" },
@@ -1098,7 +1107,10 @@ async test "live: an issue is created with a required custom field and its multi
   assert_eq(custom_field_value(body, severity), "high")
   assert_eq(custom_field_value(body, platforms), ["linux", "macos"])
   let emptied = call_tool(tools, "redmine_issues", {
-    "update": { "id": id, "custom_fields": [{ "id": platforms, "value": [] }] },
+    "update": {
+      "id": id,
+      "custom_fields": [{ "id": platforms, "value": null }],
+    },
   })
   assert_eq(emptied.text, "{\"ok\":true}")
   let shown = call_tool(tools, "redmine_issues", { "show": { "id": id } })
