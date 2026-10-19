@@ -882,7 +882,7 @@ async test "the create dates advertise that they are written, not filtered" {
 }
 
 ///|
-async test "custom_fields advertises where the ids are listed, that values are text, and how to empty one" {
+async test "custom_fields advertises where the ids are listed, that values are text, and that only update empties one, with null" {
   for action in ["create", "update"] {
     guard at(advertised_action(action), [
         "properties", "custom_fields", "description",
@@ -892,7 +892,8 @@ async test "custom_fields advertises where the ids are listed, that values are t
     }
     assert_true(text.contains("`show`"), msg=text)
     assert_true(text.contains("`\"3\"`"), msg=text)
-    assert_true(text.contains("`\"\"` empties"), msg=text)
+    assert_eq(text.contains("`null` empties"), action == "update", msg=text)
+    assert_false(text.contains("`\"\"`"), msg=text)
   }
 }
 
