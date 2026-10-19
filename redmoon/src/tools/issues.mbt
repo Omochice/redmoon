@@ -77,6 +77,21 @@ fn written_date_text(field : String, event : String, clearing : Bool) -> String 
 }
 
 ///|
+fn custom_fields() -> @schema.Schema[Array[@issues.CustomFieldInput]] {
+  let id = @schema.required("id", record_id())
+  let value = @schema.required(
+    "value",
+    @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
+  )
+  @schema.array(
+    @schema.record([id.as_member(), value.as_member()], v => {
+      id: v.get(id),
+      value: v.get(value),
+    }),
+  )
+}
+
+///|
 let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
@@ -160,6 +175,7 @@ let create_input : @schema.Schema[IssueAction] = {
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
+  let custom_fields = @schema.optional("custom_fields", custom_fields())
   @schema.record(
     [
       project_id.as_member(),
@@ -175,6 +191,7 @@ let create_input : @schema.Schema[IssueAction] = {
       due_date.as_member(),
       is_private.as_member(),
       estimated_hours.as_member(),
+      custom_fields.as_member(),
     ],
     v => {
       IssueAction::Create(
@@ -192,6 +209,7 @@ let create_input : @schema.Schema[IssueAction] = {
           estimated_hours?=v.get(estimated_hours),
           start_date?=v.get(start_date),
           due_date?=v.get(due_date),
+          custom_fields?=v.get(custom_fields),
         ),
       )
     },
