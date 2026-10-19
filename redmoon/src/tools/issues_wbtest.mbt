@@ -667,6 +667,15 @@ async test "update sends custom fields as given, empty values included" {
 }
 
 ///|
+async test "update empties a custom field given null, sending the empty string Redmine reads as empty for either kind of field" {
+  let update = updated_with({
+    "id": 1,
+    "custom_fields": [{ "id": 3, "value": null }],
+  })
+  assert_eq(update.custom_fields, Some([{ id: 3, value: Single(""), }]))
+}
+
+///|
 async test "update sets a value or clears it with null" {
   let set = updated_with({
     "id": 1,
