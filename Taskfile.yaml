@@ -100,7 +100,7 @@ tasks:
         exit 1
 
   redmine:seed:
-    desc: Enable the REST API, load the default data, create project demo with issue templates, and save the admin API key
+    desc: Enable the REST API, load the default data, create project demo with issue templates and project demo-custom-fields with custom fields, and save the admin API key
     silent: true
     cmds:
       - |
@@ -136,6 +136,10 @@ tasks:
       - |
         docker compose exec -T redmine sh -c \
           'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-issue-templates.rb'
+      - docker compose cp docker/redmine/seed-custom-fields.rb redmine:/tmp/seed-custom-fields.rb
+      - |
+        docker compose exec -T redmine sh -c \
+          'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-custom-fields.rb'
 
   redmine:down:
     desc: Stop the throwaway Redmine and keep its data volumes
