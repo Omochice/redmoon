@@ -81,7 +81,12 @@ fn custom_fields() -> @schema.Schema[Array[@issues.CustomFieldInput]] {
   let id = @schema.required("id", record_id())
   let value = @schema.required(
     "value",
-    @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
+    @schema.union([
+      @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
+      @schema.array(@schema.string()).map(values => {
+        @issues.CustomFieldValue::Multiple(values)
+      }),
+    ]),
   )
   @schema.array(
     @schema.record([id.as_member(), value.as_member()], v => {
