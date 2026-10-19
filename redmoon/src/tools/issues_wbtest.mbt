@@ -527,6 +527,46 @@ async test "create sends a multi-value custom field as an array of strings" {
 }
 
 ///|
+async fn rejected_custom_field(entry : Json) -> String {
+  rejected("create", with_field(new_issue, "custom_fields", [entry]))
+}
+
+///|
+async test "a custom field value must be a string or an array of strings, since Redmine reads every value as text" {
+  let not_text = "{\"status\":0,\"errors\":[\"invalid arguments: create.custom_fields.0.value: no alternative matched: expected a string; expected an array\"]}"
+  for value in [Json::number(3), Json::boolean(true), Json::null()] {
+    assert_eq(rejected_custom_field({ "id": 3, "value": value }), not_text)
+  }
+  assert_eq(
+    rejected_custom_field({ "id": 3, "value": [1, 2] }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.custom_fields.0.value.0: expected a string\"]}",
+  )
+}
+
+///|
+async test "a custom field entry names its field by id and nothing else" {
+  for
+    case in [
+      (({ "value": "high" } : Json), "create.custom_fields.0.id: is required"),
+      ({ "id": 3 }, "create.custom_fields.0.value: is required"),
+      (
+        { "id": 0, "value": "high" },
+        "create.custom_fields.0.id: must be at least 1",
+      ),
+      (
+        { "id": 3, "name": "Severity", "value": "high" },
+        "create.custom_fields.0.name: unknown field",
+      ),
+    ] {
+    let (entry, error) = case
+    assert_eq(
+      rejected_custom_field(entry),
+      "{\"status\":0,\"errors\":[\"invalid arguments: \{error}\"]}",
+    )
+  }
+}
+
+///|
 async test "create requires its identifying fields" {
   for
     name in ["project_id", "tracker_id", "status_id", "priority_id", "subject"] {
