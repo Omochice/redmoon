@@ -605,6 +605,28 @@ async test "update sends the changes under the issue id" {
 }
 
 ///|
+async test "update sends custom fields as given, empty values included" {
+  let update = updated_with({
+    "id": 1,
+    "custom_fields": [
+      { "id": 3, "value": "low" },
+      { "id": 4, "value": ["linux"] },
+      { "id": 5, "value": "" },
+      { "id": 6, "value": [] },
+    ],
+  })
+  assert_eq(
+    update.custom_fields,
+    Some([
+      { id: 3, value: Single("low"), },
+      { id: 4, value: Multiple(["linux"]), },
+      { id: 5, value: Single(""), },
+      { id: 6, value: Multiple([]), },
+    ]),
+  )
+}
+
+///|
 async test "update sets a value or clears it with null" {
   let set = updated_with({
     "id": 1,
