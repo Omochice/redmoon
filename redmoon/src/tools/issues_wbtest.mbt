@@ -506,6 +506,14 @@ async test "create sends only the required fields when nothing else is given" {
 }
 
 ///|
+async test "create sends a single-value custom field to the port" {
+  let issue = created_with(
+    with_field(new_issue, "custom_fields", [{ "id": 3, "value": "high" }]),
+  )
+  assert_eq(issue.custom_fields, Some([{ id: 3, value: Single("high"), }]))
+}
+
+///|
 async test "create requires its identifying fields" {
   for
     name in ["project_id", "tracker_id", "status_id", "priority_id", "subject"] {
