@@ -77,7 +77,7 @@ fn written_date_text(field : String, event : String, clearing : Bool) -> String 
 }
 
 ///|
-fn custom_fields() -> @schema.Schema[Array[@issues.CustomFieldInput]] {
+fn custom_field_inputs() -> @schema.Schema[Array[@issues.CustomFieldInput]] {
   let id = @schema.required("id", record_id())
   let value = @schema.required(
     "value",
@@ -182,7 +182,7 @@ let create_input : @schema.Schema[IssueAction] = {
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
-  let custom_fields = @schema.optional("custom_fields", custom_fields())
+  let custom_fields = @schema.optional("custom_fields", custom_field_inputs())
   @schema.record(
     [
       project_id.as_member(),
@@ -279,7 +279,7 @@ let update_input : @schema.Schema[IssueAction] = {
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
   let private_notes = @schema.optional("private_notes", @schema.boolean())
-  let custom_fields = @schema.optional("custom_fields", custom_fields())
+  let custom_fields = @schema.optional("custom_fields", custom_field_inputs())
   @schema.record(
     [
       issue_id.as_member(),
