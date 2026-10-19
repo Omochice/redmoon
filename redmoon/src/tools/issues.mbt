@@ -277,6 +277,7 @@ let update_input : @schema.Schema[IssueAction] = {
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
   let private_notes = @schema.optional("private_notes", @schema.boolean())
+  let custom_fields = @schema.optional("custom_fields", custom_fields())
   @schema.record(
     [
       issue_id.as_member(),
@@ -296,6 +297,7 @@ let update_input : @schema.Schema[IssueAction] = {
       estimated_hours.as_member(),
       notes.as_member(),
       private_notes.as_member(),
+      custom_fields.as_member(),
     ],
     v => {
       IssueAction::Update(
@@ -317,6 +319,7 @@ let update_input : @schema.Schema[IssueAction] = {
           fixed_version_id?=v.get(fixed_version_id),
           start_date?=v.get(start_date),
           due_date?=v.get(due_date),
+          custom_fields?=v.get(custom_fields),
         ),
       )
     },
