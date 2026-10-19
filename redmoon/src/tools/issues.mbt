@@ -103,7 +103,7 @@ fn custom_field_inputs(
       value: v.get(value),
     }),
   ).describe(
-    "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings. `\"\"` empties a field.",
+    "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings.\{if emptying { " `null` empties a field, and a field left out keeps its value." } else { "" }}",
   )
 }
 
