@@ -1011,6 +1011,91 @@ async fn exercise_live_issue(
 }
 
 ///|
+/// The id of the seeded custom field `name`, read from the administrator-only
+/// listing because the seed order decides it.
+async fn seeded_custom_field(
+  redmine : @redmine.Redmine,
+  name : String,
+) -> Int32 {
+  guard @redmine.send(redmine, Get, ["custom_fields.json"])
+    is { "custom_fields": Array(fields), .. } else {
+    fail("no custom_fields listing")
+  }
+  for field in fields {
+    if field is { "id": Number(id, ..), "name": String(found), .. } &&
+      found == name {
+      return id.to_int()
+    }
+  }
+  fail("custom field \{name} is not seeded; run `task redmine:seed`")
+}
+
+///|
+fn custom_field_value(issue : Json, id : Int32) -> Json raise {
+  guard issue is { "custom_fields": Array(fields), .. } else {
+    fail("no custom_fields in \{issue.stringify()}")
+  }
+  for field in fields {
+    if field is { "id": Number(found, ..), "value": value, .. } &&
+      found.to_int() == id {
+      return value
+    }
+  }
+  fail("custom field \{id} missing from \{issue.stringify()}")
+}
+
+///|
+async test "live: an issue is created with a required custom field and its multi-value field is emptied" {
+  guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
+    return
+  }
+  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
+    return
+  }
+  let redmine = @redmine.new(endpoint~, api_key~)
+  let tools = [issues_tool(redmine, Full)]
+  guard @redmine.send(redmine, Get, ["projects", "demo-custom-fields.json"])
+    is { "project": { "id": Number(project_id, ..), .. }, .. } else {
+    fail("project demo-custom-fields is not seeded; run `task redmine:seed`")
+  }
+  let severity = seeded_custom_field(redmine, "Severity")
+  let platforms = seeded_custom_field(redmine, "Platforms")
+  let issue : Json = {
+    "project_id": project_id,
+    "tracker_id": 1,
+    "status_id": 1,
+    "priority_id": 2,
+    "subject": "redmoon-custom-fields-\{@env.now()}",
+  }
+  let refused = call_tool(tools, "redmine_issues", { "create": issue })
+  assert_eq(refused.is_error, true, msg=refused.text)
+  assert_true(refused.text.contains("Severity"), msg=refused.text)
+  let created = call_tool(tools, "redmine_issues", {
+    "create": with_field(issue, "custom_fields", [
+      { "id": severity, "value": "high" },
+      { "id": platforms, "value": ["linux", "macos"] },
+    ]),
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  let body = @json.parse(created.text)
+  guard body is { "id": Number(id, ..), .. } else {
+    fail("no id in \{created.text}")
+  }
+  let id = id.to_int()
+  defer ignore(call_tool(tools, "redmine_issues", { "delete": { "id": id } }))
+  assert_eq(custom_field_value(body, severity), "high")
+  assert_eq(custom_field_value(body, platforms), ["linux", "macos"])
+  let emptied = call_tool(tools, "redmine_issues", {
+    "update": { "id": id, "custom_fields": [{ "id": platforms, "value": [] }] },
+  })
+  assert_eq(emptied.text, "{\"ok\":true}")
+  let shown = call_tool(tools, "redmine_issues", { "show": { "id": id } })
+  let shown = @json.parse(shown.text)
+  assert_eq(custom_field_value(shown, platforms), [])
+  assert_eq(custom_field_value(shown, severity), "high")
+}
+
+///|
 async test "tools/list advertises the issues tool in both modes" {
   let advertised = []
   for mode in [Mode::Full, Readonly] {
