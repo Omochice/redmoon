@@ -77,16 +77,25 @@ fn written_date_text(field : String, event : String, clearing : Bool) -> String 
 }
 
 ///|
-fn custom_field_inputs() -> @schema.Schema[Array[@issues.CustomFieldInput]] {
+fn custom_field_inputs(
+  emptying~ : Bool,
+) -> @schema.Schema[Array[@issues.CustomFieldInput]] {
   let id = @schema.required("id", record_id())
+  let text = @schema.union([
+    @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
+    @schema.array(@schema.string()).map(values => {
+      @issues.CustomFieldValue::Multiple(values)
+    }),
+  ])
   let value = @schema.required(
     "value",
-    @schema.union([
-      @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
-      @schema.array(@schema.string()).map(values => {
-        @issues.CustomFieldValue::Multiple(values)
-      }),
-    ]),
+    if emptying {
+      @schema.nullable(text).map(value => {
+        value.unwrap_or(@issues.CustomFieldValue::Single(""))
+      })
+    } else {
+      text
+    },
   )
   @schema.array(
     @schema.record([id.as_member(), value.as_member()], v => @issues.CustomFieldInput::{
@@ -182,7 +191,10 @@ let create_input : @schema.Schema[IssueAction] = {
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
-  let custom_fields = @schema.optional("custom_fields", custom_field_inputs())
+  let custom_fields = @schema.optional(
+    "custom_fields",
+    custom_field_inputs(emptying=false),
+  )
   @schema.record(
     [
       project_id.as_member(),
@@ -279,7 +291,10 @@ let update_input : @schema.Schema[IssueAction] = {
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
   let private_notes = @schema.optional("private_notes", @schema.boolean())
-  let custom_fields = @schema.optional("custom_fields", custom_field_inputs())
+  let custom_fields = @schema.optional(
+    "custom_fields",
+    custom_field_inputs(emptying=true),
+  )
   @schema.record(
     [
       issue_id.as_member(),
