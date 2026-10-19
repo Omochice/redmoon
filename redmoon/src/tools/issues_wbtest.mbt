@@ -506,6 +506,67 @@ async test "create sends only the required fields when nothing else is given" {
 }
 
 ///|
+async test "create sends a single-value custom field to the port" {
+  let issue = created_with(
+    with_field(new_issue, "custom_fields", [{ "id": 3, "value": "high" }]),
+  )
+  assert_eq(issue.custom_fields, Some([{ id: 3, value: Single("high"), }]))
+}
+
+///|
+async test "create sends a multi-value custom field as an array of strings" {
+  let issue = created_with(
+    with_field(new_issue, "custom_fields", [
+      { "id": 4, "value": ["linux", "macos"] },
+    ]),
+  )
+  assert_eq(
+    issue.custom_fields,
+    Some([{ id: 4, value: Multiple(["linux", "macos"]), }]),
+  )
+}
+
+///|
+async fn rejected_custom_field(entry : Json) -> String {
+  rejected("create", with_field(new_issue, "custom_fields", [entry]))
+}
+
+///|
+async test "a custom field value must be a string or an array of strings, since Redmine reads every value as text" {
+  let not_text = "{\"status\":0,\"errors\":[\"invalid arguments: create.custom_fields.0.value: no alternative matched: expected a string; expected an array\"]}"
+  for value in [Json::number(3), Json::boolean(true), Json::null()] {
+    assert_eq(rejected_custom_field({ "id": 3, "value": value }), not_text)
+  }
+  assert_eq(
+    rejected_custom_field({ "id": 3, "value": [1, 2] }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.custom_fields.0.value.0: expected a string\"]}",
+  )
+}
+
+///|
+async test "a custom field entry names its field by id and nothing else" {
+  for
+    case in [
+      (({ "value": "high" } : Json), "create.custom_fields.0.id: is required"),
+      ({ "id": 3 }, "create.custom_fields.0.value: is required"),
+      (
+        { "id": 0, "value": "high" },
+        "create.custom_fields.0.id: must be at least 1",
+      ),
+      (
+        { "id": 3, "name": "Severity", "value": "high" },
+        "create.custom_fields.0.name: unknown field",
+      ),
+    ] {
+    let (entry, error) = case
+    assert_eq(
+      rejected_custom_field(entry),
+      "{\"status\":0,\"errors\":[\"invalid arguments: \{error}\"]}",
+    )
+  }
+}
+
+///|
 async test "create requires its identifying fields" {
   for
     name in ["project_id", "tracker_id", "status_id", "priority_id", "subject"] {
@@ -584,6 +645,37 @@ async test "update sends the changes under the issue id" {
 }
 
 ///|
+async test "update sends custom fields as given, empty values included" {
+  let update = updated_with({
+    "id": 1,
+    "custom_fields": [
+      { "id": 3, "value": "low" },
+      { "id": 4, "value": ["linux"] },
+      { "id": 5, "value": "" },
+      { "id": 6, "value": [] },
+    ],
+  })
+  assert_eq(
+    update.custom_fields,
+    Some([
+      { id: 3, value: Single("low"), },
+      { id: 4, value: Multiple(["linux"]), },
+      { id: 5, value: Single(""), },
+      { id: 6, value: Multiple([]), },
+    ]),
+  )
+}
+
+///|
+async test "update empties a custom field given null, sending the empty string Redmine reads as empty for either kind of field" {
+  let update = updated_with({
+    "id": 1,
+    "custom_fields": [{ "id": 3, "value": null }],
+  })
+  assert_eq(update.custom_fields, Some([{ id: 3, value: Single(""), }]))
+}
+
+///|
 async test "update sets a value or clears it with null" {
   let set = updated_with({
     "id": 1,
@@ -620,7 +712,9 @@ async test "update sets a value or clears it with null" {
 ///|
 async test "update rejects null for the fields that cannot be emptied" {
   for
-    name in ["status_id", "priority_id", "tracker_id", "subject", "done_ratio"] {
+    name in [
+      "status_id", "priority_id", "tracker_id", "subject", "done_ratio", "custom_fields",
+    ] {
     ignore(rejected("update", new_update(name)))
   }
 }
@@ -788,6 +882,22 @@ async test "the create dates advertise that they are written, not filtered" {
 }
 
 ///|
+async test "custom_fields advertises where the ids are listed, that values are text, and that only update empties one, with null" {
+  for action in ["create", "update"] {
+    guard at(advertised_action(action), [
+        "properties", "custom_fields", "description",
+      ])
+      is String(text) else {
+      fail("no description on \{action}")
+    }
+    assert_true(text.contains("`show`"), msg=text)
+    assert_true(text.contains("`\"3\"`"), msg=text)
+    assert_eq(text.contains("`null` empties"), action == "update", msg=text)
+    assert_false(text.contains("`\"\"`"), msg=text)
+  }
+}
+
+///|
 async test "status_id advertises that a forbidden transition is ignored and where the allowed ones are listed" {
   let update = advertised_action("update")
   guard at(update, ["properties", "status_id", "description"]) is String(text) else {
@@ -913,6 +1023,103 @@ async fn exercise_live_issue(
 }
 
 ///|
+/// The id of the seeded custom field `name`, read from the administrator-only
+/// listing because the seed order decides it.
+async fn seeded_custom_field(
+  redmine : @redmine.Redmine,
+  name : String,
+) -> Int32 {
+  guard @redmine.send(redmine, Get, ["custom_fields.json"])
+    is { "custom_fields": Array(fields), .. } else {
+    fail("no custom_fields listing")
+  }
+  for field in fields {
+    if field is { "id": Number(id, ..), "name": String(found), .. } &&
+      found == name {
+      return id.to_int()
+    }
+  }
+  fail("custom field \{name} is not seeded; run `task redmine:seed`")
+}
+
+///|
+fn shown_custom_value(issue : Json, id : Int32) -> Json raise {
+  guard issue is { "custom_fields": Array(fields), .. } else {
+    fail("no custom_fields in \{issue.stringify()}")
+  }
+  for field in fields {
+    if field is { "id": Number(found, ..), "value": value, .. } &&
+      found.to_int() == id {
+      return value
+    }
+  }
+  fail("custom field \{id} missing from \{issue.stringify()}")
+}
+
+///|
+async test "live: an issue is created with a required custom field and its multi-value field is emptied with null" {
+  guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
+    return
+  }
+  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
+    return
+  }
+  let redmine = @redmine.new(endpoint~, api_key~)
+  let tools = [issues_tool(redmine, Full)]
+  guard @redmine.send(redmine, Get, ["projects", "demo-custom-fields.json"])
+    is { "project": { "id": Number(project_id, ..), .. }, .. } else {
+    fail("project demo-custom-fields is not seeded; run `task redmine:seed`")
+  }
+  let severity = seeded_custom_field(redmine, "redmoon Severity")
+  let platforms = seeded_custom_field(redmine, "redmoon Platforms")
+  let issue : Json = {
+    "project_id": project_id,
+    "tracker_id": 1,
+    "status_id": 1,
+    "priority_id": 2,
+    "subject": "redmoon-custom-fields-\{@env.now()}",
+  }
+  let refused = call_tool(tools, "redmine_issues", { "create": issue })
+  if !refused.is_error {
+    if @json.parse(refused.text) is { "id": Number(leaked, ..), .. } {
+      ignore(
+        call_tool(tools, "redmine_issues", {
+          "delete": { "id": leaked.to_int() },
+        }),
+      )
+    }
+    fail("created without the required field: \{refused.text}")
+  }
+  assert_true(refused.text.contains("\"status\":422"), msg=refused.text)
+  let created = call_tool(tools, "redmine_issues", {
+    "create": with_field(issue, "custom_fields", [
+      { "id": severity, "value": "high" },
+      { "id": platforms, "value": ["linux", "macos"] },
+    ]),
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  let body = @json.parse(created.text)
+  guard body is { "id": Number(id, ..), .. } else {
+    fail("no id in \{created.text}")
+  }
+  let id = id.to_int()
+  defer ignore(call_tool(tools, "redmine_issues", { "delete": { "id": id } }))
+  assert_eq(shown_custom_value(body, severity), "high")
+  assert_eq(shown_custom_value(body, platforms), ["linux", "macos"])
+  let emptied = call_tool(tools, "redmine_issues", {
+    "update": {
+      "id": id,
+      "custom_fields": [{ "id": platforms, "value": null }],
+    },
+  })
+  assert_eq(emptied.text, "{\"ok\":true}")
+  let shown = call_tool(tools, "redmine_issues", { "show": { "id": id } })
+  let shown = @json.parse(shown.text)
+  assert_eq(shown_custom_value(shown, platforms), [])
+  assert_eq(shown_custom_value(shown, severity), "high")
+}
+
+///|
 async test "tools/list advertises the issues tool in both modes" {
   let advertised = []
   for mode in [Mode::Full, Readonly] {
@@ -922,7 +1129,7 @@ async test "tools/list advertises the issues tool in both modes" {
   }
   assert_eq(
     advertised[0],
-    "{\"tools\":[{\"name\":\"redmine_issues\",\"description\":\"Create, read, update, and delete Redmine issues. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\\n`show` returns the bare issue; pass `include: [\\\"journals\\\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowedStatuses` as needed.\\n`list` accepts only `attachments` and `relations`.\\n`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"include\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"attachments\",\"relations\"]},\"description\":\"Associations Redmine omits unless asked for. A listed issue carries only these two; `journals` are available through `show`.\"},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"open\",\"closed\",\"*\"]}]},\"fixed_version_id\":{\"type\":\"integer\",\"minimum\":1},\"assigned_to_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"me\"]}]},\"start_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"},{\"type\":\"string\",\"enum\":[\"tomorrow\",\"nextWeek\",\"nextMonth\"]},{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false,\"description\":\"The single day that many days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"const\":\"today\"},\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\",\"to\"],\"additionalProperties\":false,\"description\":\"The next n days: today through the day n days from now.\"}]},\"due_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"},{\"type\":\"string\",\"enum\":[\"tomorrow\",\"nextWeek\",\"nextMonth\"]},{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false,\"description\":\"The single day that many days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"const\":\"today\"},\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\",\"to\"],\"additionalProperties\":false,\"description\":\"The next n days: today through the day n days from now.\"}]},\"created_on\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"}]},\"updated_on\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"}]},\"closed_on\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"}]},\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"include\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"journals\",\"attachments\",\"relations\",\"children\",\"changesets\",\"watchers\",\"allowedStatuses\"]},\"description\":\"Associations Redmine omits unless asked for. `journals` are the comments and the field-change history.\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"type\":\"integer\",\"minimum\":1},\"priority_id\":{\"type\":\"integer\",\"minimum\":1},\"subject\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"fixed_version_id\":{\"type\":\"integer\",\"minimum\":1},\"assigned_to_id\":{\"type\":\"integer\",\"minimum\":1},\"parent_issue_id\":{\"type\":\"integer\",\"minimum\":1},\"start_date\":{\"type\":\"string\",\"format\":\"date\",\"description\":\"Day the issue starts, as an ISO date (`YYYY-MM-DD`). This is the date to write, not a filter: unlike `start_date` on `list`, no period or range is accepted here.\"},\"due_date\":{\"type\":\"string\",\"format\":\"date\",\"description\":\"Day the issue is due, as an ISO date (`YYYY-MM-DD`). This is the date to write, not a filter: unlike `due_date` on `list`, no period or range is accepted here.\"},\"is_private\":{\"type\":\"boolean\"},\"estimated_hours\":{\"type\":\"number\"}},\"required\":[\"project_id\",\"tracker_id\",\"status_id\",\"priority_id\",\"subject\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"subject\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"status_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Status to move the issue to. Redmine ignores, without an error, a status the workflow does not allow; `show` with `include: [\\\"allowedStatuses\\\"]` lists the ones it does.\"},\"priority_id\":{\"type\":\"integer\",\"minimum\":1},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1},\"assigned_to_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"User to assign the issue to; `null` unassigns it.\"},\"category_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"Issue category to file the issue under; `null` removes the category.\"},\"parent_issue_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"Issue to make the parent of this one; `null` detaches it from its parent.\"},\"fixed_version_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"Version to move the issue into; `null` takes it out of its version.\"},\"start_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\"},{\"type\":\"null\"}],\"description\":\"Day the issue starts, as an ISO date (`YYYY-MM-DD`); `null` clears the date. This is the date to write, not a filter: unlike `start_date` on `list`, no period or range is accepted here.\"},\"due_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\"},{\"type\":\"null\"}],\"description\":\"Day the issue is due, as an ISO date (`YYYY-MM-DD`); `null` clears the date. This is the date to write, not a filter: unlike `due_date` on `list`, no period or range is accepted here.\"},\"done_ratio\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":100},\"is_private\":{\"type\":\"boolean\"},\"estimated_hours\":{\"type\":\"number\"},\"notes\":{\"type\":\"string\"},\"private_notes\":{\"type\":\"boolean\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"update_note\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"journal_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Id of the comment (journal), as listed by `show` with `include: [\\\"journals\\\"]`.\"},\"notes\":{\"type\":\"string\",\"minLength\":1,\"description\":\"New text of the comment. To erase it, use `delete_note`.\"},\"private_notes\":{\"type\":\"boolean\"}},\"required\":[\"journal_id\",\"notes\"],\"additionalProperties\":false},{\"type\":\"object\",\"properties\":{\"journal_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Id of the comment (journal), as listed by `show` with `include: [\\\"journals\\\"]`.\"},\"private_notes\":{\"type\":\"boolean\"}},\"required\":[\"journal_id\",\"private_notes\"],\"additionalProperties\":false}]},\"delete_note\":{\"type\":\"object\",\"properties\":{\"journal_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Id of the comment (journal), as listed by `show` with `include: [\\\"journals\\\"]`.\"}},\"required\":[\"journal_id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_issues\",\"description\":\"Create, read, update, and delete Redmine issues. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\\n`show` returns the bare issue; pass `include: [\\\"journals\\\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowedStatuses` as needed.\\n`list` accepts only `attachments` and `relations`.\\n`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"include\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"attachments\",\"relations\"]},\"description\":\"Associations Redmine omits unless asked for. A listed issue carries only these two; `journals` are available through `show`.\"},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"open\",\"closed\",\"*\"]}]},\"fixed_version_id\":{\"type\":\"integer\",\"minimum\":1},\"assigned_to_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"me\"]}]},\"start_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"},{\"type\":\"string\",\"enum\":[\"tomorrow\",\"nextWeek\",\"nextMonth\"]},{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false,\"description\":\"The single day that many days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"const\":\"today\"},\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\",\"to\"],\"additionalProperties\":false,\"description\":\"The next n days: today through the day n days from now.\"}]},\"due_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"},{\"type\":\"string\",\"enum\":[\"tomorrow\",\"nextWeek\",\"nextMonth\"]},{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false,\"description\":\"The single day that many days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days from now.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"const\":\"today\"},\"to\":{\"type\":\"object\",\"properties\":{\"days_from_now\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_from_now\"],\"additionalProperties\":false}},\"required\":[\"from\",\"to\"],\"additionalProperties\":false,\"description\":\"The next n days: today through the day n days from now.\"}]},\"created_on\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"}]},\"updated_on\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"}]},\"closed_on\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\",\"description\":\"That day.\"},{\"type\":\"string\",\"enum\":[\"today\",\"yesterday\",\"thisWeek\",\"lastWeek\",\"lastTwoWeeks\",\"thisMonth\",\"lastMonth\",\"thisYear\",\"any\",\"none\"]},{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false,\"description\":\"The single day that many days ago.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"On or after `from`, and on or before `to` when it is given.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before `to`.\"},{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false},\"to\":{\"type\":\"string\",\"const\":\"today\"}},\"required\":[\"from\"],\"additionalProperties\":false,\"description\":\"The last n days: on or after the day n days ago.\"},{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"object\",\"properties\":{\"days_ago\":{\"type\":\"integer\",\"minimum\":0}},\"required\":[\"days_ago\"],\"additionalProperties\":false}},\"required\":[\"to\"],\"additionalProperties\":false,\"description\":\"On or before the day n days ago.\"}]},\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"include\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"journals\",\"attachments\",\"relations\",\"children\",\"changesets\",\"watchers\",\"allowedStatuses\"]},\"description\":\"Associations Redmine omits unless asked for. `journals` are the comments and the field-change history.\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"type\":\"integer\",\"minimum\":1},\"priority_id\":{\"type\":\"integer\",\"minimum\":1},\"subject\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"fixed_version_id\":{\"type\":\"integer\",\"minimum\":1},\"assigned_to_id\":{\"type\":\"integer\",\"minimum\":1},\"parent_issue_id\":{\"type\":\"integer\",\"minimum\":1},\"start_date\":{\"type\":\"string\",\"format\":\"date\",\"description\":\"Day the issue starts, as an ISO date (`YYYY-MM-DD`). This is the date to write, not a filter: unlike `start_date` on `list`, no period or range is accepted here.\"},\"due_date\":{\"type\":\"string\",\"format\":\"date\",\"description\":\"Day the issue is due, as an ISO date (`YYYY-MM-DD`). This is the date to write, not a filter: unlike `due_date` on `list`, no period or range is accepted here.\"},\"is_private\":{\"type\":\"boolean\"},\"estimated_hours\":{\"type\":\"number\"},\"custom_fields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"value\":{\"anyOf\":[{\"type\":\"string\"},{\"type\":\"array\",\"items\":{\"type\":\"string\"}}]}},\"required\":[\"id\",\"value\"],\"additionalProperties\":false},\"description\":\"Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\\\"3\\\"`, `\\\"1\\\"` for checked), and a multi-value field takes an array of strings.\"}},\"required\":[\"project_id\",\"tracker_id\",\"status_id\",\"priority_id\",\"subject\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"subject\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"status_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Status to move the issue to. Redmine ignores, without an error, a status the workflow does not allow; `show` with `include: [\\\"allowedStatuses\\\"]` lists the ones it does.\"},\"priority_id\":{\"type\":\"integer\",\"minimum\":1},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1},\"assigned_to_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"User to assign the issue to; `null` unassigns it.\"},\"category_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"Issue category to file the issue under; `null` removes the category.\"},\"parent_issue_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"Issue to make the parent of this one; `null` detaches it from its parent.\"},\"fixed_version_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"null\"}],\"description\":\"Version to move the issue into; `null` takes it out of its version.\"},\"start_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\"},{\"type\":\"null\"}],\"description\":\"Day the issue starts, as an ISO date (`YYYY-MM-DD`); `null` clears the date. This is the date to write, not a filter: unlike `start_date` on `list`, no period or range is accepted here.\"},\"due_date\":{\"anyOf\":[{\"type\":\"string\",\"format\":\"date\"},{\"type\":\"null\"}],\"description\":\"Day the issue is due, as an ISO date (`YYYY-MM-DD`); `null` clears the date. This is the date to write, not a filter: unlike `due_date` on `list`, no period or range is accepted here.\"},\"done_ratio\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":100},\"is_private\":{\"type\":\"boolean\"},\"estimated_hours\":{\"type\":\"number\"},\"notes\":{\"type\":\"string\"},\"private_notes\":{\"type\":\"boolean\"},\"custom_fields\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"value\":{\"anyOf\":[{\"anyOf\":[{\"type\":\"string\"},{\"type\":\"array\",\"items\":{\"type\":\"string\"}}]},{\"type\":\"null\"}]}},\"required\":[\"id\",\"value\"],\"additionalProperties\":false},\"description\":\"Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\\\"3\\\"`, `\\\"1\\\"` for checked), and a multi-value field takes an array of strings. `null` empties a field, and a field left out keeps its value.\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"update_note\":{\"anyOf\":[{\"type\":\"object\",\"properties\":{\"journal_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Id of the comment (journal), as listed by `show` with `include: [\\\"journals\\\"]`.\"},\"notes\":{\"type\":\"string\",\"minLength\":1,\"description\":\"New text of the comment. To erase it, use `delete_note`.\"},\"private_notes\":{\"type\":\"boolean\"}},\"required\":[\"journal_id\",\"notes\"],\"additionalProperties\":false},{\"type\":\"object\",\"properties\":{\"journal_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Id of the comment (journal), as listed by `show` with `include: [\\\"journals\\\"]`.\"},\"private_notes\":{\"type\":\"boolean\"}},\"required\":[\"journal_id\",\"private_notes\"],\"additionalProperties\":false}]},\"delete_note\":{\"type\":\"object\",\"properties\":{\"journal_id\":{\"type\":\"integer\",\"minimum\":1,\"description\":\"Id of the comment (journal), as listed by `show` with `include: [\\\"journals\\\"]`.\"}},\"required\":[\"journal_id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
   assert_eq(
     advertised[1],

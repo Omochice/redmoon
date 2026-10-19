@@ -30,6 +30,8 @@ task redmine:seed
 The task enables the REST API, loads the default configuration data, creates the project `demo`, and writes the admin API key to `_build/redmine-api-key`.
 The default data seeds tracker `1` (Bug), status `1` (New), and priority `2` (Normal), which the issue integration tests use.
 It also enables the issue templates module on `demo` and creates one shared project template and one global template for tracker `1`, plus the subproject `demo-child` that inherits the project template, through `docker/redmine/seed-issue-templates.rb`, because the plugin offers no API to create them.
+It then creates the project `demo-custom-fields` with a required string field `redmoon Severity` and a multi-value list field `redmoon Platforms` for tracker `1`, through `docker/redmine/seed-custom-fields.rb`, because Redmine offers no API to create custom fields.
+The fields belong to that project alone because a required field in `demo` would reject every issue the other integration tests create there.
 The key goes to a file instead of the terminal so that no log carries it, and `_build/` is already gitignored.
 `task redmine:up` and `task redmine:seed` are safe to re-run against an instance that is already prepared.
 

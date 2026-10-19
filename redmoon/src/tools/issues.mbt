@@ -77,6 +77,32 @@ fn written_date_text(field : String, event : String, clearing : Bool) -> String 
 }
 
 ///|
+let custom_field_value : @schema.Schema[@issues.CustomFieldValue] = @schema.union([
+    @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
+    @schema.array(@schema.string()).map(values => {
+      @issues.CustomFieldValue::Multiple(values)
+    }),
+  ],
+)
+
+///|
+let custom_fields_text : String = "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings."
+
+///|
+fn custom_field_inputs(
+  value : @schema.Schema[@issues.CustomFieldValue],
+) -> @schema.Schema[Array[@issues.CustomFieldInput]] {
+  let id = @schema.required("id", record_id())
+  let value = @schema.required("value", value)
+  @schema.array(
+    @schema.record([id.as_member(), value.as_member()], v => @issues.CustomFieldInput::{
+      id: v.get(id),
+      value: v.get(value),
+    }),
+  )
+}
+
+///|
 let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
@@ -160,6 +186,10 @@ let create_input : @schema.Schema[IssueAction] = {
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
+  let custom_fields = @schema.optional(
+    "custom_fields",
+    custom_field_inputs(custom_field_value).describe(custom_fields_text),
+  )
   @schema.record(
     [
       project_id.as_member(),
@@ -175,6 +205,7 @@ let create_input : @schema.Schema[IssueAction] = {
       due_date.as_member(),
       is_private.as_member(),
       estimated_hours.as_member(),
+      custom_fields.as_member(),
     ],
     v => {
       IssueAction::Create(
@@ -192,6 +223,7 @@ let create_input : @schema.Schema[IssueAction] = {
           estimated_hours?=v.get(estimated_hours),
           start_date?=v.get(start_date),
           due_date?=v.get(due_date),
+          custom_fields?=v.get(custom_fields),
         ),
       )
     },
@@ -254,6 +286,17 @@ let update_input : @schema.Schema[IssueAction] = {
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
   let private_notes = @schema.optional("private_notes", @schema.boolean())
+  let custom_fields = @schema.optional(
+    "custom_fields",
+    custom_field_inputs(
+      @schema.nullable(custom_field_value).map(value => {
+        value.unwrap_or(@issues.CustomFieldValue::Single(""))
+      }),
+    ).describe(
+      custom_fields_text +
+      " `null` empties a field, and a field left out keeps its value.",
+    ),
+  )
   @schema.record(
     [
       issue_id.as_member(),
@@ -273,6 +316,7 @@ let update_input : @schema.Schema[IssueAction] = {
       estimated_hours.as_member(),
       notes.as_member(),
       private_notes.as_member(),
+      custom_fields.as_member(),
     ],
     v => {
       IssueAction::Update(
@@ -294,6 +338,7 @@ let update_input : @schema.Schema[IssueAction] = {
           fixed_version_id?=v.get(fixed_version_id),
           start_date?=v.get(start_date),
           due_date?=v.get(due_date),
+          custom_fields?=v.get(custom_fields),
         ),
       )
     },
