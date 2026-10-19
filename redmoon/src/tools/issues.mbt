@@ -89,10 +89,12 @@ fn custom_fields() -> @schema.Schema[Array[@issues.CustomFieldInput]] {
     ]),
   )
   @schema.array(
-    @schema.record([id.as_member(), value.as_member()], v => {
+    @schema.record([id.as_member(), value.as_member()], v => @issues.CustomFieldInput::{
       id: v.get(id),
       value: v.get(value),
     }),
+  ).describe(
+    "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings. `\"\"` empties a field.",
   )
 }
 
