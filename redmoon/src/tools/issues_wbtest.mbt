@@ -712,7 +712,9 @@ async test "update sets a value or clears it with null" {
 ///|
 async test "update rejects null for the fields that cannot be emptied" {
   for
-    name in ["status_id", "priority_id", "tracker_id", "subject", "done_ratio"] {
+    name in [
+      "status_id", "priority_id", "tracker_id", "subject", "done_ratio", "custom_fields",
+    ] {
     ignore(rejected("update", new_update(name)))
   }
 }
