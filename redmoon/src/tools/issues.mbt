@@ -77,33 +77,28 @@ fn written_date_text(field : String, event : String, clearing : Bool) -> String 
 }
 
 ///|
-fn custom_field_inputs(
-  emptying~ : Bool,
-) -> @schema.Schema[Array[@issues.CustomFieldInput]] {
-  let id = @schema.required("id", record_id())
-  let text = @schema.union([
+let custom_field_value : @schema.Schema[@issues.CustomFieldValue] = @schema.union([
     @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
     @schema.array(@schema.string()).map(values => {
       @issues.CustomFieldValue::Multiple(values)
     }),
-  ])
-  let value = @schema.required(
-    "value",
-    if emptying {
-      @schema.nullable(text).map(value => {
-        value.unwrap_or(@issues.CustomFieldValue::Single(""))
-      })
-    } else {
-      text
-    },
-  )
+  ],
+)
+
+///|
+let custom_fields_text : String = "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings."
+
+///|
+fn custom_field_inputs(
+  value : @schema.Schema[@issues.CustomFieldValue],
+) -> @schema.Schema[Array[@issues.CustomFieldInput]] {
+  let id = @schema.required("id", record_id())
+  let value = @schema.required("value", value)
   @schema.array(
     @schema.record([id.as_member(), value.as_member()], v => @issues.CustomFieldInput::{
       id: v.get(id),
       value: v.get(value),
     }),
-  ).describe(
-    "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings.\{if emptying { " `null` empties a field, and a field left out keeps its value." } else { "" }}",
   )
 }
 
@@ -193,7 +188,7 @@ let create_input : @schema.Schema[IssueAction] = {
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let custom_fields = @schema.optional(
     "custom_fields",
-    custom_field_inputs(emptying=false),
+    custom_field_inputs(custom_field_value).describe(custom_fields_text),
   )
   @schema.record(
     [
@@ -293,7 +288,14 @@ let update_input : @schema.Schema[IssueAction] = {
   let private_notes = @schema.optional("private_notes", @schema.boolean())
   let custom_fields = @schema.optional(
     "custom_fields",
-    custom_field_inputs(emptying=true),
+    custom_field_inputs(
+      @schema.nullable(custom_field_value).map(value => {
+        value.unwrap_or(@issues.CustomFieldValue::Single(""))
+      }),
+    ).describe(
+      custom_fields_text +
+      " `null` empties a field, and a field left out keeps its value.",
+    ),
   )
   @schema.record(
     [

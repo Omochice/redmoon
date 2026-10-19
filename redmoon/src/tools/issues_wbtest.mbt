@@ -1043,7 +1043,7 @@ async fn seeded_custom_field(
 }
 
 ///|
-fn custom_field_value(issue : Json, id : Int32) -> Json raise {
+fn shown_custom_value(issue : Json, id : Int32) -> Json raise {
   guard issue is { "custom_fields": Array(fields), .. } else {
     fail("no custom_fields in \{issue.stringify()}")
   }
@@ -1104,8 +1104,8 @@ async test "live: an issue is created with a required custom field and its multi
   }
   let id = id.to_int()
   defer ignore(call_tool(tools, "redmine_issues", { "delete": { "id": id } }))
-  assert_eq(custom_field_value(body, severity), "high")
-  assert_eq(custom_field_value(body, platforms), ["linux", "macos"])
+  assert_eq(shown_custom_value(body, severity), "high")
+  assert_eq(shown_custom_value(body, platforms), ["linux", "macos"])
   let emptied = call_tool(tools, "redmine_issues", {
     "update": {
       "id": id,
@@ -1115,8 +1115,8 @@ async test "live: an issue is created with a required custom field and its multi
   assert_eq(emptied.text, "{\"ok\":true}")
   let shown = call_tool(tools, "redmine_issues", { "show": { "id": id } })
   let shown = @json.parse(shown.text)
-  assert_eq(custom_field_value(shown, platforms), [])
-  assert_eq(custom_field_value(shown, severity), "high")
+  assert_eq(shown_custom_value(shown, platforms), [])
+  assert_eq(shown_custom_value(shown, severity), "high")
 }
 
 ///|
