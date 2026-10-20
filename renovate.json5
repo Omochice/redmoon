@@ -4,4 +4,31 @@
     "github>Omochice/personal-renovate-config#v2.0.0",
     "github>Omochice/personal-renovate-config:nix#v2.0.0",
   ],
+  customManagers: [
+    {
+      customType: "regex",
+      description: "Registry dependencies pinned in moon.mod",
+      managerFilePatterns: ["*/moon.mod"],
+      matchStrings: ['"(?<depName>[^"@\\s/]+/[^"@\\s/]+)@(?<currentValue>\\d+\\.\\d+\\.\\d+[^"\\s]*)"'],
+      datasourceTemplate: "custom.mooncakes",
+      versioningTemplate: "semver",
+    },
+  ],
+  customDatasources: {
+    mooncakes: {
+      defaultRegistryUrlTemplate: "https://mooncakes.io/api/v0/modules/{{packageName}}",
+      // The trailing [] keeps a module with a single release an array, which JSONata would otherwise unwrap into an object that Renovate rejects.
+      transformTemplates: [
+        '{"releases": versions[yanked = false].{"version": version}[], "sourceUrl": metadata.repository}',
+      ],
+    },
+  },
+  packageRules: [
+    {
+      description: "The workspace's own modules resolve to the local members, not to the registry",
+      matchDatasources: ["custom.mooncakes"],
+      matchPackageNames: ["omochice/**"],
+      enabled: false,
+    },
+  ],
 }
