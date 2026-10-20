@@ -187,3 +187,31 @@ async test "an issue is created with a required custom field and its multi-value
   assert_eq(shown_custom_value(shown, platforms), [])
   assert_eq(shown_custom_value(shown, severity), "high")
 }
+
+///|
+async test "issues are listed by a saved query through the tool" {
+  let redmine = @livetest.redmine()
+  let queries = call_tool(
+    [@tools.enumerations_tool(redmine)],
+    "redmine_enumerations",
+    { "list_issue_queries": {} },
+  )
+  guard @json.parse(queries.text) is Array(listed) &&
+    listed.iter().find_first(q => q is { "name": "Demo open issues", .. })
+    is Some({ "id": Number(query_id, ..), .. }) else {
+    fail("the seeded query is missing from \{queries.text}")
+  }
+  let tools = [@tools.issues_tool(redmine, Readonly)]
+  let called = call_tool(tools, "redmine_issues", {
+    "list": { "query_id": query_id.to_int(), "project_id": 1, "limit": 5 },
+  })
+  assert_eq(called.is_error, false, msg=called.text)
+  guard @json.parse(called.text) is Array(_) else {
+    fail("not a listing: \{called.text}")
+  }
+  let unscoped = call_tool(tools, "redmine_issues", {
+    "list": { "query_id": query_id.to_int() },
+  })
+  assert_eq(unscoped.is_error, true)
+  assert_true(unscoped.text.contains("\"status\":404"), msg=unscoped.text)
+}
