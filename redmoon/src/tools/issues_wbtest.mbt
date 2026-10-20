@@ -272,6 +272,24 @@ async test "list with query_id reaches the saved query listing with the id and t
 }
 
 ///|
+async test "list with query_id passes the project and includes to the saved query listing" {
+  let fake = FakeIssues::new()
+  let called = call_issues(fake, {
+    "list": {
+      "query_id": 4,
+      "project_id": 1,
+      "include": ["relations", "attachments"],
+    },
+  })
+  assert_eq(called.is_error, false, msg=called.text)
+  let (query, limit) = fake.listed_saved.unwrap()
+  assert_eq(query.query_id, 4)
+  assert_eq(query.project_id, Some(1))
+  assert_eq(query.includes, [Relations, Attachments])
+  assert_eq(limit, None)
+}
+
+///|
 async test "list without arguments filters nothing" {
   let query = listed_with({})
   assert_eq(query.includes, [])
