@@ -3,6 +3,7 @@ coverage:
     - _build/coverage/cobertura.xml
     - _build/coverage/keyring.xml
   exclude:
+    - integration-test/**
     - redmine/src/internal/livetest/**
     - redmine-plugins/src/internal/livetest/**
     - mcp/src/example/**
