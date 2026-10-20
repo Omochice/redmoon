@@ -83,6 +83,15 @@ impl IssuePort for FakeIssues with fn list_saved_issues(self, query, limit) {
 }
 
 ///|
+impl IssuePort for FakeIssues with fn list_queries(self) {
+  self.check()
+  [
+    { id: 1, name: "Issues assigned to me", is_public: true, project_id: None, },
+    { id: 5, name: "Demo open issues", is_public: true, project_id: Some(1), },
+  ]
+}
+
+///|
 impl IssuePort for FakeIssues with fn show_issue(self, id, includes) {
   self.check()
   self.shown = Some((id, includes))
@@ -287,6 +296,24 @@ async test "list with query_id passes the project and includes to the saved quer
   assert_eq(query.project_id, Some(1))
   assert_eq(query.includes, [Relations, Attachments])
   assert_eq(limit, None)
+}
+
+///|
+async test "list_queries takes no arguments and answers with the saved queries in either mode" {
+  for mode in [Mode::Full, Readonly] {
+    let called = call_issues(FakeIssues::new(), { "list_queries": {} }, mode~)
+    assert_eq(called.is_error, false, msg=called.text)
+    assert_eq(
+      called.text,
+      "[{\"id\":1,\"name\":\"Issues assigned to me\",\"is_public\":true},{\"id\":5,\"name\":\"Demo open issues\",\"is_public\":true,\"project_id\":1}]",
+    )
+    let stray = call_issues(
+      FakeIssues::new(),
+      { "list_queries": { "project_id": 1 } },
+      mode~,
+    )
+    assert_eq(stray.is_error, true)
+  }
 }
 
 ///|
@@ -864,6 +891,7 @@ async test "a Redmine failure becomes a failure payload" {
     { "show": { "id": 1 } },
     { "list": {} },
     { "list": { "query_id": 1 } },
+    { "list_queries": {} },
     { "create": new_issue },
     { "update": { "id": 1, "subject": "x" } },
     { "delete": { "id": 1 } },
