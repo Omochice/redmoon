@@ -177,7 +177,17 @@ fn include_value(names : Array[String]) -> String {
 }
 
 ///|
-fn ListQuery::to_query(self : ListQuery) -> Array[(String, String)] {
+/// Which issues `list` returns, encoded as the query of `GET /issues.json`.
+/// Only this package implements it, so a selection cannot carry a parameter Redmine does not read.
+pub trait Selection {
+  fn to_query(Self) -> Array[(String, String)]
+}
+
+///|
+pub extend ListQuery with Selection::{to_query}
+
+///|
+pub impl Selection for ListQuery with fn to_query(self) {
   let pairs = []
   if !self.includes.is_empty() {
     pairs.push(("include", include_value(self.includes.map(ListInclude::name))))
