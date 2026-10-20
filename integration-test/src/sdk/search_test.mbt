@@ -18,8 +18,8 @@ fn query(q : String) -> @search.Query {
 }
 
 ///|
-async test "live: a search finds the issues carrying a unique word" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a search finds the issues carrying a unique word" {
+  let redmine = @livetest.redmine()
   let nonce = @env.now().to_string()
   let first = @livetest.create_probe_issue(redmine, "searchprobe\{nonce}find")
   defer @livetest.delete_probe_issue(redmine, first)
@@ -35,8 +35,8 @@ async test "live: a search finds the issues carrying a unique word" {
 }
 
 ///|
-async test "live: all_words false matches issues carrying only one of the words" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "all_words false matches issues carrying only one of the words" {
+  let redmine = @livetest.redmine()
   let nonce = @env.now().to_string()
   let word_a = "allwa\{nonce}"
   let word_b = "allwb\{nonce}"

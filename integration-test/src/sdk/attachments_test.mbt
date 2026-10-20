@@ -1,6 +1,31 @@
 ///|
-async test "live: upload, attach, show and download round-trip" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+/// The ids of the attachments in an issue answered with `include=attachments`.
+/// It reads the raw answer of `@redmine.send` so that the attachments tests do not depend on the issues package.
+fn attachment_ids(shown : Json) -> Array[Int32] raise {
+  guard shown is { "issue": { "attachments": Array(listed), .. }, .. } else {
+    fail("no attachments in \{shown.stringify()}")
+  }
+  listed.map(attachment => {
+    guard attachment is { "id": Number(id, ..), .. } else {
+      fail("no id in \{attachment.stringify()}")
+    }
+    id.to_int()
+  })
+}
+
+///|
+/// The attachments in an issue answered with `include=attachments`, decoded as the SDK decodes an attachment.
+/// Decoding the embedded list, rather than reading only the ids, also checks that `Attachment` accepts the shape an issue embeds.
+fn listed_attachments(shown : Json) -> Array[@attachments.Attachment] raise {
+  guard shown is { "issue": { "attachments": listed, .. }, .. } else {
+    fail("no attachments in \{shown.stringify()}")
+  }
+  @json.from_json(listed)
+}
+
+///|
+async test "upload, attach, show and download round-trip" {
+  let redmine = @livetest.redmine()
   let content = b"attachments round trip\n\x00\xff binary tail"
   let filename = "attachments-live-\{@env.now()}.bin"
   let reader = @io.MemoryReader(w => w.write(content))
@@ -18,10 +43,7 @@ async test "live: upload, attach, show and download round-trip" {
   let shown = @redmine.send(redmine, Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
-  let attachments : Array[@attachments.Attachment] = @decode.decode_field(
-    @decode.decode_field(shown, "issue"),
-    "attachments",
-  )
+  let attachments = listed_attachments(shown)
   assert_eq(attachments.length(), 1)
   let attachment = redmine |> @attachments.show(attachments[0].id)
   assert_eq(attachment.filename, filename)
@@ -39,10 +61,8 @@ async test "live: upload, attach, show and download round-trip" {
 suberror ConsumeFailed
 
 ///|
-
-///|
-async test "live: an error raised by consume propagates unchanged" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "an error raised by consume propagates unchanged" {
+  let redmine = @livetest.redmine()
   let content = b"x"
   let reader = @io.MemoryReader(w => w.write(content))
   let filename = "attachments-live-consume-\{@env.now()}.txt"
@@ -58,10 +78,7 @@ async test "live: an error raised by consume propagates unchanged" {
   let shown = @redmine.send(redmine, Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
-  let attachments : Array[@attachments.Attachment] = @decode.decode_field(
-    @decode.decode_field(shown, "issue"),
-    "attachments",
-  )
+  let attachments = listed_attachments(shown)
   try
     redmine
     |> @attachments.download(attachments[0].id, (_, _) => raise ConsumeFailed)
@@ -74,8 +91,8 @@ async test "live: an error raised by consume propagates unchanged" {
 }
 
 ///|
-async test "live: downloading a missing attachment raises Response 404" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "downloading a missing attachment raises Response 404" {
+  let redmine = @livetest.redmine()
   try
     redmine |> @attachments.download(0, (_, _) => fail("unexpected content"))
   catch {
@@ -87,8 +104,8 @@ async test "live: downloading a missing attachment raises Response 404" {
 }
 
 ///|
-async test "live: show returns an attachment whose content type Redmine reports as null" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "show returns an attachment whose content type Redmine reports as null" {
+  let redmine = @livetest.redmine()
   let content = b"no extension"
   let filename = "attachments-live-noext-\{@env.now()}"
   let reader = @io.MemoryReader(w => w.write(content))
@@ -105,21 +122,15 @@ async test "live: show returns an attachment whose content type Redmine reports 
   let shown = @redmine.send(redmine, Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
-  let listed : Array[Json] = @decode.decode_field(
-    @decode.decode_field(shown, "issue"),
-    "attachments",
-  )
-  let id : Int32 = @decode.decode_field(listed[0], "id")
+  let id = attachment_ids(shown)[0]
   let attachment = redmine |> @attachments.show(id)
   assert_eq(attachment.filename, filename)
   assert_eq(attachment.content_type, None)
 }
 
-//|
-
 ///|
-async test "live: download streams an attachment whose content type Redmine reports as null" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "download streams an attachment whose content type Redmine reports as null" {
+  let redmine = @livetest.redmine()
   let content = b"no extension body"
   let filename = "attachments-live-noext-dl-\{@env.now()}"
   let reader = @io.MemoryReader(w => w.write(content))
@@ -136,11 +147,7 @@ async test "live: download streams an attachment whose content type Redmine repo
   let shown = @redmine.send(redmine, Get, ["issues", "\{issue_id}.json"], query=[
     ("include", "attachments"),
   ])
-  let listed : Array[Json] = @decode.decode_field(
-    @decode.decode_field(shown, "issue"),
-    "attachments",
-  )
-  let id : Int32 = @decode.decode_field(listed[0], "id")
+  let id = attachment_ids(shown)[0]
   let mut downloaded = b""
   redmine
   |> @attachments.download(id, (meta, body) => {
