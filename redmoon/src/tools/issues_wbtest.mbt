@@ -290,10 +290,10 @@ async test "list with query_id passes the project and includes to the saved quer
 }
 
 ///|
-async test "list rejects a saved query combined with a filter, naming both keys" {
+async test "list rejects a filter added to a saved query, naming only the filter" {
   let text = rejected("list", { "query_id": 4, "tracker_id": 1 })
   assert_eq(
-    text, "{\"status\":0,\"errors\":[\"invalid arguments: list.query_id: unknown field\",\"invalid arguments: list.tracker_id: unknown field\"]}",
+    text, "{\"status\":0,\"errors\":[\"invalid arguments: list.tracker_id: unknown field\"]}",
   )
 }
 
@@ -503,7 +503,7 @@ async test "a camelCase argument is reported as an unknown field" {
 async test "list reports a date filter that matches no form" {
   assert_eq(
     rejected("list", { "created_on": "2026/07/01" }),
-    "{\"status\":0,\"errors\":[\"invalid arguments: list.created_on: no alternative matched: must be a date in the form YYYY-MM-DD; must be one of today, yesterday, thisWeek, lastWeek, lastTwoWeeks, thisMonth, lastMonth, thisYear, any, none; expected an object\",\"invalid arguments: list.created_on: unknown field\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: list.created_on: no alternative matched: must be a date in the form YYYY-MM-DD; must be one of today, yesterday, thisWeek, lastWeek, lastTwoWeeks, thisMonth, lastMonth, thisYear, any, none; expected an object\"]}",
   )
 }
 
@@ -1040,11 +1040,11 @@ async test "tools/list advertises the issues tool in both modes" {
 async test "list rejects a limit below 1, which would answer without asking Redmine" {
   assert_eq(
     rejected("list", { "limit": 0 }),
-    "{\"status\":0,\"errors\":[\"invalid arguments: list.limit: must be at least 1\",\"invalid arguments: list.query_id: is required\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: list.limit: must be at least 1\"]}",
   )
   assert_eq(
     rejected("list", { "limit": -3 }),
-    "{\"status\":0,\"errors\":[\"invalid arguments: list.limit: must be at least 1\",\"invalid arguments: list.query_id: is required\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: list.limit: must be at least 1\"]}",
   )
 }
 
