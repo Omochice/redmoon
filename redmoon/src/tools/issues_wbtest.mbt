@@ -290,6 +290,14 @@ async test "list with query_id passes the project and includes to the saved quer
 }
 
 ///|
+async test "list rejects a saved query combined with a filter, naming both keys" {
+  let text = rejected("list", { "query_id": 4, "tracker_id": 1 })
+  assert_eq(
+    text, "{\"status\":0,\"errors\":[\"invalid arguments: list.query_id: unknown field\",\"invalid arguments: list.tracker_id: unknown field\"]}",
+  )
+}
+
+///|
 async test "list without arguments filters nothing" {
   let query = listed_with({})
   assert_eq(query.includes, [])
