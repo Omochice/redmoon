@@ -96,6 +96,25 @@ test "a saved query sends only its id" {
 }
 
 ///|
+test "a saved query sends its id, project and includes, dropping repeated includes" {
+  let query = SavedQuery::new(5, project_id=1, includes=[
+    Relations,
+    Attachments,
+    Relations,
+  ])
+  @debug.debug_inspect(
+    query.to_query(),
+    content=(
+      #|[
+      #|  ("query_id", "5"),
+      #|  ("project_id", "1"),
+      #|  ("include", "relations,attachments"),
+      #|]
+    ),
+  )
+}
+
+///|
 test "status and assignee filters encode ids and keywords" {
   assert_eq(StatusFilter::Id(5).query_value(), "5")
   assert_eq(StatusFilter::Closed.query_value(), "closed")
