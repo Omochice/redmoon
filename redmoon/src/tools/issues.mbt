@@ -177,12 +177,18 @@ let saved_list_input : @schema.Schema[IssueAction] = {
   let query_id = @schema.required(
     "query_id",
     record_id().describe(
-      "Id of a saved query, as listed by `list_queries`. Redmine applies the query's own filters, so no filter can be added to this call. A project query, one listed with a `project_id`, needs that same `project_id` here, or Redmine answers 404.",
+      "Id of a saved query, as listed by `list_queries`. Redmine applies the query's own filters, so no filter can be added to this call, and a project query also needs its project as `project_id`.",
+    ),
+  )
+  let project_id = @schema.optional(
+    "project_id",
+    record_id().describe(
+      "Project to list the query's issues in. A project query, one `list_queries` lists with a `project_id`, needs exactly that project's id, and a subproject's id answers 404 just as leaving it out does. A global query is narrowed to the given project.",
     ),
   )
   let members = [
     query_id.as_member(),
-    list_project_id.as_member(),
+    project_id.as_member(),
     list_include.as_member(),
     list_limit.as_member(),
   ]
@@ -190,7 +196,7 @@ let saved_list_input : @schema.Schema[IssueAction] = {
     IssueAction::ListSaved(
       @issues.SavedQuery::new(
         v.get(query_id),
-        project_id?=v.get(list_project_id),
+        project_id?=v.get(project_id),
         includes=v.get(list_include).unwrap_or([]),
       ),
       limit=v.get(list_limit),
