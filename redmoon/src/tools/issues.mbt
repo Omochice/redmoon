@@ -108,12 +108,6 @@ fn custom_field_inputs(
 let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
-let list_project_id : @schema.Field[Int32?] = @schema.optional(
-  "project_id",
-  record_id(),
-)
-
-///|
 let list_include : @schema.Field[Array[@issues.ListInclude]?] = @schema.optional(
   "include",
   list_includes(),
@@ -127,6 +121,7 @@ let list_limit : @schema.Field[Int32?] = @schema.optional(
 
 ///|
 let list_input : @schema.Schema[IssueAction] = {
+  let project_id = @schema.optional("project_id", record_id())
   let tracker_id = @schema.optional("tracker_id", record_id())
   let status_id = @schema.optional("status_id", status_filter())
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
@@ -139,7 +134,7 @@ let list_input : @schema.Schema[IssueAction] = {
   @schema.record(
     [
       list_include.as_member(),
-      list_project_id.as_member(),
+      project_id.as_member(),
       tracker_id.as_member(),
       status_id.as_member(),
       fixed_version_id.as_member(),
@@ -155,7 +150,7 @@ let list_input : @schema.Schema[IssueAction] = {
       IssueAction::List(
         @issues.ListQuery::new(
           includes=v.get(list_include).unwrap_or([]),
-          project_id?=v.get(list_project_id),
+          project_id?=v.get(project_id),
           tracker_id?=v.get(tracker_id),
           status_id?=v.get(status_id),
           fixed_version_id?=v.get(fixed_version_id),
