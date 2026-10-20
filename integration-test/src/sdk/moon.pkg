@@ -8,6 +8,7 @@ import {
   "omochice/redmine/attachments",
   "omochice/redmine/enumerations",
   "omochice/redmine/issues",
+  "omochice/redmine/queries",
   "omochice/redmine/relations",
   "omochice/redmine/search",
   "omochice/redmine/time_entries",

@@ -111,3 +111,55 @@ async test "showing a missing issue raises 404" {
     _ => fail("expected an error")
   }
 }
+
+///|
+/// The id of the saved query `docker/redmine/seed-queries.rb` creates on demo, which differs between instances.
+async fn seeded_demo_query(redmine : @redmine.Redmine) -> Int32 {
+  guard (redmine |> @queries.list())
+    .iter()
+    .find_first(q => q.name == "Demo open issues")
+    is Some(seeded) else {
+    fail("the seeded query is missing; run `task redmine:seed`")
+  }
+  seeded.id
+}
+
+///|
+async test "listing issues by a global saved query succeeds" {
+  let redmine = @livetest.redmine()
+  guard (redmine |> @queries.list())
+    .iter()
+    .find_first(q => q.project_id is None)
+    is Some(global) else {
+    fail("no global query")
+  }
+  ignore(redmine |> @issues.list(@issues.SavedQuery::new(global.id), limit=5))
+}
+
+///|
+async test "listing issues by a project query under its project returns that project's open issues" {
+  let redmine = @livetest.redmine()
+  let query_id = seeded_demo_query(redmine)
+  let probe = @livetest.create_probe_issue(
+    redmine,
+    "redmoon-saved-query-\{@env.now()}",
+  )
+  defer @livetest.delete_probe_issue(redmine, probe)
+  let listed = redmine
+    |> @issues.list(@issues.SavedQuery::new(query_id, project_id=1))
+  assert_true(listed.any(fn(issue) { issue.id == probe }))
+  assert_true(listed.all(fn(issue) { issue.project.id == 1 }))
+  assert_true(listed.all(fn(issue) { issue.status.is_closed != Some(true) }))
+}
+
+///|
+async test "listing issues by a project query without its project raises 404" {
+  let redmine = @livetest.redmine()
+  let query_id = seeded_demo_query(redmine)
+  try redmine |> @issues.list(@issues.SavedQuery::new(query_id)) catch {
+    @redmine.Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("expected an error")
+  }
+}
