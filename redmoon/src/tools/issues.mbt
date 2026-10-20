@@ -1,6 +1,7 @@
 ///|
 priv enum IssueAction {
   List(@issues.ListQuery, limit~ : Int32?)
+  ListSaved(@issues.SavedQuery, limit~ : Int32?)
   Show(Int32, includes~ : Array[@issues.Include])
   Create(@issues.Create)
   Update(Int32, @issues.Update)
@@ -153,6 +154,18 @@ let list_input : @schema.Schema[IssueAction] = {
       )
     },
   )
+}
+
+///|
+let saved_list_input : @schema.Schema[IssueAction] = {
+  let query_id = @schema.required("query_id", record_id())
+  let limit = @schema.optional("limit", @schema.integer(min=1))
+  @schema.record([query_id.as_member(), limit.as_member()], v => {
+    IssueAction::ListSaved(
+      @issues.SavedQuery::new(v.get(query_id)),
+      limit=v.get(limit),
+    )
+  })
 }
 
 ///|
@@ -410,7 +423,11 @@ let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
 
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
-  let read = [("list", list_input), ("show", show_input)]
+  let read = [
+    ("list", list_input),
+    ("list", saved_list_input),
+    ("show", show_input),
+  ]
   let write = [
     ("create", create_input),
     ("update", update_input),
@@ -449,6 +466,8 @@ pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
     handler=async fn(action) {
       match action {
         List(query, limit~) => respond(() => port.list_issues(query, limit))
+        ListSaved(query, limit~) =>
+          respond(() => port.list_saved_issues(query, limit))
         Show(id, includes~) => respond(() => port.show_issue(id, includes))
         Create(issue) => respond(() => port.create_issue(issue))
         Update(id, update) => respond_ok(() => port.update_issue(id, update))
