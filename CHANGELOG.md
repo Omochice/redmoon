@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/Omochice/redmoon/compare/v0.1.0...v0.2.0) (2026-10-20)
+
+
+### Features
+
+* list issues by a saved Redmine query ([#15](https://github.com/Omochice/redmoon/issues/15)) ([f588ef5](https://github.com/Omochice/redmoon/commit/f588ef5800c77fa2d5ffc65964fd41a5e0375750))
+* set custom field values when creating and updating issues ([#12](https://github.com/Omochice/redmoon/issues/12)) ([aa6a449](https://github.com/Omochice/redmoon/commit/aa6a44979270fc36b7c6557c0c182fdafa6bb699))
+
 ## 0.1.0 (2026-10-18)
 
 
