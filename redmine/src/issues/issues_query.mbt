@@ -177,6 +177,16 @@ fn include_value(names : Array[String]) -> String {
 }
 
 ///|
+fn push_list_includes(
+  pairs : Array[(String, String)],
+  includes : Array[ListInclude],
+) -> Unit {
+  if !includes.is_empty() {
+    pairs.push(("include", include_value(includes.map(ListInclude::name))))
+  }
+}
+
+///|
 /// Which issues `list` returns, encoded as the query of `GET /issues.json`.
 /// Only this package implements it, so a selection cannot carry a parameter Redmine does not read.
 pub trait Selection {
@@ -189,9 +199,7 @@ pub extend ListQuery with Selection::{to_query}
 ///|
 pub impl Selection for ListQuery with fn to_query(self) {
   let pairs = []
-  if !self.includes.is_empty() {
-    pairs.push(("include", include_value(self.includes.map(ListInclude::name))))
-  }
+  push_list_includes(pairs, self.includes)
   if self.project_id is Some(id) {
     pairs.push(("project_id", id.to_string()))
   }
@@ -262,8 +270,6 @@ pub impl Selection for SavedQuery with fn to_query(self) {
   if self.project_id is Some(id) {
     pairs.push(("project_id", id.to_string()))
   }
-  if !self.includes.is_empty() {
-    pairs.push(("include", include_value(self.includes.map(ListInclude::name))))
-  }
+  push_list_includes(pairs, self.includes)
   pairs
 }
