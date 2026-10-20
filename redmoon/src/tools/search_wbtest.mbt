@@ -182,39 +182,3 @@ async test "tools/list advertises the search schema" {
     advertised, "{\"tools\":[{\"name\":\"redmine_search\",\"description\":\"Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.\\nRequires `q`; narrow with `scope` and the per-resource flags.\\nPass the arguments under the single key `search`: `{\\\"search\\\": {\\\"q\\\": \\\"login\\\"}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"search\":{\"type\":\"object\",\"properties\":{\"q\":{\"type\":\"string\"},\"scope\":{\"type\":\"string\"},\"all_words\":{\"type\":\"boolean\"},\"titles_only\":{\"type\":\"boolean\"},\"open_issues\":{\"type\":\"boolean\"},\"issues\":{\"type\":\"boolean\"},\"news\":{\"type\":\"boolean\"},\"documents\":{\"type\":\"boolean\"},\"changesets\":{\"type\":\"boolean\"},\"wiki_pages\":{\"type\":\"boolean\"},\"messages\":{\"type\":\"boolean\"},\"projects\":{\"type\":\"boolean\"},\"attachments\":{\"anyOf\":[{\"type\":\"boolean\"},{\"type\":\"string\",\"const\":\"only\"}]}},\"required\":[\"q\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
-
-///|
-async test "live: a search finds an issue created for the test" {
-  guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
-    return
-  }
-  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
-    return
-  }
-  let redmine = @redmine.new(endpoint~, api_key~)
-  let subject = "redmoon-search-\{@env.now()}"
-  let created = redmine
-    |> @issues.create(
-      @issues.Create::new(
-        project_id=1,
-        tracker_id=1,
-        status_id=1,
-        priority_id=2,
-        subject~,
-      ),
-    )
-  let outcome : Error? = try {
-    let called = call_tool([search_tool(redmine)], "redmine_search", {
-      "search": { "q": subject, "issues": true },
-    })
-    assert_eq(called.is_error, false)
-    assert_true(called.text.contains(subject))
-    None
-  } catch {
-    error => Some(error)
-  }
-  redmine |> @issues.delete(created.id)
-  if outcome is Some(error) {
-    raise error
-  }
-}

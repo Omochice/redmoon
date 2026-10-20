@@ -1,6 +1,6 @@
 ///|
-async test "live: a relation links two issues and is listed, shown and deleted" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a relation links two issues and is listed, shown and deleted" {
+  let redmine = @livetest.redmine()
   let nonce = @env.now().to_string()
   let first = @livetest.create_probe_issue(redmine, "relprobe\{nonce}a")
   defer @livetest.delete_probe_issue(redmine, first)

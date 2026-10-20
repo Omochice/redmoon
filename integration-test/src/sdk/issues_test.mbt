@@ -1,6 +1,6 @@
 ///|
-async test "live: issues are created, listed, shown, updated, commented and deleted" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "issues are created, listed, shown, updated, commented and deleted" {
+  let redmine = @livetest.redmine()
   let subject = "redmoon-issues-\{@env.now()}"
   let created = redmine
     |> @issues.create(
@@ -102,8 +102,8 @@ async fn exercise_issue(
 }
 
 ///|
-async test "live: showing a missing issue raises 404" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "showing a missing issue raises 404" {
+  let redmine = @livetest.redmine()
   try redmine |> @issues.show(2147483647) catch {
     @redmine.Response(status~, ..) => assert_eq(status, 404)
     _ => fail("expected Response")

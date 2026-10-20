@@ -10,8 +10,6 @@ import {
 
 import {
   "moonbitlang/async",
-  "moonbitlang/core/env",
-  "omochice/redmine/internal/livetest",
 } for "test"
 
 supported_targets = "+native"

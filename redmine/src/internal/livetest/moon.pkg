@@ -1,7 +1,0 @@
-import {
-  "moonbitlang/core/env",
-  "omochice/redmine",
-  "omochice/redmine/internal/decode",
-}
-
-supported_targets = "+native"

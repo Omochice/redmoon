@@ -283,38 +283,3 @@ async test "tools/list advertises the wiki tool in readonly mode" {
     "{\"tools\":[{\"name\":\"redmine_wiki_pages\",\"description\":\"List and show Redmine wiki pages. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"title\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works.\"},\"version\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"project_id\",\"title\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
-
-///|
-async test "live: wiki pages go through the tool" {
-  guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
-    return
-  }
-  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
-    return
-  }
-  let redmine = @redmine.new(endpoint~, api_key~)
-  let tools = [wiki_pages_tool(redmine, Full)]
-  let title = "Redmoon tool \{@async.now()}"
-  let created = call_tool(tools, "redmine_wiki_pages", {
-    "create": { "project_id": "demo", "title": title, "text": "first" },
-  })
-  assert_eq(created.text, "{\"ok\":true}")
-  defer ignore(
-    call_tool(tools, "redmine_wiki_pages", {
-      "delete": { "project_id": "demo", "title": title },
-    }),
-  )
-  let shown = call_tool(tools, "redmine_wiki_pages", {
-    "show": { "project_id": 1, "title": title },
-  })
-  assert_true(shown.text.contains("\"text\":\"first\""))
-  let listed = call_tool(tools, "redmine_wiki_pages", {
-    "list": { "project_id": "demo" },
-  })
-  assert_true(listed.text.contains(title.replace_all(old=" ", new="_")))
-  let missing = call_tool(tools, "redmine_wiki_pages", {
-    "show": { "project_id": "demo", "title": "No such \{title}" },
-  })
-  assert_eq(missing.is_error, true)
-  assert_true(missing.text.contains("\"status\":404"))
-}

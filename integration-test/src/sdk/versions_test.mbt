@@ -1,6 +1,6 @@
 ///|
-async test "live: versions go through create, list, show, update and delete" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "versions go through create, list, show, update and delete" {
+  let redmine = @livetest.redmine()
   for
     project in [
       @redmine.ProjectRef::Identifier("demo"),
@@ -40,8 +40,8 @@ async test "live: versions go through create, list, show, update and delete" {
 }
 
 ///|
-async test "live: a missing version raises Response 404" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a missing version raises Response 404" {
+  let redmine = @livetest.redmine()
   try redmine |> @versions.show(0) catch {
     Response(status~, ..) => assert_eq(status, 404)
     _ => fail("expected Response")

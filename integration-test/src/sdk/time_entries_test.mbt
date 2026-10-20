@@ -6,14 +6,15 @@ priv struct TimeEntriesProject {
 
 ///|
 /// Turns on the time tracking module of project 1 when it is off, since Redmine refuses time entries for a project without it.
-async fn ensure_time_tracking(
-  redmine : @redmine.Redmine,
-) -> Unit raise @redmine.RedmineError {
+async fn ensure_time_tracking(redmine : @redmine.Redmine) -> Unit {
   let json = redmine
     |> @redmine.send(Get, ["projects", "1.json"], query=[
       ("include", "enabled_modules"),
     ])
-  let project : TimeEntriesProject = @decode.decode_field(json, "project")
+  guard json is { "project": project, .. } else {
+    fail("no project in \{json.stringify()}")
+  }
+  let project : TimeEntriesProject = @json.from_json(project)
   let names = project.enabled_modules.map(fn(enabled) { enabled.name })
   if names.contains("time_tracking") {
     return
@@ -33,8 +34,8 @@ async fn ensure_time_tracking(
 }
 
 ///|
-async test "live: a time entry is created, listed, shown, updated, and deleted" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a time entry is created, listed, shown, updated, and deleted" {
+  let redmine = @livetest.redmine()
   ensure_time_tracking(redmine)
   let activities = redmine |> @enumerations.time_entry_activities()
   assert_false(activities.is_empty())

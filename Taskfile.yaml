@@ -15,8 +15,16 @@ tasks:
       - moon update
 
   check:
-    desc: Type-check every package and fail on warnings
+    desc: Type-check every package, the integration tests included, and fail on warnings
     deps: [registry]
+    cmds:
+      - moon check --deny-warn
+      - task: check:integration-test
+
+  check:integration-test:
+    desc: Type-check the integration-test module, which the root workspace leaves out, and fail on warnings
+    deps: [registry]
+    dir: integration-test
     cmds:
       - moon check --deny-warn
 
@@ -147,18 +155,21 @@ tasks:
       - docker compose down
 
   test:integration:
-    desc: Run the tests against the seeded Redmine; arguments after `--` go to `moon test`
+    desc: "Run the unit tests and the integration-test module against the seeded Redmine; arguments after `--` go to `moon test`"
     deps: [registry]
+    dir: integration-test
     preconditions:
-      - sh: test -s {{.API_KEY_FILE}}
+      - sh: test -s {{.ROOT_DIR}}/{{.API_KEY_FILE}}
         msg: "{{.API_KEY_FILE}} is missing; run `task redmine:seed` first"
     cmds:
-      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.API_KEY_FILE}})" moon test {{if .COVERAGE}}--enable-coverage {{end}}{{.CLI_ARGS}}
+      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.ROOT_DIR}}/{{.API_KEY_FILE}})" moon test {{if .COVERAGE}}--enable-coverage {{end}}{{.CLI_ARGS}}
 
   test:integration:coverage:
-    desc: Run the tests against the seeded Redmine with coverage and write {{.COVERAGE_REPORT}}
+    desc: Run the unit tests and the integration-test module against the seeded Redmine with coverage and write {{.COVERAGE_REPORT}}
     cmds:
       - moon coverage clean
+      # The root clean leaves integration-test/_build alone, where the instrumented run writes its data.
+      - cd integration-test && moon coverage clean
       - task: test:integration
         vars:
           COVERAGE: "true"

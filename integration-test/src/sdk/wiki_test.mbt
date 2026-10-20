@@ -4,8 +4,8 @@ fn wiki_unique_title(prefix : String) -> String {
 }
 
 ///|
-async test "live: wiki pages go through create, list, show, update and delete" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "wiki pages go through create, list, show, update and delete" {
+  let redmine = @livetest.redmine()
   let title = wiki_unique_title("Redmoon wiki")
   let stored = title.replace_all(old=" ", new="_")
   for
@@ -37,8 +37,8 @@ async test "live: wiki pages go through create, list, show, update and delete" {
 }
 
 ///|
-async test "live: a missing wiki page raises Response 404" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a missing wiki page raises Response 404" {
+  let redmine = @livetest.redmine()
   try
     redmine
     |> @wiki.show(@redmine.ProjectRef::Identifier("demo"), "No such page")
@@ -51,8 +51,8 @@ async test "live: a missing wiki page raises Response 404" {
 }
 
 ///|
-async test "live: a title with dots and spaces is shown by the title it was created with" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a title with dots and spaces is shown by the title it was created with" {
+  let redmine = @livetest.redmine()
   let project = @redmine.ProjectRef::Identifier("demo")
   let title = "Release v1.0 \{wiki_unique_title("round")}"
   redmine |> @wiki.create(project, title, "body")

@@ -1,14 +1,14 @@
 ///|
-/// A client for the Redmine named by `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY`,
-/// or `None` when either is unset so that live tests skip instead of fail.
-pub fn redmine() -> @redmine.Redmine? raise @redmine.RedmineError {
+/// A client for the Redmine named by `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY`.
+/// It fails rather than skips when either is unset, because a test that returns early counts as passed and would hide that nothing reached Redmine.
+pub fn redmine() -> @redmine.Redmine raise {
   guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
-    return None
+    fail("REDMOON_TEST_ENDPOINT is unset; run `task test:integration`")
   }
   guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
-    return None
+    fail("REDMOON_TEST_API_KEY is unset; run `task test:integration`")
   }
-  Some(@redmine.new(endpoint~, api_key~))
+  @redmine.new(endpoint~, api_key~)
 }
 
 ///|
@@ -17,7 +17,7 @@ pub fn redmine() -> @redmine.Redmine? raise @redmine.RedmineError {
 pub async fn create_probe_issue(
   redmine : @redmine.Redmine,
   subject : String,
-) -> Int32 raise @redmine.RedmineError {
+) -> Int32 {
   let json = @redmine.send(redmine, Post, ["issues.json"], body={
     "issue": {
       "project_id": 1,
@@ -27,7 +27,10 @@ pub async fn create_probe_issue(
       "subject": subject,
     },
   })
-  @decode.decode_field(@decode.decode_field(json, "issue"), "id")
+  guard json is { "issue": { "id": Number(id, ..), .. }, .. } else {
+    fail("no issue id in \{json.stringify()}")
+  }
+  id.to_int()
 }
 
 ///|
