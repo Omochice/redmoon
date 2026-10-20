@@ -38,6 +38,15 @@ impl EnumerationPort for FakeEnumerations with fn list_document_categories(self)
 }
 
 ///|
+impl EnumerationPort for FakeEnumerations with fn list_issue_queries(self) {
+  self.check()
+  [
+    { id: 1, name: "Issues assigned to me", is_public: true, project_id: None, },
+    { id: 5, name: "Demo open issues", is_public: true, project_id: Some(1), },
+  ]
+}
+
+///|
 fn fake_tools(failure? : @redmine.RedmineError) -> Array[@mcp.Tool] {
   [enumerations_tool(FakeEnumerations::{ failure, })]
 }
@@ -61,6 +70,22 @@ async test "each listing reaches its own port method" {
     "list_document_categories": {},
   })
   assert_true(categories.text.contains("User documentation"))
+}
+
+///|
+async test "list_issue_queries takes no arguments and answers with the saved queries" {
+  let called = call_tool(fake_tools(), "redmine_enumerations", {
+    "list_issue_queries": {},
+  })
+  assert_eq(called.is_error, false, msg=called.text)
+  assert_eq(
+    called.text,
+    "[{\"id\":1,\"name\":\"Issues assigned to me\",\"is_public\":true},{\"id\":5,\"name\":\"Demo open issues\",\"is_public\":true,\"project_id\":1}]",
+  )
+  let stray = call_tool(fake_tools(), "redmine_enumerations", {
+    "list_issue_queries": { "project_id": 1 },
+  })
+  assert_eq(stray.is_error, true)
 }
 
 ///|
