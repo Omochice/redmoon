@@ -127,6 +127,19 @@ async test "a stray argument is reported with its action path" {
 }
 
 ///|
+async test "the description says a project query is listed with its own project_id" {
+  let listing = list_tools([
+    enumerations_tool(FakeEnumerations::{ failure: None, }),
+  ])
+  guard listing is { "tools": [{ "description": String(text), .. }], .. } else {
+    fail("no description")
+  }
+  assert_true(text.contains("`query_id`"), msg=text)
+  assert_true(text.contains("`project_id`"), msg=text)
+  assert_true(text.contains("404"), msg=text)
+}
+
+///|
 async test "tools/list advertises the enumerations tool" {
   let advertised = list_tools([
     enumerations_tool(FakeEnumerations::{ failure: None, }),
