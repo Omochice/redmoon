@@ -159,10 +159,22 @@ let list_input : @schema.Schema[IssueAction] = {
 ///|
 let saved_list_input : @schema.Schema[IssueAction] = {
   let query_id = @schema.required("query_id", record_id())
+  let project_id = @schema.optional("project_id", record_id())
+  let includes = @schema.optional("include", list_includes())
   let limit = @schema.optional("limit", @schema.integer(min=1))
-  @schema.record([query_id.as_member(), limit.as_member()], v => {
+  let members = [
+    query_id.as_member(),
+    project_id.as_member(),
+    includes.as_member(),
+    limit.as_member(),
+  ]
+  @schema.record(members, v => {
     IssueAction::ListSaved(
-      @issues.SavedQuery::new(v.get(query_id)),
+      @issues.SavedQuery::new(
+        v.get(query_id),
+        project_id?=v.get(project_id),
+        includes=v.get(includes).unwrap_or([]),
+      ),
       limit=v.get(limit),
     )
   })
