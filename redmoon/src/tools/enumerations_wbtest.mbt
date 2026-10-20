@@ -38,15 +38,6 @@ impl EnumerationPort for FakeEnumerations with fn list_document_categories(self)
 }
 
 ///|
-impl EnumerationPort for FakeEnumerations with fn list_issue_queries(self) {
-  self.check()
-  [
-    { id: 1, name: "Issues assigned to me", is_public: true, project_id: None, },
-    { id: 5, name: "Demo open issues", is_public: true, project_id: Some(1), },
-  ]
-}
-
-///|
 fn fake_tools(failure? : @redmine.RedmineError) -> Array[@mcp.Tool] {
   [enumerations_tool(FakeEnumerations::{ failure, })]
 }
@@ -73,22 +64,6 @@ async test "each listing reaches its own port method" {
 }
 
 ///|
-async test "list_issue_queries takes no arguments and answers with the saved queries" {
-  let called = call_tool(fake_tools(), "redmine_enumerations", {
-    "list_issue_queries": {},
-  })
-  assert_eq(called.is_error, false, msg=called.text)
-  assert_eq(
-    called.text,
-    "[{\"id\":1,\"name\":\"Issues assigned to me\",\"is_public\":true},{\"id\":5,\"name\":\"Demo open issues\",\"is_public\":true,\"project_id\":1}]",
-  )
-  let stray = call_tool(fake_tools(), "redmine_enumerations", {
-    "list_issue_queries": { "project_id": 1 },
-  })
-  assert_eq(stray.is_error, true)
-}
-
-///|
 async test "a Redmine failure becomes a failure payload" {
   let tools = fake_tools(failure=Response(status=403, errors=["Forbidden"]))
   let called = call_tool(tools, "redmine_enumerations", {
@@ -96,11 +71,6 @@ async test "a Redmine failure becomes a failure payload" {
   })
   assert_eq(called.is_error, true)
   assert_eq(called.text, "{\"status\":403,\"errors\":[\"Forbidden\"]}")
-  let queries = call_tool(tools, "redmine_enumerations", {
-    "list_issue_queries": {},
-  })
-  assert_eq(queries.is_error, true)
-  assert_eq(queries.text, "{\"status\":403,\"errors\":[\"Forbidden\"]}")
 }
 
 ///|
@@ -111,7 +81,7 @@ async test "an unknown action is reported with the invalid arguments wording" {
   assert_eq(called.is_error, true)
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `list_nothing`, one of: list_time_entry_activities, list_issue_priorities, list_document_categories, list_issue_queries\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `list_nothing`, one of: list_time_entry_activities, list_issue_priorities, list_document_categories\"]}",
   )
 }
 
@@ -127,24 +97,11 @@ async test "a stray argument is reported with its action path" {
 }
 
 ///|
-async test "the description says a project query is listed with its own project_id" {
-  let listing = list_tools([
-    enumerations_tool(FakeEnumerations::{ failure: None, }),
-  ])
-  guard listing is { "tools": [{ "description": String(text), .. }], .. } else {
-    fail("no description")
-  }
-  assert_true(text.contains("`query_id`"), msg=text)
-  assert_true(text.contains("`project_id`"), msg=text)
-  assert_true(text.contains("404"), msg=text)
-}
-
-///|
 async test "tools/list advertises the enumerations tool" {
   let advertised = list_tools([
     enumerations_tool(FakeEnumerations::{ failure: None, }),
   ]).stringify()
   assert_eq(
-    advertised, "{\"tools\":[{\"name\":\"redmine_enumerations\",\"description\":\"Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, document categories, and saved issue queries for `query_id` of `redmine_issues` `list`.\\nA saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.\\nName the listing as the only key, with an empty object as its value: `{\\\"list_issue_priorities\\\": {}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list_time_entry_activities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issue_priorities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_document_categories\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issue_queries\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    advertised, "{\"tools\":[{\"name\":\"redmine_enumerations\",\"description\":\"Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\\nName the listing as the only key, with an empty object as its value: `{\\\"list_issue_priorities\\\": {}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list_time_entry_activities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issue_priorities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_document_categories\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }

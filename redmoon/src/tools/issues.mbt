@@ -2,6 +2,7 @@
 priv enum IssueAction {
   List(@issues.ListQuery, limit~ : Int32?)
   ListSaved(@issues.SavedQuery, limit~ : Int32?)
+  ListQueries
   Show(Int32, includes~ : Array[@issues.Include])
   Create(@issues.Create)
   Update(Int32, @issues.Update)
@@ -176,7 +177,7 @@ let saved_list_input : @schema.Schema[IssueAction] = {
   let query_id = @schema.required(
     "query_id",
     record_id().describe(
-      "Id of a saved query, as listed by `redmine_enumerations` `list_issue_queries`. Redmine applies the query's own filters, so no filter can be added to this call. A project query, one listed with a `project_id`, needs that same `project_id` here, or Redmine answers 404.",
+      "Id of a saved query, as listed by `list_queries`. Redmine applies the query's own filters, so no filter can be added to this call. A project query, one listed with a `project_id`, needs that same `project_id` here, or Redmine answers 404.",
     ),
   )
   let members = [
@@ -470,7 +471,11 @@ let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
 
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
-  let read = [("list", list_shapes), ("show", show_input)]
+  let read = [
+    ("list", list_shapes),
+    ("list_queries", @schema.record([], _ => IssueAction::ListQueries)),
+    ("show", show_input),
+  ]
   let write = [
     ("create", create_input),
     ("update", update_input),
@@ -488,7 +493,8 @@ fn issues_description(mode : Mode) -> String {
     describe_crud_tool("issues", mode),
     "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowedStatuses` as needed.",
     "`list` accepts only `attachments` and `relations`.",
-    "`list` takes either filters or the `query_id` of a saved query that `redmine_enumerations` `list_issue_queries` lists, never both.",
+    "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
+    "A saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.",
   ]
   match mode {
     Readonly => base.join("\n")
@@ -500,8 +506,8 @@ fn issues_description(mode : Mode) -> String {
 }
 
 ///|
-/// `redmine_issues`: list, show, create, update and delete issues, and edit
-/// their comments. `Readonly` keeps `list` and `show`.
+/// `redmine_issues`: list, show, create, update and delete issues, list the
+/// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
 pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_issues",
@@ -512,6 +518,7 @@ pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
         List(query, limit~) => respond(() => port.list_issues(query, limit))
         ListSaved(query, limit~) =>
           respond(() => port.list_saved_issues(query, limit))
+        ListQueries => respond(() => port.list_queries())
         Show(id, includes~) => respond(() => port.show_issue(id, includes))
         Create(issue) => respond(() => port.create_issue(issue))
         Update(id, update) => respond_ok(() => port.update_issue(id, update))
