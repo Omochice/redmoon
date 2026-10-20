@@ -258,5 +258,12 @@ pub extend SavedQuery with Selection::{to_query}
 
 ///|
 pub impl Selection for SavedQuery with fn to_query(self) {
-  [("query_id", self.query_id.to_string())]
+  let pairs = [("query_id", self.query_id.to_string())]
+  if self.project_id is Some(id) {
+    pairs.push(("project_id", id.to_string()))
+  }
+  if !self.includes.is_empty() {
+    pairs.push(("include", include_value(self.includes.map(ListInclude::name))))
+  }
+  pairs
 }
