@@ -1,0 +1,16 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/io",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "omochice/integration-test/livetest",
+  "omochice/mcp",
+  "omochice/redmine",
+  "omochice/redmine/enumerations",
+  "omochice/redmine/issues",
+  "omochice/redmoon/cli",
+  "omochice/redmoon/tools",
+} for "test"
+
+supported_targets = "+native"

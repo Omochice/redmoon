@@ -105,26 +105,3 @@ async test "tools/list advertises the enumerations tool" {
     advertised, "{\"tools\":[{\"name\":\"redmine_enumerations\",\"description\":\"Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\\nName the listing as the only key, with an empty object as its value: `{\\\"list_issue_priorities\\\": {}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list_time_entry_activities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issue_priorities\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_document_categories\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
-
-///|
-async test "live: enumerations come from a real Redmine" {
-  guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
-    return
-  }
-  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
-    return
-  }
-  let redmine = @redmine.new(endpoint~, api_key~)
-  let tools = [enumerations_tool(redmine)]
-  let called = call_tool(tools, "redmine_enumerations", {
-    "list_issue_priorities": {},
-  })
-  assert_eq(called.is_error, false)
-  assert_true(called.text.contains("\"name\":\"Normal\""))
-  let offline = @redmine.new(endpoint="http://127.0.0.1:1", api_key~)
-  let denied = call_tool([enumerations_tool(offline)], "redmine_enumerations", {
-    "list_issue_priorities": {},
-  })
-  assert_eq(denied.is_error, true)
-  assert_true(denied.text.contains("\"status\":0"))
-}

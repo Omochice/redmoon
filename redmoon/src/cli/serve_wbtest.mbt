@@ -58,36 +58,6 @@ async test "the server lists the registered tools" {
 }
 
 ///|
-async test "live: redmine_enumerations reaches the real Redmine" {
-  guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
-    return
-  }
-  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
-    return
-  }
-  let redmine = @redmine.new(endpoint~, api_key~)
-  let responses = exchange(build_server(redmine, true, []), [
-    request(2, "tools/call", {
-      "name": "redmine_enumerations",
-      "arguments": { "list_issue_priorities": {} },
-    }),
-  ])
-  guard responses[1]
-    is {
-      "result": {
-        "content": [{ "text": String(text), .. }, ..],
-        "isError": isError,
-        ..
-      },
-      ..
-    } else {
-    fail("unexpected response \{responses[1].stringify()}")
-  }
-  assert_true(isError is False)
-  assert_true(text.contains("Normal"))
-}
-
-///|
 async test "the issue templates plugin adds its tool in both modes" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   for read_only in [false, true] {
