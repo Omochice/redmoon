@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Proposed (its `internal/livetest` is replaced by [ADR-018](./adr-018-design-evolution-from-adr-009.md))
 
 ## Context
 

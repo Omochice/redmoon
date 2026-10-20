@@ -39,14 +39,19 @@ The task runs `rails runner` through `docker compose exec`, which runs outside t
 
 ## Run the integration tests
 
-The tests that need a real Redmine run when `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY` are both set, and are skipped otherwise ([ADR-009](./adr-009-testing-strategy.md)).
+The tests that need a real Redmine ([ADR-009](./adr-009-testing-strategy.md)) live in `integration-test/`, a module with its own `moon.work` that the root workspace does not list as a member.
+A plain `moon test` at the root therefore never compiles or runs them.
+They read the instance from `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY`, and fail naming the missing variable when either is unset, because a skipped test would count as passed.
+The module uses only the public API of the SDK, the plugin SDK, and the server, since another module cannot reach their `internal/` packages.
 
 ```sh
 task test:integration
 ```
 
-The task sets `REDMOON_TEST_ENDPOINT` to `http://localhost:3000` and `REDMOON_TEST_API_KEY` to the contents of `_build/redmine-api-key`, then runs `moon test`.
+The task sets `REDMOON_TEST_ENDPOINT` to `http://localhost:3000` and `REDMOON_TEST_API_KEY` to the contents of `_build/redmine-api-key`, then runs `moon test` in `integration-test/`.
+That workspace lists every root member as well, so the run covers the unit tests together with the integration tests.
 Arguments after `--` are passed on to `moon test`.
+`task test:integration:coverage` runs the same tests with coverage and writes the report from the repository root, so that the file names in it stay relative to the repository.
 CI performs the same steps in the `integration` job of `.github/workflows/ci.yaml`.
 
 ## Register the key with the CLI
