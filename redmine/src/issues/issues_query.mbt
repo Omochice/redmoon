@@ -224,3 +224,39 @@ pub impl Selection for ListQuery with fn to_query(self) {
   }
   pairs
 }
+
+///|
+/// A query saved in Redmine, which supplies its own filters, so none can be added here.
+pub struct SavedQuery {
+  query_id : Int32
+  project_id : Int32?
+  includes : Array[ListInclude]
+}
+
+///|
+/// Selects the issues of saved query `query_id`.
+/// A project query answers only under `project_id` of its own project, and a global query is narrowed to `project_id` when it is given.
+///
+/// ```mbt check
+/// test {
+///   let query = @issues.SavedQuery::new(3, project_id=1, includes=[Relations])
+///   assert_eq(query.query_id, 3)
+///   assert_eq(query.project_id, Some(1))
+///   assert_eq(query.includes, [@issues.ListInclude::Relations])
+/// }
+/// ```
+pub fn SavedQuery::new(
+  query_id : Int32,
+  project_id? : Int32,
+  includes~ : Array[ListInclude] = [],
+) -> SavedQuery {
+  { query_id, project_id, includes, }
+}
+
+///|
+pub extend SavedQuery with Selection::{to_query}
+
+///|
+pub impl Selection for SavedQuery with fn to_query(self) {
+  [("query_id", self.query_id.to_string())]
+}
