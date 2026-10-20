@@ -158,7 +158,12 @@ let list_input : @schema.Schema[IssueAction] = {
 
 ///|
 let saved_list_input : @schema.Schema[IssueAction] = {
-  let query_id = @schema.required("query_id", record_id())
+  let query_id = @schema.required(
+    "query_id",
+    record_id().describe(
+      "Id of a saved query, as listed by `redmine_enumerations` `list_issue_queries`. Redmine applies the query's own filters, so no filter can be added to this call. A project query, one listed with a `project_id`, needs that same `project_id` here, or Redmine answers 404.",
+    ),
+  )
   let project_id = @schema.optional("project_id", record_id())
   let includes = @schema.optional("include", list_includes())
   let limit = @schema.optional("limit", @schema.integer(min=1))
@@ -457,6 +462,7 @@ fn issues_description(mode : Mode) -> String {
     describe_crud_tool("issues", mode),
     "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowedStatuses` as needed.",
     "`list` accepts only `attachments` and `relations`.",
+    "`list` takes either filters or the `query_id` of a saved query that `redmine_enumerations` `list_issue_queries` lists, never both.",
   ]
   match mode {
     Readonly => base.join("\n")
