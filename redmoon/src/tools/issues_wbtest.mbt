@@ -2,6 +2,7 @@
 struct FakeIssues {
   failure : @redmine.RedmineError?
   mut listed : (@issues.ListQuery, Int32?)?
+  mut listed_saved : (@issues.SavedQuery, Int32?)?
   mut shown : (Int32, Array[@issues.Include])?
   mut created : @issues.Create?
   mut updated : (Int32, @issues.Update)?
@@ -14,6 +15,7 @@ fn FakeIssues::new(failure? : @redmine.RedmineError) -> FakeIssues {
   {
     failure,
     listed: None,
+    listed_saved: None,
     shown: None,
     created: None,
     updated: None,
@@ -71,6 +73,13 @@ impl IssuePort for FakeIssues with fn list_issues(self, query, limit) {
   self.check()
   self.listed = Some((query, limit))
   [fake_issue(1, "first"), fake_issue(2, "second")]
+}
+
+///|
+impl IssuePort for FakeIssues with fn list_saved_issues(self, query, limit) {
+  self.check()
+  self.listed_saved = Some((query, limit))
+  [fake_issue(3, "saved")]
 }
 
 ///|
@@ -150,6 +159,7 @@ async fn rejected(action : String, arguments : Json) -> String {
   assert_eq(called.is_error, true, msg="accepted \{arguments.stringify()}")
   assert_true(
     fake.listed is None &&
+    fake.listed_saved is None &&
     fake.created is None &&
     fake.updated is None &&
     fake.journal is None,
@@ -245,6 +255,20 @@ async test "list sends its conditions and limit to the port" {
   assert_eq(query.status_id, Some(Open))
   assert_eq(query.fixed_version_id, Some(42))
   assert_eq(query.assigned_to_id, Some(Me))
+}
+
+///|
+async test "list with query_id reaches the saved query listing with the id and the limit" {
+  let fake = FakeIssues::new()
+  let called = call_issues(fake, { "list": { "query_id": 4, "limit": 5 } })
+  assert_eq(called.is_error, false, msg=called.text)
+  assert_true(called.text.contains("\"subject\":\"saved\""))
+  assert_true(fake.listed is None)
+  let (query, limit) = fake.listed_saved.unwrap()
+  assert_eq(query.query_id, 4)
+  assert_eq(query.project_id, None)
+  assert_eq(query.includes, [])
+  assert_eq(limit, Some(5))
 }
 
 ///|
