@@ -983,6 +983,27 @@ async test "list is advertised as one action holding the filter and the saved qu
 }
 
 ///|
+async test "query_id advertises where saved queries are listed and that it takes no filters" {
+  guard at(advertised_action("list"), ["anyOf"]) is [_, saved] else {
+    fail("list is not advertised as two shapes")
+  }
+  guard at(saved, ["properties", "query_id", "description"]) is String(text) else {
+    fail("query_id has no description")
+  }
+  assert_true(text.contains("`list_issue_queries`"), msg=text)
+  assert_true(text.contains("filter"), msg=text)
+  assert_true(text.contains("`project_id`"), msg=text)
+  for mode in [Mode::Full, Readonly] {
+    guard advertised_issues(mode) is [tool] else { fail("expected one tool") }
+    guard at(tool, ["description"]) is String(description) else {
+      fail("no description")
+    }
+    assert_true(description.contains("`query_id`"), msg=description)
+    assert_true(description.contains("`list_issue_queries`"), msg=description)
+  }
+}
+
+///|
 async test "the tool description names the comment actions only in full mode" {
   for mode in [Mode::Full, Readonly] {
     let tools = advertised_issues(mode)
