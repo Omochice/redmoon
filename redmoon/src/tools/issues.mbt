@@ -107,9 +107,25 @@ fn custom_field_inputs(
 let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
+let list_project_id : @schema.Field[Int32?] = @schema.optional(
+  "project_id",
+  record_id(),
+)
+
+///|
+let list_include : @schema.Field[Array[@issues.ListInclude]?] = @schema.optional(
+  "include",
+  list_includes(),
+)
+
+///|
+let list_limit : @schema.Field[Int32?] = @schema.optional(
+  "limit",
+  @schema.integer(min=1),
+)
+
+///|
 let list_input : @schema.Schema[IssueAction] = {
-  let includes = @schema.optional("include", list_includes())
-  let project_id = @schema.optional("project_id", record_id())
   let tracker_id = @schema.optional("tracker_id", record_id())
   let status_id = @schema.optional("status_id", status_filter())
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
@@ -119,11 +135,10 @@ let list_input : @schema.Schema[IssueAction] = {
   let created_on = @schema.optional("created_on", past_date_filter())
   let updated_on = @schema.optional("updated_on", past_date_filter())
   let closed_on = @schema.optional("closed_on", past_date_filter())
-  let limit = @schema.optional("limit", @schema.integer(min=1))
   @schema.record(
     [
-      includes.as_member(),
-      project_id.as_member(),
+      list_include.as_member(),
+      list_project_id.as_member(),
       tracker_id.as_member(),
       status_id.as_member(),
       fixed_version_id.as_member(),
@@ -133,13 +148,13 @@ let list_input : @schema.Schema[IssueAction] = {
       created_on.as_member(),
       updated_on.as_member(),
       closed_on.as_member(),
-      limit.as_member(),
+      list_limit.as_member(),
     ],
     v => {
       IssueAction::List(
         @issues.ListQuery::new(
-          includes=v.get(includes).unwrap_or([]),
-          project_id?=v.get(project_id),
+          includes=v.get(list_include).unwrap_or([]),
+          project_id?=v.get(list_project_id),
           tracker_id?=v.get(tracker_id),
           status_id?=v.get(status_id),
           fixed_version_id?=v.get(fixed_version_id),
@@ -150,7 +165,7 @@ let list_input : @schema.Schema[IssueAction] = {
           updated_on?=v.get(updated_on),
           closed_on?=v.get(closed_on),
         ),
-        limit=v.get(limit),
+        limit=v.get(list_limit),
       )
     },
   )
@@ -164,23 +179,20 @@ let saved_list_input : @schema.Schema[IssueAction] = {
       "Id of a saved query, as listed by `redmine_enumerations` `list_issue_queries`. Redmine applies the query's own filters, so no filter can be added to this call. A project query, one listed with a `project_id`, needs that same `project_id` here, or Redmine answers 404.",
     ),
   )
-  let project_id = @schema.optional("project_id", record_id())
-  let includes = @schema.optional("include", list_includes())
-  let limit = @schema.optional("limit", @schema.integer(min=1))
   let members = [
     query_id.as_member(),
-    project_id.as_member(),
-    includes.as_member(),
-    limit.as_member(),
+    list_project_id.as_member(),
+    list_include.as_member(),
+    list_limit.as_member(),
   ]
   @schema.record(members, v => {
     IssueAction::ListSaved(
       @issues.SavedQuery::new(
         v.get(query_id),
-        project_id?=v.get(project_id),
-        includes=v.get(includes).unwrap_or([]),
+        project_id?=v.get(list_project_id),
+        includes=v.get(list_include).unwrap_or([]),
       ),
-      limit=v.get(limit),
+      limit=v.get(list_limit),
     )
   })
 }
