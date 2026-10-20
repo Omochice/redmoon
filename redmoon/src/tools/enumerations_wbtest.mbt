@@ -96,6 +96,11 @@ async test "a Redmine failure becomes a failure payload" {
   })
   assert_eq(called.is_error, true)
   assert_eq(called.text, "{\"status\":403,\"errors\":[\"Forbidden\"]}")
+  let queries = call_tool(tools, "redmine_enumerations", {
+    "list_issue_queries": {},
+  })
+  assert_eq(queries.is_error, true)
+  assert_eq(queries.text, "{\"status\":403,\"errors\":[\"Forbidden\"]}")
 }
 
 ///|

@@ -863,6 +863,7 @@ async test "a Redmine failure becomes a failure payload" {
   let calls : Array[Json] = [
     { "show": { "id": 1 } },
     { "list": {} },
+    { "list": { "query_id": 1 } },
     { "create": new_issue },
     { "update": { "id": 1, "subject": "x" } },
     { "delete": { "id": 1 } },
