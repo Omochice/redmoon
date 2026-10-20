@@ -1033,6 +1033,20 @@ async test "query_id advertises where saved queries are listed and that it takes
 }
 
 ///|
+async test "the saved query project_id advertises that a project query needs exactly its own project and a global one is narrowed" {
+  guard at(advertised_action("list"), ["anyOf"]) is [_, saved] else {
+    fail("list is not advertised as two shapes")
+  }
+  guard at(saved, ["properties", "project_id", "description"]) is String(text) else {
+    fail("the saved query project_id has no description")
+  }
+  assert_true(text.contains("project query"), msg=text)
+  assert_true(text.contains("subproject"), msg=text)
+  assert_true(text.contains("404"), msg=text)
+  assert_true(text.contains("global query"), msg=text)
+}
+
+///|
 async test "the tool description names the comment actions only in full mode" {
   for mode in [Mode::Full, Readonly] {
     let tools = advertised_issues(mode)
