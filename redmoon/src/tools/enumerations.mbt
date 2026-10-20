@@ -3,6 +3,7 @@ priv enum EnumerationAction {
   TimeEntryActivities
   IssuePriorities
   DocumentCategories
+  IssueQueries
 }
 
 ///|
@@ -10,6 +11,7 @@ let enumeration_input : @schema.Schema[EnumerationAction] = @schema.keyed([
   ("list_time_entry_activities", @schema.record([], _ => TimeEntryActivities)),
   ("list_issue_priorities", @schema.record([], _ => IssuePriorities)),
   ("list_document_categories", @schema.record([], _ => DocumentCategories)),
+  ("list_issue_queries", @schema.record([], _ => IssueQueries)),
 ])
 
 ///|
@@ -25,6 +27,7 @@ pub fn enumerations_tool(port : &EnumerationPort) -> @mcp.Tool {
         TimeEntryActivities => respond(() => port.list_time_entry_activities())
         IssuePriorities => respond(() => port.list_issue_priorities())
         DocumentCategories => respond(() => port.list_document_categories())
+        IssueQueries => respond(() => port.list_issue_queries())
       }
     },
   )
