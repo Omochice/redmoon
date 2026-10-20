@@ -20,7 +20,7 @@ let enumeration_input : @schema.Schema[EnumerationAction] = @schema.keyed([
 pub fn enumerations_tool(port : &EnumerationPort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_enumerations",
-    description="Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\nName the listing as the only key, with an empty object as its value: `{\"list_issue_priorities\": {}}`.",
+    description="Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, document categories, and saved issue queries for `query_id` of `redmine_issues` `list`.\nA saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.\nName the listing as the only key, with an empty object as its value: `{\"list_issue_priorities\": {}}`.",
     input=enumeration_input,
     handler=async fn(action) {
       match action {
