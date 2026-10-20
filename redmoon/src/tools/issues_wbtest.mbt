@@ -972,6 +972,16 @@ async test "update_note is advertised as one action holding both of its branches
 }
 
 ///|
+async test "list is advertised as one action holding the filter and the saved query shapes" {
+  guard at(advertised_action("list"), ["anyOf"]) is [filters, saved] else {
+    fail("list is not advertised as two shapes")
+  }
+  assert_true(at(filters, ["properties", "tracker_id"]) is Object(_))
+  assert_true(at(saved, ["properties", "query_id"]) is Object(_))
+  assert_true(at(saved, ["required"]) is ["query_id"])
+}
+
+///|
 async test "the tool description names the comment actions only in full mode" {
   for mode in [Mode::Full, Readonly] {
     let tools = advertised_issues(mode)
