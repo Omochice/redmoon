@@ -2,6 +2,10 @@
 /// The Redmine operations behind `redmine_issues`.
 pub(open) trait IssuePort {
   async fn list_issues(Self, @issues.ListQuery, Int32?) -> Array[@issues.Issue] raise @redmine.RedmineError
+  async fn list_saved_issues(Self, @issues.SavedQuery, Int32?) -> Array[
+    @issues.Issue,
+  ] raise @redmine.RedmineError
+  async fn list_queries(Self) -> Array[@queries.Query] raise @redmine.RedmineError
   async fn show_issue(Self, Int32, Array[@issues.Include]) -> @issues.Issue raise @redmine.RedmineError
   async fn create_issue(Self, @issues.Create) -> @issues.Issue raise @redmine.RedmineError
   async fn update_issue(Self, Int32, @issues.Update) -> Unit raise @redmine.RedmineError
@@ -12,6 +16,20 @@ pub(open) trait IssuePort {
 ///|
 pub impl IssuePort for @redmine.Redmine with fn list_issues(self, query, limit) {
   self |> @issues.list(query, limit?)
+}
+
+///|
+pub impl IssuePort for @redmine.Redmine with fn list_saved_issues(
+  self,
+  query,
+  limit,
+) {
+  self |> @issues.list(query, limit?)
+}
+
+///|
+pub impl IssuePort for @redmine.Redmine with fn list_queries(self) {
+  self |> @queries.list()
 }
 
 ///|

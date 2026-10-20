@@ -25,18 +25,18 @@ We will expose the same tools, actions, and modes as denomine-mcp, with every ar
 
 ### 1. The tools
 
-| Tool                      | Actions                                                                           | Write actions                |
-| ------------------------- | --------------------------------------------------------------------------------- | ---------------------------- |
-| `redmine_issues`          | `list`, `show`, `create`, `update`, `delete`, `update_note`, `delete_note`        | all but `list`, `show`       |
-| `redmine_wiki_pages`      | `list`, `show`, `create`, `update`, `delete`                                      | `create`, `update`, `delete` |
-| `redmine_versions`        | `list`, `show`, `create`, `update`, `delete`                                      | `create`, `update`, `delete` |
-| `redmine_issue_relations` | `list`, `show`, `create`, `delete`                                                | `create`, `delete`           |
-| `redmine_search`          | `search`                                                                          | none                         |
-| `redmine_time_entries`    | `list`, `show`, `create`, `update`, `delete`                                      | `create`, `update`, `delete` |
-| `redmine_enumerations`    | `list_time_entry_activities`, `list_issue_priorities`, `list_document_categories` | none                         |
-| `redmine_issue_templates` | `list`                                                                            | none                         |
-| `redmine_attachments`     | `show`, `download`, `attach`                                                      | `attach`                     |
-| `redmoon_info`            | `show`                                                                            | none                         |
+| Tool                      | Actions                                                                                    | Write actions                          |
+| ------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `redmine_issues`          | `list`, `list_queries`, `show`, `create`, `update`, `delete`, `update_note`, `delete_note` | all but `list`, `list_queries`, `show` |
+| `redmine_wiki_pages`      | `list`, `show`, `create`, `update`, `delete`                                               | `create`, `update`, `delete`           |
+| `redmine_versions`        | `list`, `show`, `create`, `update`, `delete`                                               | `create`, `update`, `delete`           |
+| `redmine_issue_relations` | `list`, `show`, `create`, `delete`                                                         | `create`, `delete`                     |
+| `redmine_search`          | `search`                                                                                   | none                                   |
+| `redmine_time_entries`    | `list`, `show`, `create`, `update`, `delete`                                               | `create`, `update`, `delete`           |
+| `redmine_enumerations`    | `list_time_entry_activities`, `list_issue_priorities`, `list_document_categories`          | none                                   |
+| `redmine_issue_templates` | `list`                                                                                     | none                                   |
+| `redmine_attachments`     | `show`, `download`, `attach`                                                               | `attach`                               |
+| `redmoon_info`            | `show`                                                                                     | none                                   |
 
 Each tool keeps the arguments, constraints, defaults, and description text of its denomine-mcp counterpart, with names converted to snake_case.
 

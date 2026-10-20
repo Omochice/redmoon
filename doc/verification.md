@@ -32,6 +32,8 @@ The default data seeds tracker `1` (Bug), status `1` (New), and priority `2` (No
 It also enables the issue templates module on `demo` and creates one shared project template and one global template for tracker `1`, plus the subproject `demo-child` that inherits the project template, through `docker/redmine/seed-issue-templates.rb`, because the plugin offers no API to create them.
 It then creates the project `demo-custom-fields` with a required string field `redmoon Severity` and a multi-value list field `redmoon Platforms` for tracker `1`, through `docker/redmine/seed-custom-fields.rb`, because Redmine offers no API to create custom fields.
 The fields belong to that project alone because a required field in `demo` would reject every issue the other integration tests create there.
+It also saves the public issue query `Demo open issues` on `demo`, filtering open issues, through `docker/redmine/seed-queries.rb`, because Redmine offers no API to save a query.
+The default data provides only global queries, and the integration tests need a project query to show that it answers only under its own `project_id`.
 The key goes to a file instead of the terminal so that no log carries it, and `_build/` is already gitignored.
 `task redmine:up` and `task redmine:seed` are safe to re-run against an instance that is already prepared.
 

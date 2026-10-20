@@ -1,5 +1,5 @@
 ///|
-/// Lists the issues matching `query`, fetching as many pages as needed.
+/// Lists the issues `selection` picks, fetching as many pages as needed.
 /// With `limit`, at most that many issues are returned.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 ///
@@ -19,16 +19,16 @@
 ///   ignore(issues)
 /// }
 /// ```
-pub async fn list(
+pub async fn[S : Selection] list(
   redmine : @redmine.Redmine,
-  query : ListQuery,
+  selection : S,
   limit? : Int32,
 ) -> Array[Issue] raise @redmine.RedmineError {
   @paging.list_all(
     redmine,
     ["issues.json"],
     key="issues",
-    query=query.to_query(),
+    query=selection.to_query(),
     limit?,
   )
 }

@@ -1,6 +1,8 @@
 ///|
 priv enum IssueAction {
   List(@issues.ListQuery, limit~ : Int32?)
+  ListSaved(@issues.SavedQuery, limit~ : Int32?)
+  ListQueries
   Show(Int32, includes~ : Array[@issues.Include])
   Create(@issues.Create)
   Update(Int32, @issues.Update)
@@ -106,8 +108,19 @@ fn custom_field_inputs(
 let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 
 ///|
+let list_include : @schema.Field[Array[@issues.ListInclude]?] = @schema.optional(
+  "include",
+  list_includes(),
+)
+
+///|
+let list_limit : @schema.Field[Int32?] = @schema.optional(
+  "limit",
+  @schema.integer(min=1),
+)
+
+///|
 let list_input : @schema.Schema[IssueAction] = {
-  let includes = @schema.optional("include", list_includes())
   let project_id = @schema.optional("project_id", record_id())
   let tracker_id = @schema.optional("tracker_id", record_id())
   let status_id = @schema.optional("status_id", status_filter())
@@ -118,10 +131,9 @@ let list_input : @schema.Schema[IssueAction] = {
   let created_on = @schema.optional("created_on", past_date_filter())
   let updated_on = @schema.optional("updated_on", past_date_filter())
   let closed_on = @schema.optional("closed_on", past_date_filter())
-  let limit = @schema.optional("limit", @schema.integer(min=1))
   @schema.record(
     [
-      includes.as_member(),
+      list_include.as_member(),
       project_id.as_member(),
       tracker_id.as_member(),
       status_id.as_member(),
@@ -132,12 +144,12 @@ let list_input : @schema.Schema[IssueAction] = {
       created_on.as_member(),
       updated_on.as_member(),
       closed_on.as_member(),
-      limit.as_member(),
+      list_limit.as_member(),
     ],
     v => {
       IssueAction::List(
         @issues.ListQuery::new(
-          includes=v.get(includes).unwrap_or([]),
+          includes=v.get(list_include).unwrap_or([]),
           project_id?=v.get(project_id),
           tracker_id?=v.get(tracker_id),
           status_id?=v.get(status_id),
@@ -149,10 +161,60 @@ let list_input : @schema.Schema[IssueAction] = {
           updated_on?=v.get(updated_on),
           closed_on?=v.get(closed_on),
         ),
-        limit=v.get(limit),
+        limit=v.get(list_limit),
       )
     },
   )
+}
+
+///|
+let saved_list_input : @schema.Schema[IssueAction] = {
+  let query_id = @schema.required(
+    "query_id",
+    record_id().describe(
+      "Id of a saved query, as listed by `list_queries`. Redmine applies the query's own filters, so no filter can be added to this call, and a project query also needs its project as `project_id`.",
+    ),
+  )
+  let project_id = @schema.optional(
+    "project_id",
+    record_id().describe(
+      "Project to list the query's issues in. A project query, one `list_queries` lists with a `project_id`, needs exactly that project's id, and a subproject's id answers 404 just as leaving it out does. A global query is narrowed to the given project.",
+    ),
+  )
+  let members = [
+    query_id.as_member(),
+    project_id.as_member(),
+    list_include.as_member(),
+    list_limit.as_member(),
+  ]
+  @schema.record(members, v => {
+    IssueAction::ListSaved(
+      @issues.SavedQuery::new(
+        v.get(query_id),
+        project_id?=v.get(project_id),
+        includes=v.get(list_include).unwrap_or([]),
+      ),
+      limit=v.get(list_limit),
+    )
+  })
+}
+
+///|
+/// Both `list` shapes, advertised as alternatives but decoded by whether
+/// `query_id` is present.
+/// `@schema.union` would try both and report what each rejected, so a failed
+/// filter call would also say that `query_id` is required.
+let list_shapes : @schema.Schema[IssueAction] = {
+  json: () => {
+    "anyOf": Json::array([(list_input.json)(), (saved_list_input.json)()]),
+  },
+  decode: (input, path) => {
+    if input is Object(fields) && fields.contains("query_id") {
+      (saved_list_input.decode)(input, path)
+    } else {
+      (list_input.decode)(input, path)
+    }
+  },
 }
 
 ///|
@@ -410,7 +472,11 @@ let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
 
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
-  let read = [("list", list_input), ("show", show_input)]
+  let read = [
+    ("list", list_shapes),
+    ("list_queries", @schema.record([], _ => IssueAction::ListQueries)),
+    ("show", show_input),
+  ]
   let write = [
     ("create", create_input),
     ("update", update_input),
@@ -428,6 +494,8 @@ fn issues_description(mode : Mode) -> String {
     describe_crud_tool("issues", mode),
     "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowedStatuses` as needed.",
     "`list` accepts only `attachments` and `relations`.",
+    "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
+    "A saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.",
   ]
   match mode {
     Readonly => base.join("\n")
@@ -439,8 +507,8 @@ fn issues_description(mode : Mode) -> String {
 }
 
 ///|
-/// `redmine_issues`: list, show, create, update and delete issues, and edit
-/// their comments. `Readonly` keeps `list` and `show`.
+/// `redmine_issues`: list, show, create, update and delete issues, list the
+/// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
 pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_issues",
@@ -449,6 +517,9 @@ pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
     handler=async fn(action) {
       match action {
         List(query, limit~) => respond(() => port.list_issues(query, limit))
+        ListSaved(query, limit~) =>
+          respond(() => port.list_saved_issues(query, limit))
+        ListQueries => respond(() => port.list_queries())
         Show(id, includes~) => respond(() => port.show_issue(id, includes))
         Create(issue) => respond(() => port.create_issue(issue))
         Update(id, update) => respond_ok(() => port.update_issue(id, update))
