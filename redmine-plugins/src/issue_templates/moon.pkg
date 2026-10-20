@@ -7,7 +7,6 @@ import {
 
 import {
   "moonbitlang/async",
-  "omochice/redmine-plugins/internal/livetest",
 } for "test"
 
 import {

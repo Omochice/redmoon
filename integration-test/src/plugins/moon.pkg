@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/async",
+  "omochice/integration-test/livetest",
+  "omochice/redmine-plugins/issue_templates",
+} for "test"
+
+supported_targets = "+native"

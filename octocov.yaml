@@ -4,7 +4,6 @@ coverage:
     - _build/coverage/keyring.xml
   exclude:
     - integration-test/**
-    - redmine-plugins/src/internal/livetest/**
     - mcp/src/example/**
     - redmoon/src/cmd/**
 testExecutionTime:

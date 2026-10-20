@@ -1,6 +1,6 @@
 ///|
-async test "live: the demo project lists its own and the global templates of a tracker" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "the demo project lists its own and the global templates of a tracker" {
+  let redmine = @livetest.redmine()
   let templates = redmine
     |> @issue_templates.list(Identifier("demo"), tracker_id=1)
   assert_true(templates.project.any(fn(t) { t.title == "Bug report" }))
@@ -8,8 +8,8 @@ async test "live: the demo project lists its own and the global templates of a t
 }
 
 ///|
-async test "live: a subproject lists the templates its parent shares" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a subproject lists the templates its parent shares" {
+  let redmine = @livetest.redmine()
   let templates = redmine
     |> @issue_templates.list(Identifier("demo-child"), tracker_id=1)
   assert_true(templates.inherited.any(fn(t) { t.title == "Bug report" }))
@@ -17,8 +17,8 @@ async test "live: a subproject lists the templates its parent shares" {
 }
 
 ///|
-async test "live: a missing project raises Response 404" {
-  guard @livetest.redmine() is Some(redmine) else { return }
+async test "a missing project raises Response 404" {
+  let redmine = @livetest.redmine()
   try
     redmine
     |> @issue_templates.list(Identifier("no-such-project"), tracker_id=1)
