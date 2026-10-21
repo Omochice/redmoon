@@ -844,22 +844,37 @@ async test "update_note accepts private_notes alone so a comment can be hidden w
 
 ///|
 async test "update_note rejects empty notes, which would erase the comment" {
-  ignore(rejected("update_note", { "journal_id": 1, "notes": "" }))
+  assert_eq(
+    rejected("update_note", { "journal_id": 1, "notes": "" }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update_note.notes: must be at least 1 characters\"]}",
+  )
 }
 
 ///|
 async test "update_note rejects a call that changes neither notes nor private_notes" {
-  ignore(rejected("update_note", { "journal_id": 1 }))
+  assert_eq(
+    rejected("update_note", { "journal_id": 1 }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update_note: expected one of the keys notes, private_notes\"]}",
+  )
 }
 
 ///|
 async test "update_note does not lose a notes that is not text" {
-  ignore(
+  assert_eq(
     rejected("update_note", {
       "journal_id": 1,
       "notes": 5,
       "private_notes": true,
     }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update_note.notes: expected a string\"]}",
+  )
+}
+
+///|
+async test "update_note reports a private_notes that is not a boolean" {
+  assert_eq(
+    rejected("update_note", { "journal_id": 1, "private_notes": "yes" }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update_note.private_notes: expected a boolean\"]}",
   )
 }
 
