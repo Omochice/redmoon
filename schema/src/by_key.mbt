@@ -1,8 +1,7 @@
 ///|
-/// Accepts an object decoded by the alternative whose key it carries, the
-/// first listed one when it carries several, emitted as `anyOf`.
-/// Anything else is decoded by `otherwise`, which comes last in the `anyOf`.
-/// Unlike `union`, a failure reports only the selected alternative's errors.
+/// Accepts an object by the first listed alternative whose key it carries, and
+/// anything else by `otherwise`.
+/// Unlike `union`, a failure reports only that alternative's errors.
 pub fn[T] by_key(
   alternatives : Array[(String, Schema[T])],
   otherwise? : Schema[T],
