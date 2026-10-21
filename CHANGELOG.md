@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Omochice/redmoon/compare/v0.2.0...v0.2.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* report only the errors of the update_note shape a call selects ([#17](https://github.com/Omochice/redmoon/issues/17)) ([105c8b4](https://github.com/Omochice/redmoon/commit/105c8b4c32e4c3a5e97f1ae42bad8f69db81ff77))
+
 ## [0.2.0](https://github.com/Omochice/redmoon/compare/v0.1.0...v0.2.0) (2026-10-20)
 
 
