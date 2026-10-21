@@ -12,6 +12,7 @@ using @schema {
   array,
   nullable,
   union,
+  by_key,
   keyed,
   iso_date,
 }

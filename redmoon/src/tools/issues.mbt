@@ -200,24 +200,6 @@ let saved_list_input : @schema.Schema[IssueAction] = {
 }
 
 ///|
-/// Both `list` shapes, advertised as alternatives but decoded by whether
-/// `query_id` is present.
-/// `@schema.union` would try both and report what each rejected, so a failed
-/// filter call would also say that `query_id` is required.
-let list_shapes : @schema.Schema[IssueAction] = {
-  json: () => {
-    "anyOf": Json::array([(list_input.json)(), (saved_list_input.json)()]),
-  },
-  decode: (input, path) => {
-    if input is Object(fields) && fields.contains("query_id") {
-      (saved_list_input.decode)(input, path)
-    } else {
-      (list_input.decode)(input, path)
-    }
-  },
-}
-
-///|
 let show_input : @schema.Schema[IssueAction] = {
   let includes = @schema.optional("include", show_includes())
   @schema.record([issue_id.as_member(), includes.as_member()], v => {
@@ -428,10 +410,8 @@ let private_notes_required : @schema.Field[Bool] = @schema.required(
 )
 
 ///|
-/// "At least one of `notes` and `private_notes`" is two alternatives of one
-/// action, because the advertised JSON Schema cannot state it as a check on a
-/// single object. The second has no `notes` field, so a call whose `notes` is
-/// not valid text is rejected instead of falling through and losing it.
+/// Split from the visibility shape because the advertised JSON Schema cannot
+/// require "at least one of `notes` and `private_notes`" on a single object.
 let update_note_text_input : @schema.Schema[IssueAction] = {
   let notes = @schema.required(
     "notes",
@@ -473,7 +453,10 @@ let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
   let read = [
-    ("list", list_shapes),
+    (
+      "list",
+      @schema.by_key([("query_id", saved_list_input)], otherwise=list_input),
+    ),
     ("list_queries", @schema.record([], _ => IssueAction::ListQueries)),
     ("show", show_input),
   ]
@@ -481,8 +464,13 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
     ("create", create_input),
     ("update", update_input),
     ("delete", delete_input),
-    ("update_note", update_note_text_input),
-    ("update_note", update_note_visibility_input),
+    (
+      "update_note",
+      @schema.by_key([
+        ("notes", update_note_text_input),
+        ("private_notes", update_note_visibility_input),
+      ]),
+    ),
     ("delete_note", delete_note_input),
   ]
   actions(mode, read~, write~)
