@@ -430,8 +430,9 @@ let private_notes_required : @schema.Field[Bool] = @schema.required(
 ///|
 /// "At least one of `notes` and `private_notes`" is two alternatives of one
 /// action, because the advertised JSON Schema cannot state it as a check on a
-/// single object. The second has no `notes` field, so a call whose `notes` is
-/// not valid text is rejected instead of falling through and losing it.
+/// single object.
+/// `notes` selects this shape before `private_notes` selects the other, so a
+/// call whose `notes` is not valid text is rejected instead of losing it.
 let update_note_text_input : @schema.Schema[IssueAction] = {
   let notes = @schema.required(
     "notes",
@@ -481,8 +482,13 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
     ("create", create_input),
     ("update", update_input),
     ("delete", delete_input),
-    ("update_note", update_note_text_input),
-    ("update_note", update_note_visibility_input),
+    (
+      "update_note",
+      @schema.by_key([
+        ("notes", update_note_text_input),
+        ("private_notes", update_note_visibility_input),
+      ]),
+    ),
     ("delete_note", delete_note_input),
   ]
   actions(mode, read~, write~)
