@@ -410,11 +410,8 @@ let private_notes_required : @schema.Field[Bool] = @schema.required(
 )
 
 ///|
-/// "At least one of `notes` and `private_notes`" is two alternatives of one
-/// action, because the advertised JSON Schema cannot state it as a check on a
-/// single object.
-/// `notes` selects this shape before `private_notes` selects the other, so a
-/// call whose `notes` is not valid text is rejected instead of losing it.
+/// Split from the visibility shape because the advertised JSON Schema cannot
+/// require "at least one of `notes` and `private_notes`" on a single object.
 let update_note_text_input : @schema.Schema[IssueAction] = {
   let notes = @schema.required(
     "notes",
