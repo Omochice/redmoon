@@ -50,8 +50,10 @@ let note_by_journal : Schema[Input] = @schema.record(
 let tool : Schema[Input] = keyed([
   ("list", list_input),
   ("show", show_input),
-  ("update_note", note_input),
-  ("update_note", note_by_journal),
+  (
+    "update_note",
+    by_key([("text", note_input), ("journal_id", note_by_journal)]),
+  ),
 ])
 
 ///|
@@ -63,7 +65,7 @@ test "keyed emits an action-keyed object" {
 }
 
 ///|
-test "keyed merges duplicate keys into anyOf" {
+test "keyed emits an action with several shapes as anyOf inside its property" {
   let json = tool.to_json_schema()
   assert_eq(
     json.stringify(),
@@ -118,14 +120,14 @@ test "keyed names the action and field in errors" {
 }
 
 ///|
-test "keyed reports field errors of duplicated shapes" {
+test "keyed reports the errors of the shape an action selects" {
   assert_eq(
     outcome(tool, "{\"update_note\":{\"id\":1}}"),
-    "error: update_note.text: is required; update_note.journal_id: is required",
+    "error: update_note: expected one of the keys text, journal_id",
   )
   assert_eq(
     outcome(tool, "{\"update_note\":{\"id\":1,\"text\":\" \"}}"),
-    "error: update_note.text: must not be blank; update_note.text: unknown field",
+    "error: update_note.text: must not be blank",
   )
 }
 
