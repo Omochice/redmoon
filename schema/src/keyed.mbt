@@ -3,28 +3,17 @@
 /// that action's schema. The top level stays a plain object because the
 /// Anthropic Messages API rejects `anyOf`, `oneOf` and `allOf` there.
 ///
-/// Entries sharing a key are alternatives for that action: they are emitted as
-/// an `anyOf` inside its property and tried in order.
+/// Aborts when an action is named twice.
 pub fn[T] keyed(entries : Array[(String, Schema[T])]) -> Schema[T] {
   let actions : Array[String] = []
-  let shapes : Map[String, Array[Schema[T]]] = Map([])
-  for entry in entries {
-    match shapes.get(entry.0) {
-      Some(group) => group.push(entry.1)
-      None => {
-        actions.push(entry.0)
-        shapes[entry.0] = [entry.1]
-      }
-    }
-  }
   let by_action : Map[String, Schema[T]] = Map([])
-  for action in actions {
-    let group = shapes[action]
-    by_action[action] = if group.length() == 1 {
-      group[0]
-    } else {
-      union(group)
+  for entry in entries {
+    let (action, schema) = entry
+    if by_action.contains(action) {
+      abort("keyed: action `\{action}` is named twice")
     }
+    actions.push(action)
+    by_action[action] = schema
   }
   let names = actions.join(", ")
   {
