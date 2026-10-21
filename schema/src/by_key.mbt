@@ -8,14 +8,12 @@ pub fn[T] by_key(
   otherwise? : Schema[T],
 ) -> Schema[T] {
   let keys = alternatives.map(a => a.0).join(", ")
+  let shapes = alternatives.map(a => a.1)
+  if otherwise is Some(fallback) {
+    shapes.push(fallback)
+  }
   {
-    json: () => {
-      let shapes = alternatives.map(a => (a.1.json)())
-      if otherwise is Some(fallback) {
-        shapes.push((fallback.json)())
-      }
-      { "anyOf": Json::array(shapes) }
-    },
+    json: union(shapes).json,
     decode: (input, path) => {
       if input is Object(fields) {
         for alternative in alternatives {
