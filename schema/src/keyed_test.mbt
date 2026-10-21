@@ -140,3 +140,8 @@ test "keyed can be nested under a caller's path" {
   }
   assert_eq(result, "tool.show.id: is required")
 }
+
+///|
+test "panic keyed aborts on an action named twice" {
+  ignore(keyed([("show", show_input), ("show", show_input)]))
+}
