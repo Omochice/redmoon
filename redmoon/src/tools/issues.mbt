@@ -200,24 +200,6 @@ let saved_list_input : @schema.Schema[IssueAction] = {
 }
 
 ///|
-/// Both `list` shapes, advertised as alternatives but decoded by whether
-/// `query_id` is present.
-/// `@schema.union` would try both and report what each rejected, so a failed
-/// filter call would also say that `query_id` is required.
-let list_shapes : @schema.Schema[IssueAction] = {
-  json: () => {
-    "anyOf": Json::array([(list_input.json)(), (saved_list_input.json)()]),
-  },
-  decode: (input, path) => {
-    if input is Object(fields) && fields.contains("query_id") {
-      (saved_list_input.decode)(input, path)
-    } else {
-      (list_input.decode)(input, path)
-    }
-  },
-}
-
-///|
 let show_input : @schema.Schema[IssueAction] = {
   let includes = @schema.optional("include", show_includes())
   @schema.record([issue_id.as_member(), includes.as_member()], v => {
@@ -474,7 +456,10 @@ let delete_note_input : @schema.Schema[IssueAction] = @schema.record(
 ///|
 fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
   let read = [
-    ("list", list_shapes),
+    (
+      "list",
+      @schema.by_key([("query_id", saved_list_input)], otherwise=list_input),
+    ),
     ("list_queries", @schema.record([], _ => IssueAction::ListQueries)),
     ("show", show_input),
   ]
