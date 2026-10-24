@@ -128,7 +128,6 @@ pub async fn get(
 /// Changes the agile data of the issue `issue_id`, keeping every field `attributes` leaves unset.
 /// An issue without agile data gets a row holding only the fields given.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure, without writing anything when the current agile data cannot be read for any reason other than a 404.
-/// Redmine applies the change only for a user who may `edit_issues`, and drops it without an error otherwise.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine with the RedmineUP Agile plugin")
