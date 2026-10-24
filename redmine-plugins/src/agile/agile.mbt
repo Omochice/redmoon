@@ -56,15 +56,6 @@ pub fn Update::new(
 }
 
 ///|
-fn overlay(change : @redmine.Clearable[Int32]?, current : Int32?) -> Json? {
-  match change {
-    Some(Set(value)) => Some(Json(value))
-    Some(Clear) => Some(Json::null())
-    None => current.map(value => Json(value))
-  }
-}
-
-///|
 /// The plugin accepts the nested attributes without `update_only`, so a payload without the row's `id` replaces the row and nulls every field it leaves out.
 /// Carrying the current row forward is what makes the write a change instead of a replacement.
 fn Update::to_body(self : Update, current : AgileData?) -> Json {
@@ -72,20 +63,25 @@ fn Update::to_body(self : Update, current : AgileData?) -> Json {
   if current is Some(row) {
     attributes["id"] = Json(row.id)
   }
-  let fields = [
-    ("story_points", self.story_points, current.bind(row => row.story_points)),
-    (
-      "agile_sprint_id",
-      self.agile_sprint_id,
-      current.bind(row => row.agile_sprint_id),
-    ),
-    ("position", self.position, current.bind(row => row.position)),
-  ]
-  for field in fields {
-    if overlay(field.1, field.2) is Some(value) {
-      attributes[field.0] = value
+  let put = fn(
+    name : String,
+    change : @redmine.Clearable[Int32]?,
+    held : Int32?,
+  ) {
+    match (change, held) {
+      (Some(Set(value)), _) | (None, Some(value)) =>
+        attributes[name] = Json(value)
+      (Some(Clear), _) => attributes[name] = Json::null()
+      (None, None) => ()
     }
   }
+  put("story_points", self.story_points, current.bind(row => row.story_points))
+  put(
+    "agile_sprint_id",
+    self.agile_sprint_id,
+    current.bind(row => row.agile_sprint_id),
+  )
+  put("position", self.position, current.bind(row => row.position))
   { "issue": { "agile_data_attributes": Json::object(attributes) } }
 }
 
