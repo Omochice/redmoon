@@ -35,6 +35,7 @@ We will expose the same tools, actions, and modes as denomine-mcp, with every ar
 | `redmine_time_entries`    | `list`, `show`, `create`, `update`, `delete`                                               | `create`, `update`, `delete`           |
 | `redmine_enumerations`    | `list_time_entry_activities`, `list_issue_priorities`, `list_document_categories`          | none                                   |
 | `redmine_issue_templates` | `list`                                                                                     | none                                   |
+| `redmine_agile`           | `get`, `update`                                                                            | `update`                               |
 | `redmine_attachments`     | `show`, `download`, `attach`                                                               | `attach`                               |
 | `redmoon_info`            | `show`                                                                                     | none                                   |
 
