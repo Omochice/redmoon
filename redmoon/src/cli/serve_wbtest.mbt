@@ -54,6 +54,7 @@ async test "the server lists the registered tools" {
   })
   assert_true(names.contains("redmine_enumerations"))
   assert_false(names.contains("redmine_issue_templates"))
+  assert_false(names.contains("redmine_agile"))
   assert_true(names.contains("redmoon_info"))
 }
 
@@ -68,5 +69,28 @@ async test "the issue templates plugin adds its tool in both modes" {
     assert_true(
       responses[1].stringify().contains("\"name\":\"redmine_issue_templates\""),
     )
+  }
+}
+
+///|
+async test "the agile plugin adds its tool, without update in readonly mode" {
+  let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
+  for read_only in [false, true] {
+    let responses = exchange(build_server(redmine, read_only, [Agile]), [
+      request(2, "tools/list", {}),
+    ])
+    guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {
+      fail("no tools/list result")
+    }
+    guard tools.search_by(tool => tool is { "name": "redmine_agile", .. })
+      is Some(index) else {
+      fail("redmine_agile is not registered")
+    }
+    guard tools[index]
+      is { "inputSchema": { "properties": Object(actions), .. }, .. } else {
+      fail("redmine_agile has no keyed schema")
+    }
+    assert_true(actions.contains("get"))
+    assert_eq(actions.contains("update"), !read_only)
   }
 }
