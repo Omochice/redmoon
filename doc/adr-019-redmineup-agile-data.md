@@ -13,17 +13,16 @@ Instances that plan work on agile boards get them from the RedmineUP Agile plugi
 
 ADR-017 measured its plugin against the verification Redmine.
 RedmineUP distributes the Agile plugin only after registration and publishes no repository of its source, and the verification Redmine does not install it.
-The shapes below are read instead from the source of the free edition, redmine_agile 1.7.0 Light, as archived at [jirutka/redmine_agile](https://github.com/jirutka/redmine_agile) at commit `2032483`, and are cross-checked against [jztan/redmine-mcp-server](https://github.com/jztan/redmine-mcp-server), which already reads and writes the row.
+The shapes below are taken instead from [jztan/redmine-mcp-server](https://github.com/jztan/redmine-mcp-server), which already reads and writes the row, and from RedmineUP's API documentation.
 None of them has been observed on a running instance.
 
-| Source                                     | What it says                                                                                                                                                         |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Routes                                     | `member { get "agile_data", to: "agile_boards#agile_data" }` on issues, so `GET /issues/{id}/agile_data.json`                                                        |
-| `AgileBoardsController`                    | `accept_api_auth :agile_data`, guarded by `view_agile_queries` in the project module `agile`; `return render_404 unless @agile_data`                                 |
-| `agile_data.api.rsb`                       | `{"agile_data": {"id", "issue_id", "position", "story_points", "agile_sprint_id"}}`, all integers                                                                    |
-| Schema and `AgileData` model               | `position`, `story_points`, and `agile_sprint_id` are nullable; `story_points` is validated as an integer `>= 0`, `nil` allowed                                      |
-| Issue patch                                | `safe_attributes 'agile_data_attributes'` only for a new issue or a user allowed to `edit_issues`; `accepts_nested_attributes_for :agile_data` without `update_only` |
-| jztan/redmine-mcp-server `tools/issues.py` | writes with `PUT /issues/{id}.json` and `{"issue": {"agile_data_attributes": {...}}}`, after reading the row to carry its `id` forward                               |
+| Source                                                                | What it says                                                                                                                                                                                    |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RedmineUP, REST API Agile data                                        | `GET /issues/{id}/agile_data.json` answers `agile_data` with `id`, `issue_id`, `position`, `story_points`, and `agile_sprint_id`, the last three empty when unset                               |
+| jztan/redmine-mcp-server `tools/issues.py`                            | a `404` from the read means that the issue has no row; the write is `PUT /issues/{id}.json` with `{"issue": {"agile_data_attributes": {...}}}`, after reading the row to carry its `id` forward |
+| jztan/redmine-mcp-server `tools/issues.py`                            | the plugin declares `accepts_nested_attributes_for :agile_data` without `update_only`                                                                                                           |
+| jztan/redmine-mcp-server `docs/tool-reference.md`                     | `story_points` is a non-negative integer, or `null` to clear; `agile_sprint_id` `0` or `null` removes the issue from its sprint                                                                 |
+| jztan/redmine-mcp-server `docs/troubleshooting.md`, `oauth_scopes.py` | the read answers `403` unless the project enables the Agile module and the role grants `view_agile_queries`                                                                                     |
 
 Without `update_only`, Rails treats a nested payload without the row's `id` as a new row that replaces the old one, so a write that names only the sprint nulls the story points and the position.
 A `404` from the read means that the issue has no row yet or that the plugin is absent, and a `403` means that the project lacks the Agile module or the role lacks `view_agile_queries`.
@@ -78,8 +77,8 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 
 **Cons:**
 
-- The Light edition has the `agile_sprints` table but no controller for it; the sprint API, `/projects/{id}/agile_sprints.json`, exists only in the paid Pro edition.
-- The board, `GET /projects/{id}/agile/board`, answers only HTML and JavaScript and does not accept an API key, so there is no board API to call.
+- RedmineUP documents a sprint API, `/projects/{id}/agile_sprints.json`, without its answer or the edition that serves it, and jztan/redmine-mcp-server does not use it, so there is nothing to build its types on.
+- RedmineUP documents no API for the board itself, so there is no board API to call.
 
 ## Decision
 
@@ -156,28 +155,27 @@ A missing plugin, a missing module, a missing permission, and a missing row each
 
 ### Negative
 
-1. **Unmeasured shapes**: the types follow the plugin's source and a third-party client, not an answer observed from Redmine, and the Pro edition, whose source is not public, may answer differently.
+1. **Unmeasured shapes**: the types follow a third-party client and RedmineUP's documentation, not an answer observed from Redmine, and an edition or version of the plugin may answer differently.
 2. **No live test**: unlike ADR-017's package, nothing in the integration tests exercises this package.
 3. **Two requests per write, without a lock**: a change made between the read and the write is overwritten with the values read.
 4. **Sprint ids are opaque**: without the sprint API a model has to be given the id of a sprint.
 
 ### Mitigations
 
-- The decoder ignores unknown keys and treats the three nullable fields as optional, so a Pro answer with more keys still decodes; a shape mismatch is reported as a `Transport` failure rather than misread.
-- The source commit is cited here, so a later measurement can compare against what this ADR assumed, and an instance with the plugin can add a live test then.
+- The decoder ignores unknown keys and treats the three nullable fields as optional, so an answer with more keys still decodes; a shape mismatch is reported as a `Transport` failure rather than misread.
+- The reference commit is cited here, so a later measurement can compare against what this ADR assumed, and an instance with the plugin can add a live test then.
 - The window between the read and the write is one round trip, and a caller that needs to know the result reads the row again with `get`.
-- The description says where a sprint id comes from, and the sprint listing can be added as an action for instances with the Pro edition if one is needed.
+- The description says where a sprint id comes from, and the sprint listing can be added as an action once its answer is known.
 
 ## Implementation Notes
 
 - `issue_id` is decoded but not carried into the write, because the nested attributes set it from the issue.
-- A write needs `edit_issues` on the project in addition to the Agile module; Redmine ignores the attributes without an error otherwise, as it ignores any attribute a user may not set.
 - The carry-forward is a pure function from the current row and the requested changes to the request body, so it is unit-tested without a Redmine.
 
 ## References
 
 - [ADR-005](./adr-005-tool-surface.md) — the tool table this ADR extends.
 - [ADR-017](./adr-017-redmine-plugin-sdk-module.md) — the plugin module, the `--plugin` option, and the measured shapes this ADR cannot match.
-- [jirutka/redmine_agile](https://github.com/jirutka/redmine_agile) — an archive of redmine_agile 1.7.0 Light, at commit `2032483b81e77c6dec3ee6dec07d820d5b9e42a9`.
-- [jztan/redmine-mcp-server](https://github.com/jztan/redmine-mcp-server) — `src/redmine_mcp_server/tools/issues.py`, the reference for the carry-forward write.
+- [jztan/redmine-mcp-server](https://github.com/jztan/redmine-mcp-server) — at commit `49ef82228b016d5e46522c2dd8fa8e5cacefdebf`; `src/redmine_mcp_server/tools/issues.py` is the reference for the carry-forward write.
+- [REST API Agile data](https://www.redmineup.com/pages/help/agile/rest-api-agile-data) and [REST API Agile Sprint](https://www.redmineup.com/pages/help/agile/rest-api-agile-sprint) — RedmineUP's API documentation.
 - [RedmineUP Agile](https://www.redmineup.com/pages/plugins/agile) — the plugin.
