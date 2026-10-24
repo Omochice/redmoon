@@ -61,15 +61,29 @@ test "serve enables each plugin named by a repeatable --plugin" {
 test "an unknown plugin is rejected with the known names" {
   try
     parse_arguments(argv=[
-      "serve", "--endpoint", "https://r.example.com", "--plugin", "agile",
+      "serve", "--endpoint", "https://r.example.com", "--plugin", "checklists",
     ])
   catch {
     error =>
       assert_eq(
         error.to_string(),
-        "unknown plugin `agile`; known plugins: issue_templates",
+        "unknown plugin `checklists`; known plugins: issue_templates, agile",
       )
   } noraise {
     _ => fail("an unknown plugin was accepted")
   }
+}
+
+///|
+test "serve enables the agile plugin alongside issue templates" {
+  assert_eq(
+    parse_arguments(argv=[
+      "serve", "--endpoint", "https://r.example.com", "--plugin", "agile", "--plugin",
+      "issue_templates",
+    ]),
+    Serve(endpoint="https://r.example.com", read_only=false, plugins=[
+      Agile,
+      IssueTemplates,
+    ]),
+  )
 }
