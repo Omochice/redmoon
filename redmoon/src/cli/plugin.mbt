@@ -3,6 +3,7 @@
 /// redmoon cannot tell which plugins an instance runs, so the user names them.
 pub(all) enum Plugin {
   IssueTemplates
+  Agile
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -14,6 +15,7 @@ pub extend Plugin with @debug.Debug::{to_repr}
 ///|
 let known_plugins : Array[(String, Plugin)] = [
   ("issue_templates", IssueTemplates),
+  ("agile", Agile),
 ]
 
 ///|
