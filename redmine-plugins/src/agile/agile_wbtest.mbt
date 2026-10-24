@@ -38,43 +38,32 @@ test "agile data encodes under the plugin's keys, leaving unset fields out" {
 }
 
 ///|
-test "an update carries the row id and its values forward and overlays the change" {
-  let current = row(story_points=3, agile_sprint_id=2, position=5)
-  let body = Update::new(agile_sprint_id=Set(117)).to_body(Some(current))
-  assert_eq(
-    body.stringify(),
-    "{\"issue\":{\"agile_data_attributes\":{\"id\":9,\"story_points\":3,\"agile_sprint_id\":117,\"position\":5}}}",
-  )
-}
-
-///|
-test "an update leaves out the fields the row does not hold" {
-  let body = Update::new(position=Set(1)).to_body(Some(row(story_points=3)))
-  assert_eq(
-    body.stringify(),
-    "{\"issue\":{\"agile_data_attributes\":{\"id\":9,\"story_points\":3,\"position\":1}}}",
-  )
-}
-
-///|
-test "an update of an issue without a row sends only the requested fields" {
-  let body = Update::new(story_points=Set(8)).to_body(None)
-  assert_eq(
-    body.stringify(),
-    "{\"issue\":{\"agile_data_attributes\":{\"story_points\":8}}}",
-  )
-}
-
-///|
-test "Clear is sent as null and wins over the value the row holds" {
-  let current = row(story_points=3, agile_sprint_id=2, position=5)
-  let body = Update::new(story_points=Clear, agile_sprint_id=Clear).to_body(
-    Some(current),
-  )
-  assert_eq(
-    body.stringify(),
-    "{\"issue\":{\"agile_data_attributes\":{\"id\":9,\"story_points\":null,\"agile_sprint_id\":null,\"position\":5}}}",
-  )
+test "an update carries the row id and held values forward under the requested changes" {
+  let full = row(story_points=3, agile_sprint_id=2, position=5)
+  let cases : Array[(Update, AgileData?, String)] = [
+    (
+      Update::new(agile_sprint_id=Set(117)),
+      Some(full),
+      "{\"id\":9,\"story_points\":3,\"agile_sprint_id\":117,\"position\":5}",
+    ),
+    (
+      Update::new(position=Set(1)),
+      Some(row(story_points=3)),
+      "{\"id\":9,\"story_points\":3,\"position\":1}",
+    ),
+    (Update::new(story_points=Set(8)), None, "{\"story_points\":8}"),
+    (
+      Update::new(story_points=Clear, agile_sprint_id=Clear),
+      Some(full),
+      "{\"id\":9,\"story_points\":null,\"agile_sprint_id\":null,\"position\":5}",
+    ),
+  ]
+  for entry in cases {
+    assert_eq(
+      entry.0.to_body(entry.1).stringify(),
+      "{\"issue\":{\"agile_data_attributes\":\{entry.2}}}",
+    )
+  }
 }
 
 ///|
