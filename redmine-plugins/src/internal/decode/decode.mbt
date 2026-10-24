@@ -6,3 +6,15 @@ pub fn[T : @json.FromJson] decode(json : Json) -> T raise @redmine.RedmineError 
       raise @redmine.Transport(message="unexpected response shape: \{error}")
   }
 }
+
+///|
+/// Decodes `json[key]`, unwrapping the `{"<key>": ...}` envelope a plugin answers in.
+pub fn[T : @json.FromJson] decode_field(
+  json : Json,
+  key : String,
+) -> T raise @redmine.RedmineError {
+  guard json is Object(members) && members.get(key) is Some(value) else {
+    raise @redmine.Transport(message="response has no `\{key}`")
+  }
+  decode(value)
+}
