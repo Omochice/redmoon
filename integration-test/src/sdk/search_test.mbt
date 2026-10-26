@@ -35,6 +35,27 @@ async test "a search finds the issues carrying a unique word" {
 }
 
 ///|
+async test "a search returns the description of an issue that has one" {
+  let redmine = @livetest.redmine()
+  let nonce = @env.now().to_string()
+  let id = @livetest.create_probe_issue(
+    redmine,
+    "descprobe\{nonce}",
+    description="A search result with a description",
+  )
+  defer @livetest.delete_probe_issue(redmine, id)
+  let found = redmine
+    |> @search.search(
+      { ..query("descprobe\{nonce}"), issues: Some(true), },
+      limit=10,
+    )
+  guard found.search_by(fn(r) { r.id == id }) is Some(i) else {
+    fail("the probe issue was not found")
+  }
+  assert_eq(found[i].description, Some("A search result with a description"))
+}
+
+///|
 async test "all_words false matches issues carrying only one of the words" {
   let redmine = @livetest.redmine()
   let nonce = @env.now().to_string()
