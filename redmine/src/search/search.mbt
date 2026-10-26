@@ -75,7 +75,7 @@ pub(all) struct Match {
   url : String
   description : String?
   datetime : String
-} derive(Eq, Debug)
+} derive(Eq, Debug, FromJson(fields(kind(rename="type"))))
 
 ///|
 pub extend Match with Eq::{equal, not_equal}
@@ -85,21 +85,6 @@ pub extend Match with @debug.Debug::{to_repr}
 
 ///|
 pub extend Match with @json.FromJson::{from_json}
-
-///|
-pub impl @json.FromJson for Match with fn from_json(json, path) {
-  guard json is Object(members) else {
-    raise @json.JsonDecodeError((path, "Match::from_json: expected object"))
-  }
-  {
-    id: @wire.json_member(members, "id", path),
-    title: @wire.json_member(members, "title", path),
-    kind: @wire.json_member(members, "type", path),
-    url: @wire.json_member(members, "url", path),
-    description: @wire.json_member(members, "description", path),
-    datetime: @wire.json_member(members, "datetime", path),
-  }
-}
 
 ///|
 pub extend Match with ToJson::{to_json}

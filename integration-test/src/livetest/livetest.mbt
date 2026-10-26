@@ -17,15 +17,20 @@ pub fn redmine() -> @redmine.Redmine raise {
 pub async fn create_probe_issue(
   redmine : @redmine.Redmine,
   subject : String,
+  description? : String,
 ) -> Int32 {
+  let issue : Map[String, Json] = {
+    "project_id": 1,
+    "tracker_id": 1,
+    "status_id": 1,
+    "priority_id": 2,
+    "subject": Json(subject),
+  }
+  if description is Some(description) {
+    issue["description"] = Json(description)
+  }
   let json = @redmine.send(redmine, Post, ["issues.json"], body={
-    "issue": {
-      "project_id": 1,
-      "tracker_id": 1,
-      "status_id": 1,
-      "priority_id": 2,
-      "subject": subject,
-    },
+    "issue": Json(issue),
   })
   guard json is { "issue": { "id": Number(id, ..), .. }, .. } else {
     fail("no issue id in \{json.stringify()}")
