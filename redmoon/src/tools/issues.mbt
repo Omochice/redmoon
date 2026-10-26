@@ -91,6 +91,9 @@ let custom_field_value : @schema.Schema[@issues.CustomFieldValue] = @schema.unio
 let custom_fields_text : String = "Custom field values, each naming its field by id; `show` on an issue of the same project and tracker lists the fields and their ids under `custom_fields`. Every value is text, even for a number or checkbox field (`\"3\"`, `\"1\"` for checked), and a multi-value field takes an array of strings."
 
 ///|
+let assignee_text : String = "User or group to assign the issue to, by the `user.id` or `group.id` that `redmine_memberships` lists for the project"
+
+///|
 fn custom_field_inputs(
   value : @schema.Schema[@issues.CustomFieldValue],
 ) -> @schema.Schema[Array[@issues.CustomFieldInput]] {
@@ -216,7 +219,10 @@ let create_input : @schema.Schema[IssueAction] = {
   let subject = @schema.required("subject", @schema.string())
   let description = @schema.optional("description", @schema.string())
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
-  let assigned_to_id = @schema.optional("assigned_to_id", record_id())
+  let assigned_to_id = @schema.optional(
+    "assigned_to_id",
+    record_id().describe("\{assignee_text}."),
+  )
   let parent_issue_id = @schema.optional("parent_issue_id", record_id())
   let start_date = @schema.optional(
     "start_date",
@@ -288,7 +294,7 @@ let update_input : @schema.Schema[IssueAction] = {
   let tracker_id = @schema.optional("tracker_id", record_id())
   let assigned_to_id = @schema.optional(
     "assigned_to_id",
-    clearable(record_id(), "User to assign the issue to; `null` unassigns it."),
+    clearable(record_id(), "\{assignee_text}; `null` unassigns it."),
   )
   let category_id = @schema.optional(
     "category_id",
