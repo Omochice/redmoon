@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/Omochice/redmoon/compare/v0.2.2...v0.3.0) (2026-10-26)
+
+
+### Features
+
+* list project members to find user and group ids for assignment ([#29](https://github.com/Omochice/redmoon/issues/29)) ([2a8bc45](https://github.com/Omochice/redmoon/commit/2a8bc45fc127709acac0757fdd869769185c0f31))
+* read and change RedmineUP Agile data of issues ([#26](https://github.com/Omochice/redmoon/issues/26)) ([d3f7c34](https://github.com/Omochice/redmoon/commit/d3f7c34ea9b724116e6eb4a60942450637e5287d))
+
 ## [0.2.2](https://github.com/Omochice/redmoon/compare/v0.2.1...v0.2.2) (2026-10-26)
 
 
