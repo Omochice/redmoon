@@ -20,6 +20,9 @@ pub fn registered_tools(
   if plugins.contains(IssueTemplates) {
     tools.push(@tools.issue_templates_tool(redmine))
   }
+  if plugins.contains(Agile) {
+    tools.push(@tools.agile_tool(redmine, mode))
+  }
   tools
 }
 

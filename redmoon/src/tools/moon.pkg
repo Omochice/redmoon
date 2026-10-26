@@ -13,6 +13,7 @@ import {
   "omochice/redmine/time_entries",
   "omochice/redmine/versions",
   "omochice/redmine/wiki",
+  "omochice/redmine-plugins/agile",
   "omochice/redmine-plugins/issue_templates",
   "omochice/redmoon/build",
   "omochice/schema",
