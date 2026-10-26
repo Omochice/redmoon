@@ -98,6 +98,20 @@ test "a result decodes from Redmine's response with a null description" {
 }
 
 ///|
+test "a result decodes from Redmine's response with a text description" {
+  let text =
+    #|{"results":[{"id":3,"title":"Wiki: Screenshots","type":"wiki-page","url":"http://localhost:3000/projects/p/wiki/Screenshots","description":"How to take screenshots","datetime":"2026-10-15T18:08:53Z"}],"total_count":1,"offset":0,"limit":25}
+  let json = @json.parse(text) catch { _ => fail("fixture is not JSON") }
+  let results : Array[Match] = @decode.decode_field(
+    @wire.strip_nulls(json),
+    "results",
+  ) catch {
+    _ => fail("results did not decode")
+  }
+  assert_eq(results[0].description, Some("How to take screenshots"))
+}
+
+///|
 test "all_words false is sent as an empty value because Redmine defaults it to true" {
   let query = { ..query("login"), all_words: Some(false), }
   assert_eq(query_pairs(query), [("q", "login"), ("all_words", "")])
