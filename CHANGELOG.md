@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/Omochice/redmoon/compare/v0.2.1...v0.2.2) (2026-10-26)
+
+
+### Bug Fixes
+
+* return search results whose matches have a description ([#28](https://github.com/Omochice/redmoon/issues/28)) ([facb8b0](https://github.com/Omochice/redmoon/commit/facb8b0372930e7337f5d5e490ca81b8d10bebb5))
+
 ## [0.2.1](https://github.com/Omochice/redmoon/compare/v0.2.0...v0.2.1) (2026-10-21)
 
 
