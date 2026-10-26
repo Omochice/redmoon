@@ -58,6 +58,19 @@ async test "the server lists the registered tools" {
 }
 
 ///|
+async test "the memberships tool is listed in both modes" {
+  let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
+  for read_only in [false, true] {
+    let responses = exchange(build_server(redmine, read_only, []), [
+      request(2, "tools/list", {}),
+    ])
+    assert_true(
+      responses[1].stringify().contains("\"name\":\"redmine_memberships\""),
+    )
+  }
+}
+
+///|
 async test "the issue templates plugin adds its tool in both modes" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   for read_only in [false, true] {

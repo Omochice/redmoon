@@ -13,6 +13,7 @@ pub fn registered_tools(
     @tools.search_tool(redmine),
     @tools.time_entries_tool(redmine, mode),
     @tools.enumerations_tool(redmine),
+    @tools.memberships_tool(redmine),
     @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
     @tools.server_info_tool(),
   ]
