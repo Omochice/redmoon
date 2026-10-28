@@ -5,7 +5,7 @@
 
 A [Redmine](https://www.redmine.org/) MCP server written in MoonBit.
 
-The API key is kept in the OS keyring rather than in the MCP client's configuration, so it never appears in an argument list and `env` or `cat` etc.
+The API key is kept in the OS keyring rather than in the MCP client's configuration, so it never appears in an argument list, an environment variable, or a plain-text file.
 
 ## Usage
 
