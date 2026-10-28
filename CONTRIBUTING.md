@@ -42,4 +42,4 @@ Follow [Semantic Versioning 2.0.0](https://semver.org/).
 
 ## Commit
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and Use wellknown [Commit types](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional#type-enum).
+Follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and use the well-known [commit types](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional#type-enum).
