@@ -4,10 +4,20 @@ priv enum IssueAction {
   ListSaved(@issues.SavedQuery, limit~ : Int32?)
   ListQueries
   Show(Int32, includes~ : Array[@issues.Include])
-  Create(@issues.Create)
-  Update(Int32, @issues.Update)
+  Create(@issues.Create, description_path~ : String?)
+  Update(
+    Int32,
+    @issues.Update,
+    description_path~ : String?,
+    notes_path~ : String?
+  )
   Delete(Int32)
-  UpdateNote(Int32, notes~ : String?, private_notes~ : Bool?)
+  UpdateNote(
+    Int32,
+    notes~ : String?,
+    notes_path~ : String?,
+    private_notes~ : Bool?
+  )
   DeleteNote(Int32)
 }
 
@@ -218,6 +228,7 @@ let create_input : @schema.Schema[IssueAction] = {
   let priority_id = @schema.required("priority_id", record_id())
   let subject = @schema.required("subject", @schema.string())
   let description = @schema.optional("description", @schema.string())
+  let description_path = text_path("description")
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
   let assigned_to_id = @schema.optional(
     "assigned_to_id",
@@ -248,6 +259,7 @@ let create_input : @schema.Schema[IssueAction] = {
       priority_id.as_member(),
       subject.as_member(),
       description.as_member(),
+      description_path.as_member(),
       fixed_version_id.as_member(),
       assigned_to_id.as_member(),
       parent_issue_id.as_member(),
@@ -275,6 +287,7 @@ let create_input : @schema.Schema[IssueAction] = {
           due_date?=v.get(due_date),
           custom_fields?=v.get(custom_fields),
         ),
+        description_path=v.get(description_path),
       )
     },
   )
@@ -284,6 +297,7 @@ let create_input : @schema.Schema[IssueAction] = {
 let update_input : @schema.Schema[IssueAction] = {
   let subject = @schema.optional("subject", @schema.string())
   let description = @schema.optional("description", @schema.string())
+  let description_path = text_path("description")
   let status_id = @schema.optional(
     "status_id",
     record_id().describe(
@@ -335,6 +349,7 @@ let update_input : @schema.Schema[IssueAction] = {
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
+  let notes_path = text_path("notes")
   let private_notes = @schema.optional("private_notes", @schema.boolean())
   let custom_fields = @schema.optional(
     "custom_fields",
@@ -352,6 +367,7 @@ let update_input : @schema.Schema[IssueAction] = {
       issue_id.as_member(),
       subject.as_member(),
       description.as_member(),
+      description_path.as_member(),
       status_id.as_member(),
       priority_id.as_member(),
       tracker_id.as_member(),
@@ -365,6 +381,7 @@ let update_input : @schema.Schema[IssueAction] = {
       is_private.as_member(),
       estimated_hours.as_member(),
       notes.as_member(),
+      notes_path.as_member(),
       private_notes.as_member(),
       custom_fields.as_member(),
     ],
@@ -390,6 +407,8 @@ let update_input : @schema.Schema[IssueAction] = {
           due_date?=v.get(due_date),
           custom_fields?=v.get(custom_fields),
         ),
+        description_path=v.get(description_path),
+        notes_path=v.get(notes_path),
       )
     },
   )
@@ -432,6 +451,27 @@ let update_note_text_input : @schema.Schema[IssueAction] = {
       IssueAction::UpdateNote(
         v.get(journal),
         notes=Some(v.get(notes)),
+        notes_path=None,
+        private_notes=v.get(private_notes),
+      )
+    },
+  )
+}
+
+///|
+let update_note_file_input : @schema.Schema[IssueAction] = {
+  let notes_path = @schema.required(
+    "notes_path",
+    path_schema(text_path_text("notes")),
+  )
+  let private_notes = @schema.optional("private_notes", @schema.boolean())
+  @schema.record(
+    [journal.as_member(), notes_path.as_member(), private_notes.as_member()],
+    v => {
+      IssueAction::UpdateNote(
+        v.get(journal),
+        notes=None,
+        notes_path=Some(v.get(notes_path)),
         private_notes=v.get(private_notes),
       )
     },
@@ -445,6 +485,7 @@ let update_note_visibility_input : @schema.Schema[IssueAction] = @schema.record(
     IssueAction::UpdateNote(
       v.get(journal),
       notes=None,
+      notes_path=None,
       private_notes=Some(v.get(private_notes_required)),
     )
   },
@@ -467,19 +508,123 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
     ("show", show_input),
   ]
   let write = [
-    ("create", create_input),
-    ("update", update_input),
+    ("create", exclusive_text(create_input, field="description")),
+    (
+      "update",
+      exclusive_text(
+        exclusive_text(update_input, field="description"),
+        field="notes",
+      ),
+    ),
     ("delete", delete_input),
     (
       "update_note",
       @schema.by_key([
         ("notes", update_note_text_input),
+        ("notes_path", update_note_file_input),
         ("private_notes", update_note_visibility_input),
       ]),
     ),
     ("delete_note", delete_note_input),
   ]
   actions(mode, read~, write~)
+}
+
+///|
+fn with_read_description(
+  issue : @issues.Create,
+  read : String?,
+) -> @issues.Create {
+  // No `..`, so a field added to `@issues.Create` fails the check instead of
+  // being dropped.
+  let {
+    project_id,
+    tracker_id,
+    status_id,
+    priority_id,
+    subject,
+    description,
+    category_id,
+    fixed_version_id,
+    assigned_to_id,
+    parent_issue_id,
+    watcher_user_ids,
+    is_private,
+    estimated_hours,
+    start_date,
+    due_date,
+    custom_fields,
+    uploads,
+  } = issue
+  @issues.Create::new(
+    project_id~,
+    tracker_id~,
+    status_id~,
+    priority_id~,
+    subject~,
+    description?=file_or_inline(read, description),
+    category_id?,
+    fixed_version_id?,
+    assigned_to_id?,
+    parent_issue_id?,
+    watcher_user_ids?,
+    is_private?,
+    estimated_hours?,
+    start_date?,
+    due_date?,
+    custom_fields?,
+    uploads?,
+  )
+}
+
+///|
+fn with_read_texts(
+  update : @issues.Update,
+  description~ : String?,
+  notes~ : String?,
+) -> @issues.Update {
+  // No `..`, so a field added to `@issues.Update` fails the check instead of
+  // being dropped.
+  let {
+    subject,
+    description: inline_description,
+    notes: inline_notes,
+    private_notes,
+    done_ratio,
+    is_private,
+    estimated_hours,
+    status_id,
+    priority_id,
+    tracker_id,
+    assigned_to_id,
+    category_id,
+    parent_issue_id,
+    fixed_version_id,
+    start_date,
+    due_date,
+    custom_fields,
+    uploads,
+  } = update
+  @issues.Update::new(
+    subject?,
+    description?=file_or_inline(description, inline_description),
+    notes?=file_or_inline(notes, inline_notes),
+    private_notes?,
+    done_ratio?,
+    is_private?,
+    estimated_hours?,
+    status_id?,
+    priority_id?,
+    tracker_id?,
+    assigned_to_id?,
+    category_id?,
+    parent_issue_id?,
+    fixed_version_id?,
+    start_date?,
+    due_date?,
+    custom_fields?,
+    uploads?,
+  )
 }
 
 ///|
@@ -496,6 +641,7 @@ fn issues_description(mode : Mode) -> String {
     Full =>
       [
         ..base, "`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.",
+        "For a long text, pass the path of a local UTF-8 file instead of the text itself: `description_path` on `create` and `update`, and `notes_path` on `update` and `update_note` (absolute is recommended).",
       ].join("\n")
   }
 }
@@ -505,7 +651,7 @@ fn issues_description(mode : Mode) -> String {
 /// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
 pub fn issues_tool(
   port : &IssuePort,
-  _files : &FilePort,
+  files : &FilePort,
   mode : Mode,
 ) -> @mcp.Tool {
   @mcp.tool(
@@ -519,11 +665,36 @@ pub fn issues_tool(
           respond(() => port.list_saved_issues(query, limit))
         ListQueries => respond(() => port.list_queries())
         Show(id, includes~) => respond(() => port.show_issue(id, includes))
-        Create(issue) => respond(() => port.create_issue(issue))
-        Update(id, update) => respond_ok(() => port.update_issue(id, update))
+        Create(issue, description_path~) => {
+          let description = read_optional_file(files, description_path) catch {
+            FileError(message~) => return local_failure([message])
+          }
+          let issue = with_read_description(issue, description)
+          respond(() => port.create_issue(issue))
+        }
+        Update(id, update, description_path~, notes_path~) => {
+          let (description, notes) = (
+            read_optional_file(files, description_path),
+            read_optional_file(files, notes_path),
+          ) catch {
+            FileError(message~) => return local_failure([message])
+          }
+          let update = with_read_texts(update, description~, notes~)
+          respond_ok(() => port.update_issue(id, update))
+        }
         Delete(id) => respond_ok(() => port.delete_issue(id))
-        UpdateNote(id, notes~, private_notes~) =>
+        UpdateNote(id, notes~, notes_path~, private_notes~) => {
+          let from_file = read_optional_file(files, notes_path) catch {
+            FileError(message~) => return local_failure([message])
+          }
+          if from_file is Some(text) && text.is_blank() {
+            return local_failure([
+              "the notes_path file is blank; to erase the comment, use `delete_note`",
+            ])
+          }
+          let notes = file_or_inline(from_file, notes)
           respond_ok(() => port.update_journal(id, notes, private_notes))
+        }
         DeleteNote(id) =>
           respond_ok(() => port.update_journal(id, Some(""), None))
       }

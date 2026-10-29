@@ -109,6 +109,7 @@ struct FakeFiles {
   save_failure : String?
   open_failure : String?
   content : Bytes
+  declared_size : Int64?
   mut closed : Int32
 }
 
@@ -117,8 +118,9 @@ fn FakeFiles::new(
   save_failure? : String,
   open_failure? : String,
   content~ : Bytes = b"hello",
+  declared_size? : Int64,
 ) -> FakeFiles {
-  { saved: [], save_failure, open_failure, content, closed: 0, }
+  { saved: [], save_failure, open_failure, content, declared_size, closed: 0, }
 }
 
 ///|
@@ -138,7 +140,7 @@ impl FilePort for FakeFiles with fn open(self, path) {
   let reader = @io.MemoryReader(w => w.write(self.content))
   {
     filename: last_segment(path),
-    size: self.content.length().to_int64(),
+    size: self.declared_size.unwrap_or(self.content.length().to_int64()),
     reader,
     close: () => {
       reader.close()
