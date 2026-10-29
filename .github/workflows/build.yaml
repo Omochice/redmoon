@@ -38,8 +38,7 @@ jobs:
       - name: Stage the executable under the asset name
         run: |
           mkdir -p dist
-          cp _build/native/release/build/omochice/redmoon/cmd/redmoon/redmoon.exe \
-            "dist/redmoon-${{ matrix.target }}"
+          cp _build/redmoon/bin/redmoon "dist/redmoon-${{ matrix.target }}"
 
       - name: Smoke-run the artifact
         run: ./dist/redmoon-${{ matrix.target }} --help
