@@ -503,7 +503,11 @@ fn issues_description(mode : Mode) -> String {
 ///|
 /// `redmine_issues`: list, show, create, update and delete issues, list the
 /// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
-pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
+pub fn issues_tool(
+  port : &IssuePort,
+  _files : &FilePort,
+  mode : Mode,
+) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_issues",
     description=issues_description(mode),

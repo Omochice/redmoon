@@ -112,7 +112,7 @@ impl WikiPagePort for FakeWikiPages with fn delete_wiki_page(
 
 ///|
 fn wiki_tools(fake : FakeWikiPages, mode~ : Mode = Full) -> Array[@mcp.Tool] {
-  [wiki_pages_tool(fake, mode)]
+  [wiki_pages_tool(fake, FakeFiles::new(), mode)]
 }
 
 ///|
