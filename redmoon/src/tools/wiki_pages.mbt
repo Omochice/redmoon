@@ -1,7 +1,7 @@
 ///|
 priv enum WikiPageAction {
   List(@redmine.ProjectRef)
-  Show(@redmine.ProjectRef, String, Int32?)
+  Show(@redmine.ProjectRef, String, Int32?, String?)
   Create(@redmine.ProjectRef, String, String, String?, String?)
   Update(@redmine.ProjectRef, String, String, String?, Int32?, String?)
   Delete(@redmine.ProjectRef, String)
@@ -33,6 +33,7 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   let comments = @schema.optional("comments", @schema.string())
   let version = @schema.optional("version", record_id())
   let parent_title = @schema.optional("parent_title", @schema.string())
+  let save_text_path = save_path("text")
   let read = [
     (
       "list",
@@ -43,9 +44,19 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
     (
       "show",
       @schema.record(
-        [project_id.as_member(), title.as_member(), version.as_member()],
+        [
+          project_id.as_member(),
+          title.as_member(),
+          version.as_member(),
+          save_text_path.as_member(),
+        ],
         v => {
-          WikiPageAction::Show(v.get(project_id), v.get(title), v.get(version))
+          WikiPageAction::Show(
+            v.get(project_id),
+            v.get(title),
+            v.get(version),
+            v.get(save_text_path),
+          )
         },
       ),
     ),
@@ -117,7 +128,8 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
 
 ///|
 fn wiki_pages_description(mode : Mode) -> String {
-  let base = describe_crud_tool("wiki pages", mode)
+  let base = describe_crud_tool("wiki pages", mode) +
+    "\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text."
   match mode {
     Readonly => base
     Full =>
@@ -143,8 +155,18 @@ pub fn wiki_pages_tool(
     handler=async fn(action) {
       match action {
         List(project) => respond(() => port.list_wiki_pages(project))
-        Show(project, title, version) =>
-          respond(() => port.show_wiki_page(project, title, version?))
+        Show(project, title, version, text_path) => {
+          let page = port.show_wiki_page(project, title, version?) catch {
+            error => return failure_of(error)
+          }
+          respond_saving_text(
+            files,
+            page.to_json(),
+            "text",
+            page.text,
+            text_path,
+          )
+        }
         Create(project, title, text, comments, parent_title) =>
           respond_ok(() => {
             port.create_wiki_page(
