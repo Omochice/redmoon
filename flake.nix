@@ -20,6 +20,15 @@
       url = "github:moonbit-community/moonbit-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    moon-nix = {
+      url = "github:Omochice/moon-nix/fix-moon-compat";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.moonbit-overlay.follows = "moonbit-overlay";
+    };
+    mooncake-index = {
+      url = "git+https://mooncakes.io/git/index";
+      flake = false;
+    };
   };
 
   outputs =
@@ -31,6 +40,8 @@
       nur-packages,
       git-hooks,
       moonbit-overlay,
+      moon-nix,
+      mooncake-index,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -220,6 +231,38 @@
           ))
         ];
         formatter = treefmt.config.build.wrapper;
+        packages = pkgs.lib.optionalAttrs (moonbitToolchain != [ ]) rec {
+          redmoon =
+            let
+              project =
+                (moon-nix.lib.mkMoonNix {
+                  inherit pkgs;
+                  toolchain = pkgs.moonbit-bin.latest;
+                }).buildProject
+                  {
+                    src = ./.;
+                    mainPackage = "omochice/redmoon/cmd/redmoon";
+                    target = "native";
+                    registry = mooncake-index;
+                  };
+            in
+            # The linked binary embeds store paths of its build inputs.
+            # Removing them keeps the toolchain and sources out of the runtime closure.
+            pkgs.runCommandCC "redmoon"
+              {
+                nativeBuildInputs = [ pkgs.removeReferencesTo ];
+                meta.mainProgram = "redmoon";
+              }
+              ''
+                mkdir -p $out/bin
+                install -m755 ${project}/bin/main $out/bin/redmoon
+                $STRIP -S $out/bin/redmoon
+                for ref in $(grep -ao '${builtins.storeDir}/[a-z0-9]\{32\}-[^/[:space:]]*' $out/bin/redmoon | sort -u); do
+                  remove-references-to -t "$ref" $out/bin/redmoon
+                done
+              '';
+          default = redmoon;
+        };
         # keep-sorted end
       }
     );
