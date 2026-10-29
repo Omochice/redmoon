@@ -20,6 +20,15 @@
       url = "github:moonbit-community/moonbit-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    moon-nix = {
+      url = "github:Omochice/moon-nix/fix-moon-compat";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.moonbit-overlay.follows = "moonbit-overlay";
+    };
+    mooncake-index = {
+      url = "git+https://mooncakes.io/git/index";
+      flake = false;
+    };
   };
 
   outputs =
@@ -31,6 +40,8 @@
       nur-packages,
       git-hooks,
       moonbit-overlay,
+      moon-nix,
+      mooncake-index,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -220,6 +231,34 @@
           ))
         ];
         formatter = treefmt.config.build.wrapper;
+        packages = pkgs.lib.optionalAttrs (moonbitToolchain != [ ]) rec {
+          redmoon =
+            let
+              toolchain = builtins.head moonbitToolchain;
+              project = (moon-nix.lib.mkMoonNix { inherit pkgs toolchain; }).buildProject {
+                src = ./.;
+                mainPackage = "omochice/redmoon/cmd/redmoon";
+                target = "native";
+                registry = mooncake-index;
+              };
+            in
+            # The debug info moon-nix leaves in the binary names the toolchain and the build tree.
+            # Stripping it is enough; removing every store path would also break the Linux dynamic loader and rpath.
+            pkgs.runCommandCC "redmoon"
+              {
+                disallowedReferences = [
+                  toolchain
+                  project
+                ];
+                meta.mainProgram = "redmoon";
+              }
+              ''
+                mkdir -p $out/bin
+                install -m755 ${project}/bin/main $out/bin/redmoon
+                $STRIP -S $out/bin/redmoon
+              '';
+          default = redmoon;
+        };
         # keep-sorted end
       }
     );

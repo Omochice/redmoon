@@ -74,10 +74,9 @@ tasks:
       - moon fmt
 
   build:
-    desc: Build the release executable for the native backend
-    deps: [registry]
+    desc: Build the release executable as the flake package and link it at _build/redmoon
     cmds:
-      - moon build --target native --release redmoon/src/cmd/redmoon
+      - nix build .#redmoon --out-link _build/redmoon
 
   build-info:stamp:
     desc: Overwrite the build-info source with this checkout's commit
