@@ -97,7 +97,11 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
 ///|
 /// `redmine_wiki_pages`: the wiki pages of a project. `Readonly` mode leaves
 /// out create, update, and delete.
-pub fn wiki_pages_tool(port : &WikiPagePort, mode : Mode) -> @mcp.Tool {
+pub fn wiki_pages_tool(
+  port : &WikiPagePort,
+  _files : &FilePort,
+  mode : Mode,
+) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_wiki_pages",
     description=describe_crud_tool("wiki pages", mode),

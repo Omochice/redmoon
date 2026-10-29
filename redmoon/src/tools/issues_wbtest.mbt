@@ -134,7 +134,11 @@ async fn call_issues(
   arguments : Json,
   mode~ : Mode = Full,
 ) -> Called {
-  call_tool([issues_tool(fake, mode)], "redmine_issues", arguments)
+  call_tool(
+    [issues_tool(fake, FakeFiles::new(), mode)],
+    "redmine_issues",
+    arguments,
+  )
 }
 
 ///|
@@ -225,7 +229,9 @@ fn at(json : Json, path : Array[String]) -> Json raise {
 
 ///|
 async fn advertised_issues(mode : Mode) -> Json {
-  let listing = list_tools([issues_tool(FakeIssues::new(), mode)])
+  let listing = list_tools([
+    issues_tool(FakeIssues::new(), FakeFiles::new(), mode),
+  ])
   at(listing, ["tools"])
 }
 
@@ -1080,9 +1086,8 @@ async test "the tool description names the comment actions only in full mode" {
 async test "tools/list advertises the issues tool in both modes" {
   let advertised = []
   for mode in [Mode::Full, Readonly] {
-    advertised.push(
-      list_tools([issues_tool(FakeIssues::new(), mode)]).stringify(),
-    )
+    let tool = issues_tool(FakeIssues::new(), FakeFiles::new(), mode)
+    advertised.push(list_tools([tool]).stringify())
   }
   assert_eq(
     advertised[0],
