@@ -3,7 +3,7 @@ priv enum IssueAction {
   List(@issues.ListQuery, limit~ : Int32?)
   ListSaved(@issues.SavedQuery, limit~ : Int32?)
   ListQueries
-  Show(Int32, includes~ : Array[@issues.Include])
+  Show(Int32, includes~ : Array[@issues.Include], description_path~ : String?)
   Create(@issues.Create)
   Update(Int32, @issues.Update)
   Delete(Int32)
@@ -205,8 +205,18 @@ let saved_list_input : @schema.Schema[IssueAction] = {
 ///|
 let show_input : @schema.Schema[IssueAction] = {
   let includes = @schema.optional("include", show_includes())
-  @schema.record([issue_id.as_member(), includes.as_member()], v => {
-    IssueAction::Show(v.get(issue_id), includes=v.get(includes).unwrap_or([]))
+  let description_path = save_path("description")
+  let members = [
+    issue_id.as_member(),
+    includes.as_member(),
+    description_path.as_member(),
+  ]
+  @schema.record(members, v => {
+    IssueAction::Show(
+      v.get(issue_id),
+      includes=v.get(includes).unwrap_or([]),
+      description_path=v.get(description_path),
+    )
   })
 }
 
@@ -525,6 +535,7 @@ fn issues_description(mode : Mode) -> String {
     "`list` accepts only `attachments` and `relations`.",
     "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
     "A saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.",
+    "`show` with `description_path` saves the description to a new local file and answers with that path instead of the text.",
   ]
   match mode {
     Readonly => base.join("\n")
@@ -561,7 +572,19 @@ pub fn issues_tool(
         ListSaved(query, limit~) =>
           respond(() => port.list_saved_issues(query, limit))
         ListQueries => respond(() => port.list_queries())
-        Show(id, includes~) => respond(() => port.show_issue(id, includes))
+        Show(id, includes~, description_path~) => {
+          let issue = port.show_issue(id, includes) catch {
+            error => return failure_of(error)
+          }
+          let description = issue.description.unwrap_or("")
+          respond_saving_text(
+            files,
+            issue.to_json(),
+            "description",
+            description,
+            description_path,
+          )
+        }
         Create(issue) => respond(() => port.create_issue(issue))
         Update(id, update) => respond_ok(() => port.update_issue(id, update))
         Delete(id) => respond_ok(() => port.delete_issue(id))
