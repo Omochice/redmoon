@@ -18,7 +18,18 @@ fn wiki_title() -> @schema.Schema[String] {
 fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   let project_id = @schema.required("project_id", project_ref())
   let title = @schema.required("title", wiki_title())
-  let text = @schema.required("text", @schema.string())
+  let text = @schema.optional(
+    "text",
+    @schema.string().describe(
+      "Content of the page. Exactly one of `text` and `text_path` is required.",
+    ),
+  )
+  let text_path = text_path("text")
+  // `text` is absent only while the arguments are validated before the
+  // `text_path` file is read, since `exclusive_text` requires one of the two.
+  fn page_text(v : @schema.Values) -> String raise @schema.SchemaError {
+    v.get(text).unwrap_or("")
+  }
   let comments = @schema.optional("comments", @schema.string())
   let version = @schema.optional("version", record_id())
   let parent_title = @schema.optional("parent_title", @schema.string())
@@ -42,46 +53,56 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   let write = [
     (
       "create",
-      @schema.record(
-        [
-          project_id.as_member(),
-          title.as_member(),
-          text.as_member(),
-          comments.as_member(),
-          parent_title.as_member(),
-        ],
-        v => {
-          WikiPageAction::Create(
-            v.get(project_id),
-            v.get(title),
-            v.get(text),
-            v.get(comments),
-            v.get(parent_title),
-          )
-        },
+      exclusive_text(
+        field="text",
+        required=true,
+        @schema.record(
+          [
+            project_id.as_member(),
+            title.as_member(),
+            text.as_member(),
+            text_path.as_member(),
+            comments.as_member(),
+            parent_title.as_member(),
+          ],
+          v => {
+            WikiPageAction::Create(
+              v.get(project_id),
+              v.get(title),
+              page_text(v),
+              v.get(comments),
+              v.get(parent_title),
+            )
+          },
+        ),
       ),
     ),
     (
       "update",
-      @schema.record(
-        [
-          project_id.as_member(),
-          title.as_member(),
-          text.as_member(),
-          comments.as_member(),
-          version.as_member(),
-          parent_title.as_member(),
-        ],
-        v => {
-          WikiPageAction::Update(
-            v.get(project_id),
-            v.get(title),
-            v.get(text),
-            v.get(comments),
-            v.get(version),
-            v.get(parent_title),
-          )
-        },
+      exclusive_text(
+        field="text",
+        required=true,
+        @schema.record(
+          [
+            project_id.as_member(),
+            title.as_member(),
+            text.as_member(),
+            text_path.as_member(),
+            comments.as_member(),
+            version.as_member(),
+            parent_title.as_member(),
+          ],
+          v => {
+            WikiPageAction::Update(
+              v.get(project_id),
+              v.get(title),
+              page_text(v),
+              v.get(comments),
+              v.get(version),
+              v.get(parent_title),
+            )
+          },
+        ),
       ),
     ),
     (
@@ -95,17 +116,30 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
 }
 
 ///|
+fn wiki_pages_description(mode : Mode) -> String {
+  let base = describe_crud_tool("wiki pages", mode)
+  match mode {
+    Readonly => base
+    Full =>
+      base +
+      "\nFor a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended)."
+  }
+}
+
+///|
 /// `redmine_wiki_pages`: the wiki pages of a project. `Readonly` mode leaves
 /// out create, update, and delete.
 pub fn wiki_pages_tool(
   port : &WikiPagePort,
-  _files : &FilePort,
+  files : &FilePort,
   mode : Mode,
 ) -> @mcp.Tool {
-  @mcp.tool(
+  text_file_tool(
     name="redmine_wiki_pages",
-    description=describe_crud_tool("wiki pages", mode),
+    description=wiki_pages_description(mode),
     input=wiki_pages_input(mode),
+    files~,
+    texts=[("create", "text"), ("update", "text")],
     handler=async fn(action) {
       match action {
         List(project) => respond(() => port.list_wiki_pages(project))
