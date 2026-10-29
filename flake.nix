@@ -244,6 +244,9 @@
                     mainPackage = "omochice/redmoon/cmd/redmoon";
                     target = "native";
                     registry = mooncake-index;
+                    # moon-nix compiles C with -Og and has no flag option.
+                    # The cc-wrapper appends NIX_CFLAGS_COMPILE last, so -O2 wins and matches `moon build --release`.
+                    stdenv = pkgs.stdenvAdapters.withCFlags [ "-O2" ] pkgs.stdenv;
                   };
             in
             # The linked binary embeds store paths of its build inputs.
