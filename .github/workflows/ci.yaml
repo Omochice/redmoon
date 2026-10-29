@@ -139,6 +139,29 @@ jobs:
       contents: read
     uses: $/.github/workflows/build.yaml
 
+  # nix flake check only evaluates packages, so the Nix package is built and run here.
+  nix-package:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-26, ubuntu-latest]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/setup-nix
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: nix build .#redmoon
+
+      - run: ./result/bin/redmoon --help
+
   status-check:
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -147,6 +170,7 @@ jobs:
       - build
       - check
       - integration
+      - nix-package
       - report
       - test-macos
       # keep-sorted end
