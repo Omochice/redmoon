@@ -212,3 +212,32 @@ async test "issues are listed by a saved query through the tool" {
   assert_eq(unscoped.is_error, true)
   assert_true(unscoped.text.contains("\"status\":404"), msg=unscoped.text)
 }
+
+///|
+async test "an issue description is read from description_path" {
+  let redmine = @livetest.redmine()
+  let issue = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="description_path live \{@env.now()}",
+      ),
+    )
+  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
+  let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
+  with_scratch_dir(async fn(dir) {
+    let path = "\{dir}/description.md"
+    let content = "# Heading\n\nfirst line\nsecond line\n"
+    @fs.write_file(path, content)
+    let updated = call_tool(tools, "redmine_issues", {
+      "update": { "id": issue.id, "description_path": path },
+    })
+    assert_eq(updated.text, "{\"ok\":true}")
+    let shown = redmine |> @issues.show(issue.id)
+    let stored = "# Heading\r\n\r\nfirst line\r\nsecond line\r\n"
+    assert_eq(shown.description, Some(stored))
+  })
+}
