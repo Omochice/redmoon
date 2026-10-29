@@ -65,11 +65,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793244644,
-        "narHash": "sha256-eN3VonqBGmNFyBdQbDwXb5L615BzCbk4DCVI/9ZK9pU=",
+        "lastModified": 1793268352,
+        "narHash": "sha256-aXyICjvskncJQN/RZYTuTbPyOKjEZrAsxCQUYCGzvHA=",
         "owner": "Omochice",
         "repo": "moon-nix",
-        "rev": "3ada9523bc5ef8d77aacf4ed90f847242e8e12f7",
+        "rev": "621e12718a6706d00fcbc350b0fb9b0d2fe020ea",
         "type": "github"
       },
       "original": {
