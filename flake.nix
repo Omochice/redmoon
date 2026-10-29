@@ -237,7 +237,7 @@
               project =
                 (moon-nix.lib.mkMoonNix {
                   inherit pkgs;
-                  toolchain = pkgs.moonbit-bin.latest;
+                  toolchain = builtins.head moonbitToolchain;
                 }).buildProject
                   {
                     src = ./.;
