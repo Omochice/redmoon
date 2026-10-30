@@ -4,20 +4,10 @@ priv enum IssueAction {
   ListSaved(@issues.SavedQuery, limit~ : Int32?)
   ListQueries
   Show(Int32, includes~ : Array[@issues.Include])
-  Create(@issues.Create, description_path~ : String?)
-  Update(
-    Int32,
-    @issues.Update,
-    description_path~ : String?,
-    notes_path~ : String?
-  )
+  Create(@issues.Create)
+  Update(Int32, @issues.Update)
   Delete(Int32)
-  UpdateNote(
-    Int32,
-    notes~ : String?,
-    notes_path~ : String?,
-    private_notes~ : Bool?
-  )
+  UpdateNote(Int32, notes~ : String?, private_notes~ : Bool?)
   DeleteNote(Int32)
 }
 
@@ -287,7 +277,6 @@ let create_input : @schema.Schema[IssueAction] = {
           due_date?=v.get(due_date),
           custom_fields?=v.get(custom_fields),
         ),
-        description_path=v.get(description_path),
       )
     },
   )
@@ -407,8 +396,6 @@ let update_input : @schema.Schema[IssueAction] = {
           due_date?=v.get(due_date),
           custom_fields?=v.get(custom_fields),
         ),
-        description_path=v.get(description_path),
-        notes_path=v.get(notes_path),
       )
     },
   )
@@ -440,7 +427,7 @@ let private_notes_required : @schema.Field[Bool] = @schema.required(
 let update_note_text_input : @schema.Schema[IssueAction] = {
   let notes = @schema.required(
     "notes",
-    @schema.string(min_length=1).describe(
+    @schema.not_blank().describe(
       "New text of the comment. To erase it, use `delete_note`.",
     ),
   )
@@ -451,7 +438,6 @@ let update_note_text_input : @schema.Schema[IssueAction] = {
       IssueAction::UpdateNote(
         v.get(journal),
         notes=Some(v.get(notes)),
-        notes_path=None,
         private_notes=v.get(private_notes),
       )
     },
@@ -467,11 +453,13 @@ let update_note_file_input : @schema.Schema[IssueAction] = {
   let private_notes = @schema.optional("private_notes", @schema.boolean())
   @schema.record(
     [journal.as_member(), notes_path.as_member(), private_notes.as_member()],
+    // Only the validation before reading the file reaches this shape; the
+    // file then turns `notes_path` into `notes`, which selects the text shape.
     v => {
+      ignore(v.get(notes_path))
       IssueAction::UpdateNote(
         v.get(journal),
         notes=None,
-        notes_path=Some(v.get(notes_path)),
         private_notes=v.get(private_notes),
       )
     },
@@ -485,7 +473,6 @@ let update_note_visibility_input : @schema.Schema[IssueAction] = @schema.record(
     IssueAction::UpdateNote(
       v.get(journal),
       notes=None,
-      notes_path=None,
       private_notes=Some(v.get(private_notes_required)),
     )
   },
@@ -531,103 +518,6 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
 }
 
 ///|
-fn with_read_description(
-  issue : @issues.Create,
-  read : String?,
-) -> @issues.Create {
-  // No `..`, so a field added to `@issues.Create` fails the check instead of
-  // being dropped.
-  let {
-    project_id,
-    tracker_id,
-    status_id,
-    priority_id,
-    subject,
-    description,
-    category_id,
-    fixed_version_id,
-    assigned_to_id,
-    parent_issue_id,
-    watcher_user_ids,
-    is_private,
-    estimated_hours,
-    start_date,
-    due_date,
-    custom_fields,
-    uploads,
-  } = issue
-  @issues.Create::new(
-    project_id~,
-    tracker_id~,
-    status_id~,
-    priority_id~,
-    subject~,
-    description?=file_or_inline(read, description),
-    category_id?,
-    fixed_version_id?,
-    assigned_to_id?,
-    parent_issue_id?,
-    watcher_user_ids?,
-    is_private?,
-    estimated_hours?,
-    start_date?,
-    due_date?,
-    custom_fields?,
-    uploads?,
-  )
-}
-
-///|
-fn with_read_texts(
-  update : @issues.Update,
-  description~ : String?,
-  notes~ : String?,
-) -> @issues.Update {
-  // No `..`, so a field added to `@issues.Update` fails the check instead of
-  // being dropped.
-  let {
-    subject,
-    description: inline_description,
-    notes: inline_notes,
-    private_notes,
-    done_ratio,
-    is_private,
-    estimated_hours,
-    status_id,
-    priority_id,
-    tracker_id,
-    assigned_to_id,
-    category_id,
-    parent_issue_id,
-    fixed_version_id,
-    start_date,
-    due_date,
-    custom_fields,
-    uploads,
-  } = update
-  @issues.Update::new(
-    subject?,
-    description?=file_or_inline(description, inline_description),
-    notes?=file_or_inline(notes, inline_notes),
-    private_notes?,
-    done_ratio?,
-    is_private?,
-    estimated_hours?,
-    status_id?,
-    priority_id?,
-    tracker_id?,
-    assigned_to_id?,
-    category_id?,
-    parent_issue_id?,
-    fixed_version_id?,
-    start_date?,
-    due_date?,
-    custom_fields?,
-    uploads?,
-  )
-}
-
-///|
 fn issues_description(mode : Mode) -> String {
   let base = [
     describe_crud_tool("issues", mode),
@@ -654,10 +544,17 @@ pub fn issues_tool(
   files : &FilePort,
   mode : Mode,
 ) -> @mcp.Tool {
-  @mcp.tool(
+  text_file_tool(
     name="redmine_issues",
     description=issues_description(mode),
     input=issues_input(mode),
+    files~,
+    texts=[
+      ("create", "description"),
+      ("update", "description"),
+      ("update", "notes"),
+      ("update_note", "notes"),
+    ],
     handler=async fn(action) {
       match action {
         List(query, limit~) => respond(() => port.list_issues(query, limit))
@@ -665,36 +562,11 @@ pub fn issues_tool(
           respond(() => port.list_saved_issues(query, limit))
         ListQueries => respond(() => port.list_queries())
         Show(id, includes~) => respond(() => port.show_issue(id, includes))
-        Create(issue, description_path~) => {
-          let description = read_optional_file(files, description_path) catch {
-            FileError(message~) => return local_failure([message])
-          }
-          let issue = with_read_description(issue, description)
-          respond(() => port.create_issue(issue))
-        }
-        Update(id, update, description_path~, notes_path~) => {
-          let (description, notes) = (
-            read_optional_file(files, description_path),
-            read_optional_file(files, notes_path),
-          ) catch {
-            FileError(message~) => return local_failure([message])
-          }
-          let update = with_read_texts(update, description~, notes~)
-          respond_ok(() => port.update_issue(id, update))
-        }
+        Create(issue) => respond(() => port.create_issue(issue))
+        Update(id, update) => respond_ok(() => port.update_issue(id, update))
         Delete(id) => respond_ok(() => port.delete_issue(id))
-        UpdateNote(id, notes~, notes_path~, private_notes~) => {
-          let from_file = read_optional_file(files, notes_path) catch {
-            FileError(message~) => return local_failure([message])
-          }
-          if from_file is Some(text) && text.is_blank() {
-            return local_failure([
-              "the notes_path file is blank; to erase the comment, use `delete_note`",
-            ])
-          }
-          let notes = file_or_inline(from_file, notes)
+        UpdateNote(id, notes~, private_notes~) =>
           respond_ok(() => port.update_journal(id, notes, private_notes))
-        }
         DeleteNote(id) =>
           respond_ok(() => port.update_journal(id, Some(""), None))
       }

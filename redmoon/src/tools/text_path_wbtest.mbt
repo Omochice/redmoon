@@ -91,9 +91,7 @@ async test "update_note refuses a blank notes_path file, which would erase the c
     )
     assert_eq(
       called.text,
-      failure_text(
-        "the notes_path file is blank; to erase the comment, use `delete_note`",
-      ),
+      failure_text("invalid arguments: update_note.notes: must not be blank"),
     )
     assert_true(fake.journal is None)
     assert_eq(files.closed, 1)
@@ -149,6 +147,23 @@ async test "a text field given together with its file is rejected before Redmine
     )
     assert_eq(files.closed, 0)
   }
+}
+
+///|
+async test "an invalid argument beside a file is reported without opening the file" {
+  let fake = FakeIssues::new()
+  let files = FakeFiles::new()
+  let called = call_issues(
+    fake,
+    { "update": { "id": 0, "description_path": "/tmp/body.md" } },
+    files~,
+  )
+  assert_true(
+    called.text.contains("invalid arguments: update.id"),
+    msg=called.text,
+  )
+  assert_true(fake.updated is None)
+  assert_eq(files.closed, 0)
 }
 
 ///|

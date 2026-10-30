@@ -2,8 +2,8 @@
 priv enum WikiPageAction {
   List(@redmine.ProjectRef)
   Show(@redmine.ProjectRef, String, Int32?)
-  Create(@redmine.ProjectRef, String, TextSource, String?, String?)
-  Update(@redmine.ProjectRef, String, TextSource, String?, Int32?, String?)
+  Create(@redmine.ProjectRef, String, String, String?, String?)
+  Update(@redmine.ProjectRef, String, String, String?, Int32?, String?)
   Delete(@redmine.ProjectRef, String)
 }
 
@@ -25,17 +25,10 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
     ),
   )
   let text_path = text_path("text")
-  fn text_source(v : @schema.Values) -> TextSource raise @schema.SchemaError {
-    match (v.get(text), v.get(text_path)) {
-      (Some(text), _) => Inline(text)
-      (None, Some(file)) => File(file)
-      // `exclusive_text` refuses this case first and reports it at `text_path`.
-      (None, None) =>
-        raise @schema.SchemaError::Invalid(
-          path=[],
-          message="one of `text` and `text_path` is required",
-        )
-    }
+  // `text` is absent only while the arguments are validated before the
+  // `text_path` file is read, since `exclusive_text` requires one of the two.
+  fn page_text(v : @schema.Values) -> String raise @schema.SchemaError {
+    v.get(text).unwrap_or("")
   }
   let comments = @schema.optional("comments", @schema.string())
   let version = @schema.optional("version", record_id())
@@ -76,7 +69,7 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
             WikiPageAction::Create(
               v.get(project_id),
               v.get(title),
-              text_source(v),
+              page_text(v),
               v.get(comments),
               v.get(parent_title),
             )
@@ -103,7 +96,7 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
             WikiPageAction::Update(
               v.get(project_id),
               v.get(title),
-              text_source(v),
+              page_text(v),
               v.get(comments),
               v.get(version),
               v.get(parent_title),
@@ -141,19 +134,18 @@ pub fn wiki_pages_tool(
   files : &FilePort,
   mode : Mode,
 ) -> @mcp.Tool {
-  @mcp.tool(
+  text_file_tool(
     name="redmine_wiki_pages",
     description=wiki_pages_description(mode),
     input=wiki_pages_input(mode),
+    files~,
+    texts=[("create", "text"), ("update", "text")],
     handler=async fn(action) {
       match action {
         List(project) => respond(() => port.list_wiki_pages(project))
         Show(project, title, version) =>
           respond(() => port.show_wiki_page(project, title, version?))
-        Create(project, title, text, comments, parent_title) => {
-          let text = text.read(files) catch {
-            FileError(message~) => return local_failure([message])
-          }
+        Create(project, title, text, comments, parent_title) =>
           respond_ok(() => {
             port.create_wiki_page(
               project,
@@ -163,11 +155,7 @@ pub fn wiki_pages_tool(
               parent_title?,
             )
           })
-        }
-        Update(project, title, text, comments, version, parent_title) => {
-          let text = text.read(files) catch {
-            FileError(message~) => return local_failure([message])
-          }
+        Update(project, title, text, comments, version, parent_title) =>
           respond_ok(() => {
             port.update_wiki_page(
               project,
@@ -178,7 +166,6 @@ pub fn wiki_pages_tool(
               parent_title?,
             )
           })
-        }
         Delete(project, title) =>
           respond_ok(() => port.delete_wiki_page(project, title))
       }

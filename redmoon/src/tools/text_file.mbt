@@ -1,11 +1,4 @@
 ///|
-/// A free-text argument, given inline or as a local file to read.
-priv enum TextSource {
-  Inline(String)
-  File(String)
-}
-
-///|
 const MAX_TEXT_SIZE : Int32 = 1048576
 
 ///|
@@ -92,31 +85,58 @@ async fn read_text_file(
 }
 
 ///|
-async fn TextSource::read(
-  self : TextSource,
+/// `arguments` with each `<field>_path` that `texts` names by action replaced
+/// by `field` holding the content of that file.
+async fn read_text_files(
   files : &FilePort,
-) -> String raise FileError {
-  match self {
-    Inline(text) => text
-    File(path) => read_text_file(files, path)
+  arguments : Json,
+  texts : Array[(String, String)],
+) -> Json raise FileError {
+  guard arguments is Object(actions) else { return arguments }
+  let resolved = actions.copy()
+  for text in texts {
+    let (action, field) = text
+    let file = field + "_path"
+    guard resolved.get(action) is Some(Object(fields)) &&
+      fields.get(file) is Some(String(path)) else {
+      continue
+    }
+    let fields = fields.copy()
+    fields.remove(file)
+    fields[field] = Json::string(read_text_file(files, path))
+    resolved[action] = Json::object(fields)
   }
+  Json::object(resolved)
 }
 
 ///|
-async fn read_optional_file(
-  files : &FilePort,
-  path : String?,
-) -> String? raise FileError {
-  match path {
-    Some(path) => Some(read_text_file(files, path))
-    None => None
+/// A tool whose `<field>_path` arguments, named by action in `texts`, reach
+/// `handler` as `field` holding the content of the file.
+/// The arguments are validated whole before any file is read, so a mistake in
+/// them is reported without touching the filesystem, and parsed again once the
+/// files are in, so the actions keep the shape they have without files.
+fn[T] text_file_tool(
+  name~ : String,
+  description~ : String,
+  input~ : @schema.Schema[T],
+  files~ : &FilePort,
+  texts~ : Array[(String, String)],
+  handler~ : async (T) -> @mcp.ToolResult,
+) -> @mcp.Tool {
+  let validated : @schema.Schema[Json] = {
+    json: input.json,
+    decode: (arguments, path) => {
+      ignore((input.decode)(arguments, path))
+      arguments
+    },
   }
-}
-
-///|
-fn file_or_inline(file : String?, inline : String?) -> String? {
-  match file {
-    Some(_) => file
-    None => inline
-  }
+  @mcp.tool(name~, description~, input=validated, handler=async fn(arguments) {
+    let arguments = read_text_files(files, arguments, texts) catch {
+      FileError(message~) => return local_failure([message])
+    }
+    let action = input.parse(arguments) catch {
+      error => return on_invalid(error)
+    }
+    handler(action)
+  })
 }
