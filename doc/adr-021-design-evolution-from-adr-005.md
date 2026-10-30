@@ -30,13 +30,14 @@ The model also has its own tools to write a file and to replace an exact string 
 - Giving both a field and its file fails with status `0`; on `update_note` it fails as `update_note.notes_path: unknown field`, because that action picks its shape by key.
 - Wiki `text` needs exactly one of the two.
 - The file is sent as is, trailing newline included, except that a leading UTF-8 byte order mark is dropped.
-- A file over 1 MiB or not valid UTF-8 is refused with status `0`, and so is a blank (empty or whitespace only) `notes_path` file on `update_note`, as an empty `notes` is.
+- A file over 1 MiB or not valid UTF-8 is refused with status `0`.
+- `update_note` refuses blank (empty or whitespace only) `notes`, whether inline or from `notes_path`.
 
 Redmine stores an issue description's line breaks as `\r\n` whatever was sent, while wiki text is stored as sent.
 
 **Rationale**: a path is short, and the model writes the text with tools built for files.
 A separate argument keeps each field a plain string instead of a string-or-object `anyOf`.
-The limits stop a mistaken path from posting a binary or a log, a byte order mark would break the first line's markup, and a blank notes file would erase the comment, which `delete_note` exists for.
+The limits stop a mistaken path from posting a binary or a log, a byte order mark would break the first line's markup, and blank notes would erase the comment, which `delete_note` exists for.
 
 ### 2. `show` can save the text to a local file
 
@@ -56,16 +57,15 @@ One path cannot say which of an issue's many journals to save, and notes are usu
 A `description_edits` argument of old and new strings was rejected.
 Redmine has no partial update of a text field, so redmoon would read and write back the whole text and lose a change made in between, and it would repeat what the client's edit tool already does.
 
-### 4. The SDK request is copied, not opened
+### 4. Files are read into the arguments before they are parsed
 
-**Original Design (ADR-005)**: parsing builds the SDK request, such as `@issues.Create`, and the handler sends it unchanged.
+**Original Design (ADR-005)**: the arguments are parsed into the tool's action, and the handler runs it.
 
-**Revised Design**: parsing still builds the request, and the action carries the `_path` arguments beside it.
-After reading the file, the handler rebuilds the request through `Create::new` or `Update::new`, replacing only the text.
-The copy destructures the request with a pattern that names every field and omits `..`, so a field added to the SDK later fails `moon check --deny-warn` through `missing_pattern_field`.
+**Revised Design**: the arguments are first validated whole, then each `_path` file is read into its field, and the result is parsed into the same action a call without files produces.
 
-**Rationale**: parsing is synchronous and reading a file is not, so the text is not available when the request is first built.
-A method on the SDK type would widen its public API for one tool, and a builder closure in the action would hide the request from tests.
+**Rationale**: parsing is synchronous and reading a file is not, so the text cannot be read while the action is built.
+Reading it beforehand keeps the actions, handlers, and SDK requests unchanged, instead of carrying paths in the actions and rebuilding each request with the text.
+Validating first reports a mistaken argument without touching the filesystem.
 
 ## Consequences
 
