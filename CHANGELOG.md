@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/Omochice/redmoon/compare/v0.3.0...v0.4.0) (2026-10-31)
+
+
+### Features
+
+* read long issue and wiki text from local files ([#41](https://github.com/Omochice/redmoon/issues/41)) ([2b64e2b](https://github.com/Omochice/redmoon/commit/2b64e2b0e7d9a484b7487d7f48bc2f606fd3d51b))
+
 ## [0.3.0](https://github.com/Omochice/redmoon/compare/v0.2.2...v0.3.0) (2026-10-26)
 
 
