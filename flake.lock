@@ -87,11 +87,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1792913100,
-        "narHash": "sha256-fQNIrX5meQQuLdrvDlNhpm+liB8rla2twuPpzlFlnVQ=",
+        "lastModified": 1793434175,
+        "narHash": "sha256-woeeZ23rbo2NBw/hcZ6v+Rt5xNppKU21jfeGYEF7UX8=",
         "owner": "moonbit-community",
         "repo": "moonbit-overlay",
-        "rev": "8675b0154c51f1a5fb676575293ba7e65f4cb362",
+        "rev": "a0aeeb3a1d3524de62817ba1c6e8d10a228099ea",
         "type": "github"
       },
       "original": {
@@ -103,11 +103,11 @@
     "mooncake-index": {
       "flake": false,
       "locked": {
-        "lastModified": 1793213169,
-        "narHash": "sha256-z2XBMRy4My7J8bsKOeo4OhpPikp3Pz+NeKZFZglf9RE=",
+        "lastModified": 1793476423,
+        "narHash": "sha256-1vyr69NrRHiUykvImCSUmINRxuYwYRdMJpXVQdml674=",
         "ref": "refs/heads/main",
-        "rev": "ab972af98221dcc04115101150b3109e6d27d33c",
-        "revCount": 20702,
+        "rev": "dc88b7fc761479812d1922a164d2b5e4b9772fac",
+        "revCount": 21378,
         "type": "git",
         "url": "https://mooncakes.io/git/index"
       },
@@ -118,11 +118,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1792812153,
-        "narHash": "sha256-T2+XBfNbf9pecLUWS4+RtuVNZ3W8K5taG5QdV71mWlk=",
+        "lastModified": 1793345420,
+        "narHash": "sha256-e/yiZ31gXRROBDcnOtT3YwDQ73NVG9Cepccbt86LIn8=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "674a2028661e550a97400c1cc992b9cca9a668a1",
+        "rev": "885ba4d038f10c3d17d7a92e8c3cc185b99c9158",
         "type": "github"
       },
       "original": {
@@ -140,11 +140,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1792938348,
-        "narHash": "sha256-qvqkZZ+KVxwd8nA7SP2pqFh4dPQu9k4YI3EeWUVPHwU=",
+        "lastModified": 1793459101,
+        "narHash": "sha256-S7g20olJ8yr2hAveruWSzQGjwlVg/IxavsXCh7f3904=",
         "owner": "Omochice",
         "repo": "nur-packages",
-        "rev": "f0c2dc5e2061430abb613603abe493eab8f097f9",
+        "rev": "6ff936a2c5dd62a46e986ce553a486d9935b1d1b",
         "type": "github"
       },
       "original": {
