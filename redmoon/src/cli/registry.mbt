@@ -6,8 +6,8 @@ pub fn registered_tools(
   plugins : Array[Plugin],
 ) -> Array[@mcp.Tool] {
   let tools = [
-    @tools.issues_tool(redmine, mode),
-    @tools.wiki_pages_tool(redmine, mode),
+    @tools.issues_tool(redmine, @tools.LocalFile::new(), mode),
+    @tools.wiki_pages_tool(redmine, @tools.LocalFile::new(), mode),
     @tools.versions_tool(redmine, mode),
     @tools.relations_tool(redmine, mode),
     @tools.search_tool(redmine),

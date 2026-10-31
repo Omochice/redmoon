@@ -218,6 +218,7 @@ let create_input : @schema.Schema[IssueAction] = {
   let priority_id = @schema.required("priority_id", record_id())
   let subject = @schema.required("subject", @schema.string())
   let description = @schema.optional("description", @schema.string())
+  let description_path = text_path("description")
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
   let assigned_to_id = @schema.optional(
     "assigned_to_id",
@@ -248,6 +249,7 @@ let create_input : @schema.Schema[IssueAction] = {
       priority_id.as_member(),
       subject.as_member(),
       description.as_member(),
+      description_path.as_member(),
       fixed_version_id.as_member(),
       assigned_to_id.as_member(),
       parent_issue_id.as_member(),
@@ -284,6 +286,7 @@ let create_input : @schema.Schema[IssueAction] = {
 let update_input : @schema.Schema[IssueAction] = {
   let subject = @schema.optional("subject", @schema.string())
   let description = @schema.optional("description", @schema.string())
+  let description_path = text_path("description")
   let status_id = @schema.optional(
     "status_id",
     record_id().describe(
@@ -335,6 +338,7 @@ let update_input : @schema.Schema[IssueAction] = {
   let is_private = @schema.optional("is_private", @schema.boolean())
   let estimated_hours = @schema.optional("estimated_hours", @schema.number())
   let notes = @schema.optional("notes", @schema.string())
+  let notes_path = text_path("notes")
   let private_notes = @schema.optional("private_notes", @schema.boolean())
   let custom_fields = @schema.optional(
     "custom_fields",
@@ -352,6 +356,7 @@ let update_input : @schema.Schema[IssueAction] = {
       issue_id.as_member(),
       subject.as_member(),
       description.as_member(),
+      description_path.as_member(),
       status_id.as_member(),
       priority_id.as_member(),
       tracker_id.as_member(),
@@ -365,6 +370,7 @@ let update_input : @schema.Schema[IssueAction] = {
       is_private.as_member(),
       estimated_hours.as_member(),
       notes.as_member(),
+      notes_path.as_member(),
       private_notes.as_member(),
       custom_fields.as_member(),
     ],
@@ -421,7 +427,7 @@ let private_notes_required : @schema.Field[Bool] = @schema.required(
 let update_note_text_input : @schema.Schema[IssueAction] = {
   let notes = @schema.required(
     "notes",
-    @schema.string(min_length=1).describe(
+    @schema.not_blank().describe(
       "New text of the comment. To erase it, use `delete_note`.",
     ),
   )
@@ -432,6 +438,28 @@ let update_note_text_input : @schema.Schema[IssueAction] = {
       IssueAction::UpdateNote(
         v.get(journal),
         notes=Some(v.get(notes)),
+        private_notes=v.get(private_notes),
+      )
+    },
+  )
+}
+
+///|
+let update_note_file_input : @schema.Schema[IssueAction] = {
+  let notes_path = @schema.required(
+    "notes_path",
+    path_schema(text_path_text("notes")),
+  )
+  let private_notes = @schema.optional("private_notes", @schema.boolean())
+  @schema.record(
+    [journal.as_member(), notes_path.as_member(), private_notes.as_member()],
+    // Only the validation before reading the file reaches this shape; the
+    // file then turns `notes_path` into `notes`, which selects the text shape.
+    v => {
+      ignore(v.get(notes_path))
+      IssueAction::UpdateNote(
+        v.get(journal),
+        notes=None,
         private_notes=v.get(private_notes),
       )
     },
@@ -467,13 +495,20 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
     ("show", show_input),
   ]
   let write = [
-    ("create", create_input),
-    ("update", update_input),
+    ("create", exclusive_text(create_input, field="description")),
+    (
+      "update",
+      exclusive_text(
+        exclusive_text(update_input, field="description"),
+        field="notes",
+      ),
+    ),
     ("delete", delete_input),
     (
       "update_note",
       @schema.by_key([
         ("notes", update_note_text_input),
+        ("notes_path", update_note_file_input),
         ("private_notes", update_note_visibility_input),
       ]),
     ),
@@ -496,6 +531,7 @@ fn issues_description(mode : Mode) -> String {
     Full =>
       [
         ..base, "`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.",
+        "For a long text, pass the path of a local UTF-8 file instead of the text itself: `description_path` on `create` and `update`, and `notes_path` on `update` and `update_note` (absolute is recommended).",
       ].join("\n")
   }
 }
@@ -503,11 +539,22 @@ fn issues_description(mode : Mode) -> String {
 ///|
 /// `redmine_issues`: list, show, create, update and delete issues, list the
 /// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
-pub fn issues_tool(port : &IssuePort, mode : Mode) -> @mcp.Tool {
-  @mcp.tool(
+pub fn issues_tool(
+  port : &IssuePort,
+  files : &FilePort,
+  mode : Mode,
+) -> @mcp.Tool {
+  text_file_tool(
     name="redmine_issues",
     description=issues_description(mode),
     input=issues_input(mode),
+    files~,
+    texts=[
+      ("create", "description"),
+      ("update", "description"),
+      ("update", "notes"),
+      ("update_note", "notes"),
+    ],
     handler=async fn(action) {
       match action {
         List(query, limit~) => respond(() => port.list_issues(query, limit))

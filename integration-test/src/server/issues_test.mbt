@@ -12,7 +12,7 @@ fn with_field(base : Json, name : String, value : Json) -> Json {
 ///|
 async test "issues are created, shown, updated, commented and deleted through the tool" {
   let redmine = @livetest.redmine()
-  let tools = [@tools.issues_tool(redmine, Full)]
+  let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
   let subject = "redmoon-issues-tool-\{@env.now()}"
   let created = call_tool(tools, "redmine_issues", {
     "create": {
@@ -134,7 +134,7 @@ fn shown_custom_value(issue : Json, id : Int32) -> Json raise {
 ///|
 async test "an issue is created with a required custom field and its multi-value field is emptied with null" {
   let redmine = @livetest.redmine()
-  let tools = [@tools.issues_tool(redmine, Full)]
+  let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
   guard @redmine.send(redmine, Get, ["projects", "demo-custom-fields.json"])
     is { "project": { "id": Number(project_id, ..), .. }, .. } else {
     fail("project demo-custom-fields is not seeded; run `task redmine:seed`")
@@ -191,7 +191,7 @@ async test "an issue is created with a required custom field and its multi-value
 ///|
 async test "issues are listed by a saved query through the tool" {
   let redmine = @livetest.redmine()
-  let tools = [@tools.issues_tool(redmine, Readonly)]
+  let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Readonly)]
   let queries = call_tool(tools, "redmine_issues", { "list_queries": {} })
   assert_eq(queries.is_error, false, msg=queries.text)
   guard @json.parse(queries.text) is Array(listed) &&
@@ -211,4 +211,33 @@ async test "issues are listed by a saved query through the tool" {
   })
   assert_eq(unscoped.is_error, true)
   assert_true(unscoped.text.contains("\"status\":404"), msg=unscoped.text)
+}
+
+///|
+async test "an issue description is read from description_path" {
+  let redmine = @livetest.redmine()
+  let issue = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="description_path live \{@env.now()}",
+      ),
+    )
+  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
+  let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
+  with_scratch_dir(async fn(dir) {
+    let path = "\{dir}/description.md"
+    let content = "# Heading\n\nfirst line\nsecond line\n"
+    @fs.write_file(path, content)
+    let updated = call_tool(tools, "redmine_issues", {
+      "update": { "id": issue.id, "description_path": path },
+    })
+    assert_eq(updated.text, "{\"ok\":true}")
+    let shown = redmine |> @issues.show(issue.id)
+    let stored = "# Heading\r\n\r\nfirst line\r\nsecond line\r\n"
+    assert_eq(shown.description, Some(stored))
+  })
 }
