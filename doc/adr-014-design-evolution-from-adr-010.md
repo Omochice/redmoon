@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Proposed (refined by [ADR-022](./adr-022-design-evolution-from-adr-014.md))
 
 ## Context
 

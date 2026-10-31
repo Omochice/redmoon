@@ -1,12 +1,17 @@
 name = "omochice/redmine-plugins"
 
-version = "0.1.0"
+// x-release-please-start-version
+
+version = "0.3.0"
+// x-release-please-end
 
 license = "Zlib"
 
 import {
   "moonbitlang/async@0.22.5",
-  "omochice/redmine@0.1.0",
+  // x-release-please-start-version
+  "omochice/redmine@0.3.0",
+  // x-release-please-end
 }
 
 preferred_target = "native"
