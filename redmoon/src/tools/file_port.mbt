@@ -15,7 +15,7 @@ pub(all) struct LocalContent {
 }
 
 ///|
-/// The filesystem access the attachment tool depends on.
+/// The local filesystem access the tools depend on.
 pub(open) trait FilePort {
   /// Writes `reader` to a new file at `path` and returns the absolute path
   /// written. An existing file is never replaced, and a stream longer than

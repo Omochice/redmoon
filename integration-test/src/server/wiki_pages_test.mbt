@@ -1,7 +1,7 @@
 ///|
 async test "wiki pages go through the tool" {
   let redmine = @livetest.redmine()
-  let tools = [@tools.wiki_pages_tool(redmine, Full)]
+  let tools = [@tools.wiki_pages_tool(redmine, @tools.LocalFile::new(), Full)]
   let title = "Redmoon tool \{@async.now()}"
   let created = call_tool(tools, "redmine_wiki_pages", {
     "create": { "project_id": "demo", "title": title, "text": "first" },
