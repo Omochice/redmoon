@@ -8,7 +8,7 @@ version = "0.3.0"
 license = "Zlib"
 
 import {
-  "moonbitlang/async@0.22.5",
+  "moonbitlang/async@0.22.7",
   // x-release-please-start-version
   "omochice/redmine@0.3.0",
   // x-release-please-end
