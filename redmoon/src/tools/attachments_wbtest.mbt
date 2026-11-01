@@ -2,7 +2,7 @@
 struct FakeAttachments {
   failure : @redmine.RedmineError?
   content : Bytes
-  declared_size : Int32
+  declared_size : Int64
   content_type : String?
   uploads : Array[(Int64, String)]
   updates : Array[(Int32, @issues.Update)]
@@ -12,7 +12,7 @@ struct FakeAttachments {
 fn FakeAttachments::new(
   failure? : @redmine.RedmineError,
   content~ : Bytes = b"hello",
-  declared_size~ : Int32 = 5,
+  declared_size~ : Int64 = 5,
   content_type~ : String = "text/plain",
 ) -> FakeAttachments {
   {
@@ -36,13 +36,13 @@ fn FakeAttachments::check(
 
 ///|
 fn fake_attachment(
-  filesize : Int32,
+  filesize : Int64,
   content_type~ : String? = Some("text/plain"),
 ) -> @attachments.Attachment {
   {
     id: 7,
     filename: "report.txt",
-    filesize,
+    filesize: @attachments.ByteSize(filesize),
     content_type,
     description: None,
     content_url: "http://redmine.test/attachments/download/7/report.txt",
@@ -171,6 +171,20 @@ async test "show answers the attachment metadata" {
 }
 
 ///|
+async test "show answers a filesize above 2 GiB as a JSON number" {
+  let called = call_tool(
+    attachments_for(
+      FakeAttachments::new(declared_size=3000000000L),
+      FakeFiles::new(),
+    ),
+    "redmine_attachments",
+    { "show": { "id": 7 } },
+  )
+  assert_eq(called.is_error, false)
+  assert_true(called.text.contains("\"filesize\":3000000000,"))
+}
+
+///|
 async test "download saves the stream and answers the written file" {
   let files = FakeFiles::new()
   let called = call_tool(
@@ -211,6 +225,35 @@ async test "download refuses a declared size above max_size before saving" {
   assert_eq(
     called.text,
     "{\"status\":0,\"errors\":[\"attachment 7 is 5 bytes, which exceeds the max_size limit of 4 bytes\"]}",
+  )
+  assert_eq(files.saved.length(), 0)
+}
+
+///|
+async test "download accepts a max_size above 2 GiB for an attachment that size" {
+  let files = FakeFiles::new()
+  let called = call_tool(
+    attachments_for(FakeAttachments::new(declared_size=3000000000L), files),
+    "redmine_attachments",
+    { "download": { "id": 7, "path": "a", "max_size": 4000000000 } },
+  )
+  assert_eq(called.is_error, false)
+  assert_true(called.text.contains("\"filesize\":3000000000}"))
+  assert_eq(files.saved[0].2, 4000000000L)
+}
+
+///|
+async test "download refuses a declared size above a max_size beyond 2 GiB" {
+  let files = FakeFiles::new()
+  let called = call_tool(
+    attachments_for(FakeAttachments::new(declared_size=5000000000L), files),
+    "redmine_attachments",
+    { "download": { "id": 7, "path": "a", "max_size": 4000000000 } },
+  )
+  assert_eq(called.is_error, true)
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"attachment 7 is 5000000000 bytes, which exceeds the max_size limit of 4000000000 bytes\"]}",
   )
   assert_eq(files.saved.length(), 0)
 }
@@ -386,6 +429,25 @@ async test "readonly drops attach from the schema and the description" {
     "download": { "id": 7, "path": "a" },
   })
   assert_eq(downloaded.is_error, false)
+}
+
+///|
+test "max_size advertises an integer schema with a numeric default" {
+  let schema = attachment_input(Readonly).to_json_schema()
+  guard schema
+    is {
+      "properties": {
+        "download": { "properties": { "max_size": max_size, .. }, .. },
+        ..
+      },
+      ..
+    } else {
+    fail("no download.max_size in \{schema.stringify()}")
+  }
+  guard max_size is { "type": "integer", "default": default, .. } else {
+    fail("max_size is not an integer: \{max_size.stringify()}")
+  }
+  assert_eq(default, Json::number(524288000.0))
 }
 
 ///|

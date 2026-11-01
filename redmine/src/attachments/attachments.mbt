@@ -1,9 +1,51 @@
 ///|
+/// A size in bytes as Redmine reports it, which may exceed the range of `Int32`.
+pub(all) struct ByteSize(Int64) derive(Eq, Debug)
+
+///|
+pub extend ByteSize with Eq::{equal, not_equal}
+
+///|
+pub extend ByteSize with @debug.Debug::{to_repr}
+
+///|
+pub extend ByteSize with @json.FromJson::{from_json}
+
+///|
+pub extend ByteSize with ToJson::{to_json}
+
+///|
+/// Core's `Int64` codec reads and writes a JSON string, while Redmine sends a size as a number.
+pub impl @json.FromJson for ByteSize with fn from_json(json, path) {
+  guard json is Number(d, ..) &&
+    d == d.floor() &&
+    d >= 0.0 &&
+    d < 9223372036854775808.0 else {
+    raise @json.JsonDecodeError(
+      (path, "ByteSize::from_json: expected a non-negative integer"),
+    )
+  }
+  ByteSize(d.to_int64())
+}
+
+///|
+/// Written as a number for the same reason it is read as one.
+pub impl ToJson for ByteSize with fn to_json(self) {
+  Json::number(self.0.to_double())
+}
+
+///|
+/// The size as a number of bytes.
+pub fn ByteSize::to_int64(self : ByteSize) -> Int64 {
+  self.0
+}
+
+///|
 /// A file attached to a Redmine record.
 pub(all) struct Attachment {
   id : Int32
   filename : String
-  filesize : Int32
+  filesize : ByteSize
   content_type : String?
   description : String?
   content_url : String

@@ -47,7 +47,7 @@ async test "upload, attach, show and download round-trip" {
   assert_eq(attachments.length(), 1)
   let attachment = redmine |> @attachments.show(attachments[0].id)
   assert_eq(attachment.filename, filename)
-  assert_eq(attachment.filesize, content.length())
+  assert_eq(attachment.filesize.to_int64(), content.length().to_int64())
   let mut downloaded = b""
   redmine
   |> @attachments.download(attachment.id, (meta, body) => {

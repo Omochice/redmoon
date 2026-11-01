@@ -296,3 +296,12 @@ test "an attachment of a shown issue is an attachments Attachment" {
   let attachment : @attachments.Attachment = issue.attachments.unwrap()[0]
   assert_eq(attachment.filename, "f.txt")
 }
+
+///|
+test "an issue with an attachment larger than 2 GiB is decoded" {
+  let text =
+    #|{"id":1,"project":{"id":1,"name":"Demo"},"tracker":{"id":1,"name":"Bug"},"status":{"id":1,"name":"New"},"priority":{"id":2,"name":"Normal"},"author":{"id":1,"name":"Redmine Admin"},"subject":"s","done_ratio":0,"is_private":false,"created_on":"2026-10-15T17:56:29Z","updated_on":"2026-10-15T17:56:29Z",
+    #|"attachments":[{"id":4,"filename":"big.iso","filesize":3000000000,"content_type":"application/octet-stream","content_url":"http://localhost:3000/attachments/download/4/big.iso","author":{"id":1,"name":"Redmine Admin"},"created_on":"2026-10-15T17:56:29Z"}]}
+  let issue : Issue = @decode.decode(@wire.strip_nulls(@json.parse(text)))
+  assert_eq(issue.attachments.unwrap()[0].filesize.to_int64(), 3000000000L)
+}

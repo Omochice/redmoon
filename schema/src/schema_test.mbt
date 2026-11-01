@@ -20,6 +20,27 @@ test "integer parses and bounds" {
 }
 
 ///|
+test "integer64 emits bounds as numbers" {
+  assert_eq(schema_json(integer64()), "{\"type\":\"integer\"}")
+  assert_eq(
+    schema_json(integer64(min=1, max=5000000000)),
+    "{\"type\":\"integer\",\"minimum\":1,\"maximum\":5000000000}",
+  )
+}
+
+///|
+test "integer64 parses integers beyond Int32 and bounds" {
+  let s = integer64(min=1, max=5000000000)
+  assert_eq(outcome(s, "3000000000"), "ok: 3000000000")
+  assert_eq(outcome(s, "5000000000"), "ok: 5000000000")
+  assert_eq(outcome(s, "0"), "error: must be at least 1")
+  assert_eq(outcome(s, "5000000001"), "error: must be at most 5000000000")
+  assert_eq(outcome(s, "1.5"), "error: expected an integer")
+  assert_eq(outcome(s, "\"3000000000\""), "error: expected an integer")
+  assert_eq(outcome(integer64(), "1e19"), "error: expected an integer")
+}
+
+///|
 test "number emits and parses" {
   assert_eq(
     schema_json(number(min=0.5)),

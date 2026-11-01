@@ -100,6 +100,42 @@ pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
 }
 
 ///|
+/// An integer beyond the range of `integer`, such as a byte count, optionally
+/// bounded (inclusive).
+pub fn integer64(min? : Int64, max? : Int64) -> Schema[Int64] {
+  {
+    json: () => {
+      let entries : Array[(String, Json)] = [("type", "integer")]
+      // `Json(m)` would emit the bound as a string, since core encodes `Int64` that way.
+      if min is Some(m) {
+        entries.push(("minimum", Json::number(m.to_double())))
+      }
+      if max is Some(m) {
+        entries.push(("maximum", Json::number(m.to_double())))
+      }
+      Json::object(Map::from_array(entries))
+    },
+    decode: (input, path) => {
+      // 2^63 itself is excluded, since it is one past the largest `Int64`.
+      guard input is Number(d, ..) &&
+        d == d.floor() &&
+        d >= -9223372036854775808.0 &&
+        d < 9223372036854775808.0 else {
+        fail(path, "expected an integer")
+      }
+      let n = d.to_int64()
+      if min is Some(m) && n < m {
+        fail(path, "must be at least \{m}")
+      }
+      if max is Some(m) && n > m {
+        fail(path, "must be at most \{m}")
+      }
+      n
+    },
+  }
+}
+
+///|
 /// A number, optionally bounded (inclusive).
 pub fn number(min? : Double, max? : Double) -> Schema[Double] {
   {
