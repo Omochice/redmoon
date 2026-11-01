@@ -74,6 +74,8 @@ let time_entry_comments : @schema.Field[String?] = @schema.optional(
 )
 
 ///|
+/// Redmine derives the project from the issue, so a new entry is accepted with
+/// either one or both but rejected with neither.
 let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
   let hours = @schema.required("hours", @schema.number())
   @schema.record(
@@ -95,7 +97,10 @@ let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
         comments: v.get(time_entry_comments),
       })
     },
-  )
+  ).require_any([
+    time_entry_issue_id.as_member(),
+    time_entry_project_id.as_member(),
+  ])
 }
 
 ///|

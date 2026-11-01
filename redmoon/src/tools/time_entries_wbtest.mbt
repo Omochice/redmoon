@@ -162,19 +162,56 @@ async test "create maps every argument onto the attributes" {
 }
 
 ///|
-async test "create with only hours leaves the optional attributes unset" {
+async test "create with only an issue leaves the project and the other attributes unset" {
   let fake = FakeTimeEntries::new()
-  let _ = call_tool(time_entry_tools(fake), "redmine_time_entries", {
-    "create": { "hours": 1 },
+  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+    "create": { "hours": 1, "issue_id": 3 },
   })
+  assert_eq(called.is_error, false)
   assert_eq(fake.creates[0], {
     hours: 1.0,
-    issue_id: None,
+    issue_id: Some(3),
     project_id: None,
     spent_on: None,
     activity_id: None,
     comments: None,
   })
+}
+
+///|
+async test "create with only a project leaves the issue unset" {
+  let fake = FakeTimeEntries::new()
+  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+    "create": { "hours": 1, "project_id": 1 },
+  })
+  assert_eq(called.is_error, false)
+  assert_eq(fake.creates[0].issue_id, None)
+  assert_eq(fake.creates[0].project_id, Some(1))
+}
+
+///|
+async test "create with both an issue and a project passes both" {
+  let fake = FakeTimeEntries::new()
+  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+    "create": { "hours": 1, "issue_id": 3, "project_id": 1 },
+  })
+  assert_eq(called.is_error, false)
+  assert_eq(fake.creates[0].issue_id, Some(3))
+  assert_eq(fake.creates[0].project_id, Some(1))
+}
+
+///|
+async test "create with neither an issue nor a project is rejected before reaching the port" {
+  let fake = FakeTimeEntries::new()
+  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+    "create": { "hours": 1 },
+  })
+  assert_eq(called.is_error, true)
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: create: one of `issue_id` and `project_id` is required\"]}",
+  )
+  assert_true(fake.creates.is_empty())
 }
 
 ///|
@@ -257,7 +294,7 @@ async test "a Redmine failure becomes a failure payload" {
     failure=Response(status=422, errors=["Hours cannot be blank"]),
   )
   let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
-    "create": { "hours": 1 },
+    "create": { "hours": 1, "project_id": 1 },
   })
   assert_eq(called.is_error, true)
   assert_eq(
@@ -285,7 +322,7 @@ async test "tools/list advertises the full time entry tool" {
   let advertised = list_tools([time_entries_tool(FakeTimeEntries::new(), Full)])
   assert_eq(
     advertised.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_time_entries\",\"description\":\"Create, read, update, and delete Redmine time entries. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"user_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"hours\":{\"type\":\"number\"},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\"}},\"required\":[\"hours\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"hours\":{\"type\":\"number\"},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_time_entries\",\"description\":\"Create, read, update, and delete Redmine time entries. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"user_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"hours\":{\"type\":\"number\"},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\"}},\"required\":[\"hours\"],\"additionalProperties\":false,\"anyOf\":[{\"required\":[\"issue_id\"]},{\"required\":[\"project_id\"]}]},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"hours\":{\"type\":\"number\"},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
 

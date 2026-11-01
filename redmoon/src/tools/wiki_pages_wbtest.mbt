@@ -221,7 +221,7 @@ async test "validation reports missing fields, bad projects, and bad versions" {
   })
   assert_eq(
     missing.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: create.text_path: one of `text` and `text_path` is required\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: create: one of `text` and `text_path` is required\"]}",
   )
   let spaced = call_tool(tools, "redmine_wiki_pages", {
     "list": { "project_id": "a b" },
