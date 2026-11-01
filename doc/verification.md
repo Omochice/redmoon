@@ -1,6 +1,6 @@
 # Verification harness
 
-`compose.yaml`, driven by the tasks in `Taskfile.yaml` ([ADR-015](./adr-015-task-runner.md)), brings up a throwaway Redmine instance so redmoon and its SDK can be exercised against a real Redmine REST API.
+`compose.yaml`, driven by the tasks in `Taskfile.yaml` ([ADR-015](./adr/adr-015-task-runner.md)), brings up a throwaway Redmine instance so redmoon and its SDK can be exercised against a real Redmine REST API.
 It is a verification aid, not a deployment artifact.
 
 ## Start
@@ -41,7 +41,7 @@ The task runs `rails runner` through `docker compose exec`, which runs outside t
 
 ## Run the integration tests
 
-The tests that need a real Redmine ([ADR-009](./adr-009-testing-strategy.md)) live in `integration-test/`, a module with its own `moon.work` that the root workspace does not list as a member.
+The tests that need a real Redmine ([ADR-009](./adr/adr-009-testing-strategy.md)) live in `integration-test/`, a module with its own `moon.work` that the root workspace does not list as a member.
 A plain `moon test` at the root therefore never compiles or runs them.
 They read the instance from `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY`, and fail naming the missing variable when either is unset, because a skipped test would count as passed.
 The module uses only the public API of the SDK, the plugin SDK, and the server, since another module cannot reach their `internal/` packages.
@@ -58,7 +58,7 @@ CI performs the same steps in the `integration` job of `.github/workflows/ci.yam
 
 ## Register the key with the CLI
 
-redmoon reads its API key only from the OS keyring ([ADR-008](./adr-008-keyring-module-and-credential-cli.md)).
+redmoon reads its API key only from the OS keyring ([ADR-008](./adr/adr-008-keyring-module-and-credential-cli.md)).
 Register the key in `_build/redmine-api-key` with the `login` subcommand to try the compiled binary against this instance:
 
 ```sh
