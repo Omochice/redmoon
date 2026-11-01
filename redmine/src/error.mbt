@@ -1,8 +1,9 @@
 ///|
 /// Failure of a Redmine call.
 /// `Response` is a non-2xx answer carrying Redmine's own messages;
-/// `Transport` is any failure without an HTTP status (connection, TLS, decoding).
-/// Neither case holds request headers, the request URL, or the API key.
+/// `Decode` is a 2xx answer whose body could not be read as the expected JSON;
+/// `Transport` is any other failure without an HTTP status (connection, TLS, an unusable endpoint).
+/// No case holds request headers, the request URL, or the API key.
 ///
 /// ```mbt check
 /// test {
@@ -10,7 +11,7 @@
 ///     match error {
 ///       Response(status=404, ..) => "not found"
 ///       Response(status~, errors~) => "\{status}: \{errors.join(", ")}"
-///       Transport(message~) => message
+///       Decode(message~) | Transport(message~) => message
 ///     }
 ///   }
 ///
@@ -23,6 +24,7 @@
 /// ```
 pub(all) suberror RedmineError {
   Response(status~ : Int32, errors~ : Array[String])
+  Decode(message~ : String)
   Transport(message~ : String)
 } derive(Debug, ToJson)
 

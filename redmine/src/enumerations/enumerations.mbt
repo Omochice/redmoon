@@ -21,7 +21,7 @@ pub extend Enumeration with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the time entry activities.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -42,7 +42,7 @@ pub async fn time_entry_activities(
 
 ///|
 /// Lists the issue priorities.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -63,7 +63,7 @@ pub async fn issue_priorities(
 
 ///|
 /// Lists the document categories.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

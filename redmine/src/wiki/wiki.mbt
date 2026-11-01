@@ -65,7 +65,7 @@ pub extend Page with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the wiki pages of `project`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -89,7 +89,7 @@ pub async fn list(
 
 ///|
 /// Shows a wiki page, at `version` when given and at the latest otherwise.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -118,7 +118,7 @@ pub async fn show(
 
 ///|
 /// Creates the wiki page `title`, or replaces its text when it already exists.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -157,7 +157,7 @@ pub async fn create(
 ///|
 /// Replaces the text of the wiki page `title`.
 /// With `version`, Redmine answers 409 when the page has changed since that version.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -196,7 +196,7 @@ pub async fn update(
 
 ///|
 /// Deletes the wiki page `title`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

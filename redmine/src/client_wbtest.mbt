@@ -18,3 +18,13 @@ test "an unusable endpoint raises Transport without echoing it" {
     _ => fail("expected an error")
   }
 }
+
+///|
+test "a 2xx body that is not JSON raises Decode" {
+  try unwrap(@core.interpret(200, "<html></html>")) catch {
+    Decode(message~) => assert_true(message.contains("not JSON"))
+    error => fail(Json(error).stringify())
+  } noraise {
+    _ => fail("expected an error")
+  }
+}

@@ -100,7 +100,7 @@ pub extend Relation with @debug.Debug::{to_repr}
 
 ///|
 /// Lists every relation of the issue `issue_id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -124,7 +124,7 @@ pub async fn list(
 
 ///|
 /// Returns the relation with the given `id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -147,7 +147,7 @@ pub async fn show(
 
 ///|
 /// Creates a relation from `issue_id` to `issue_to_id` and returns it.
-/// Raises `RedmineError` on a non-2xx answer (e.g. the relation already exists) or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer (e.g. the relation already exists), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -179,7 +179,7 @@ pub async fn create(
 
 ///|
 /// Deletes the relation with the given `id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

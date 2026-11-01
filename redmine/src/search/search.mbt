@@ -106,7 +106,7 @@ pub impl ToJson for Match with fn to_json(self) {
 
 ///|
 /// Searches the resources Redmine indexes and returns the matches, up to `limit` when given.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

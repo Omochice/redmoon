@@ -27,11 +27,12 @@ pub fn local_failure(errors : Array[String]) -> @mcp.ToolResult {
 
 ///|
 /// Maps a Redmine failure to the failure payload: a response keeps its status
-/// and messages, anything else reports status 0 with its message.
+/// and messages, anything else reports status 0 with its message, which tells
+/// an unreadable answer from a failure to reach Redmine.
 pub fn failure_of(error : @redmine.RedmineError) -> @mcp.ToolResult {
   match error {
     Response(status~, errors~) => failure(status, errors)
-    Transport(message~) => local_failure([message])
+    Decode(message~) | Transport(message~) => local_failure([message])
   }
 }
 

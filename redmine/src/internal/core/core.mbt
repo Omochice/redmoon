@@ -71,6 +71,11 @@ pub enum Interpretation {
 }
 
 ///|
+/// Names the likely cause, because a proxy or single sign-on gateway in front of Redmine answers
+/// a request with a 2xx HTML page.
+const NOT_JSON : String = "Redmine answered, but the response could not be read: the body is not JSON, so the endpoint may point at something other than Redmine's API, such as a proxy or a login page"
+
+///|
 /// Classifies a status and body: a 2xx answer yields its JSON with `null` members removed,
 /// `null` for an empty body.
 pub fn interpret(status : Int32, text : String) -> Interpretation {
@@ -78,8 +83,7 @@ pub fn interpret(status : Int32, text : String) -> Interpretation {
     return Rejected(status~, errors=@wire.errors_from_body(text))
   }
   guard text != "" else { return Body(Json::null()) }
-  let json = @json.parse(text) catch {
-    error => return Malformed(message="invalid JSON in response: \{error}")
-  }
+  // The parser's message is dropped because it quotes a character of the body, and no part of the body may reach the error.
+  let json = @json.parse(text) catch { _ => return Malformed(message=NOT_JSON) }
   Body(@wire.strip_nulls(json))
 }

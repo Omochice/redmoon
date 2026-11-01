@@ -157,7 +157,7 @@ fn[T : @json.FromJson] field(
 
 ///|
 /// Lists the memberships of `project`, following every page unless `limit` caps the count.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
