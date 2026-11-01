@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/Omochice/redmoon/compare/v0.3.0...v0.4.0) (2026-11-01)
+
+
+### Features
+
+* read long issue and wiki text from local files ([#41](https://github.com/Omochice/redmoon/issues/41)) ([2b64e2b](https://github.com/Omochice/redmoon/commit/2b64e2b0e7d9a484b7487d7f48bc2f606fd3d51b))
+* save issue descriptions and wiki text to local files on show ([#42](https://github.com/Omochice/redmoon/issues/42)) ([864e861](https://github.com/Omochice/redmoon/commit/864e8616d48cbcf2456b4309084a601886751570))
+
+
+### Bug Fixes
+
+* require an issue or a project when creating a time entry ([#46](https://github.com/Omochice/redmoon/issues/46)) ([ea2b23a](https://github.com/Omochice/redmoon/commit/ea2b23a6158a21d682dbecbecff8a4810cd51974))
+
 ## [0.3.0](https://github.com/Omochice/redmoon/compare/v0.2.2...v0.3.0) (2026-10-26)
 
 
