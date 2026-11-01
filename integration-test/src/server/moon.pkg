@@ -9,6 +9,7 @@ import {
   "omochice/redmine",
   "omochice/redmine/enumerations",
   "omochice/redmine/issues",
+  "omochice/redmine/wiki",
   "omochice/redmoon/cli",
   "omochice/redmoon/tools",
 } for "test"

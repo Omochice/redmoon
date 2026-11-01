@@ -241,3 +241,41 @@ async test "an issue description is read from description_path" {
     assert_eq(shown.description, Some(stored))
   })
 }
+
+///|
+async test "a description saved by show and sent back from the file is stored unchanged" {
+  let redmine = @livetest.redmine()
+  let content = "# Heading\n\nfirst line\nsecond line\n"
+  let issue = redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="description round trip \{@env.now()}",
+        description=content,
+      ),
+    )
+  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
+  let stored = (redmine |> @issues.show(issue.id)).description
+  let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
+  with_scratch_dir(async fn(dir) {
+    let path = "\{dir}/description.md"
+    let shown = call_tool(tools, "redmine_issues", {
+      "show": { "id": issue.id, "description_path": path },
+    })
+    assert_eq(shown.is_error, false, msg=shown.text)
+    guard @json.parse(shown.text) is Object(fields) else {
+      fail("not an object: \{shown.text}")
+    }
+    assert_true(fields.get("description_path") is Some(String(_)))
+    assert_false(fields.contains("description"))
+    assert_eq(@fs.read_file(path).text(), content)
+    let updated = call_tool(tools, "redmine_issues", {
+      "update": { "id": issue.id, "description_path": path },
+    })
+    assert_eq(updated.text, "{\"ok\":true}")
+    assert_eq((redmine |> @issues.show(issue.id)).description, stored)
+  })
+}
