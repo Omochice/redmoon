@@ -1,7 +1,7 @@
 ///|
 /// Lists the issues `selection` picks, fetching as many pages as needed.
 /// With `limit`, at most that many issues are returned.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

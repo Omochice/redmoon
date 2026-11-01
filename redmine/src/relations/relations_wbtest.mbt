@@ -63,3 +63,13 @@ test "an unknown relation type fails to decode" {
     _ => fail("expected a decode error")
   }
 }
+
+///|
+test "an unknown relation type is named in the decode error" {
+  try @decode.decode(Json::string("depends_on")) catch {
+    Decode(message~) => assert_true(message.contains("`depends_on`"))
+    error => fail(Json(error).stringify())
+  } noraise {
+    (_ : Type) => fail("expected a decode error")
+  }
+}

@@ -39,7 +39,8 @@ pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError 
 /// Low-level escape hatch for endpoints the resource packages do not cover yet.
 /// Sends one request and returns the response body as JSON, `null` when it is empty.
 /// `segments` are appended to the endpoint's path and percent-encoded, and `null` members are removed from the answer.
-/// Raises `Response` on a non-2xx answer and `Transport` on any other failure.
+/// Raises `Response` on a non-2xx answer, `Decode` on a 2xx answer whose body is not JSON,
+/// and `Transport` on any other failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -79,7 +80,7 @@ pub fn unwrap(interpretation : @core.Interpretation) -> Json raise RedmineError 
   match interpretation {
     Body(json) => json
     Rejected(status~, errors~) => raise Response(status~, errors~)
-    Malformed(message~) => raise Transport(message~)
+    Malformed(message~) => raise Decode(message~)
   }
 }
 

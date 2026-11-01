@@ -92,7 +92,7 @@ pub extend Templates with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the issue templates `project` can use for issues of the tracker `tracker_id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure; an instance without the
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure; an instance without the
 /// redmine_issue_templates plugin answers 404.
 ///
 /// ```mbt check

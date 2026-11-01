@@ -159,7 +159,7 @@ pub extend Update with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the versions of `project`; Redmine answers them all in one response.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -183,7 +183,7 @@ pub async fn list(
 
 ///|
 /// Shows the version `id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -207,7 +207,7 @@ pub async fn show(
 
 ///|
 /// Creates a version in `project` and returns it.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -251,7 +251,7 @@ pub async fn create(
 
 ///|
 /// Changes the version `id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -295,7 +295,7 @@ pub async fn update(
 
 ///|
 /// Deletes the version `id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

@@ -21,7 +21,7 @@ pub extend Query with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the saved issue queries the user can see, global and project ones alike.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

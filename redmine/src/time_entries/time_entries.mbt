@@ -96,7 +96,7 @@ pub extend ListQuery with @debug.Debug::{to_repr}
 
 ///|
 /// Lists the time entries matching `query`, following every page unless `limit` caps the count.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -222,7 +222,7 @@ pub extend Update with @debug.Debug::{to_repr}
 
 ///|
 /// Shows the time entry with `id`.
-/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -248,7 +248,7 @@ pub async fn show(
 
 ///|
 /// Logs a time entry and returns it as Redmine stored it.
-/// Raises `RedmineError` on a non-2xx answer (422 for invalid attributes) or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer (422 for invalid attributes), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -280,7 +280,7 @@ pub async fn create(
 
 ///|
 /// Changes the time entry with `id`.
-/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist, 422 for invalid attributes) or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist, 422 for invalid attributes), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -317,7 +317,7 @@ pub async fn update(
 
 ///|
 /// Deletes the time entry with `id`.
-/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist) or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

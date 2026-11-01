@@ -97,7 +97,7 @@ async fn[T] or_missing(
 
 ///|
 /// The agile data of the issue `issue_id`.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 /// The answer is 404 for an issue without agile data and on an instance without the plugin, and 403 when the project lacks the Agile module or the user may not `view_agile_queries`.
 ///
 /// ```mbt check
@@ -123,7 +123,7 @@ pub async fn get(
 ///|
 /// Changes the agile data of the issue `issue_id`, keeping every field `attributes` leaves unset.
 /// An issue without agile data gets a row holding only the fields given.
-/// Raises `RedmineError` on a non-2xx answer or a transport failure, without writing anything when the current agile data cannot be read for any reason other than a 404.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure, without writing anything when the current agile data cannot be read for any reason other than a 404.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine with the RedmineUP Agile plugin")
