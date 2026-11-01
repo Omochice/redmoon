@@ -61,7 +61,7 @@ pub impl @json.FromJson for Type with fn from_json(json, path) {
     Some(relation_type) => relation_type
     None =>
       raise @json.JsonDecodeError(
-        (path, "Type::from_json: unknown relation type"),
+        (path, "Type::from_json: unknown relation type `\{wire}`"),
       )
   }
 }
