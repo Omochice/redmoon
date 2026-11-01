@@ -2,6 +2,7 @@
 using @schema {
   type Schema,
   integer,
+  integer64,
   number,
   string,
   not_blank,
