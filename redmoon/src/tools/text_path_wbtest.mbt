@@ -109,7 +109,7 @@ async test "a text field given together with its file is rejected before Redmine
           "/tmp/body.md",
         ),
       },
-      "create.description_path: `description` and `description_path` cannot be given together",
+      "create: `description` and `description_path` cannot be given together",
     ),
     (
       {
@@ -119,11 +119,11 @@ async test "a text field given together with its file is rejected before Redmine
           "description_path": "/tmp/body.md",
         },
       },
-      "update.description_path: `description` and `description_path` cannot be given together",
+      "update: `description` and `description_path` cannot be given together",
     ),
     (
       { "update": { "id": 1, "notes": "inline", "notes_path": "/tmp/n.md" } },
-      "update.notes_path: `notes` and `notes_path` cannot be given together",
+      "update: `notes` and `notes_path` cannot be given together",
     ),
     (
       {
@@ -253,7 +253,7 @@ async test "wiki create and update need exactly one of text and text_path" {
     assert_eq(
       neither.text,
       failure_text(
-        "invalid arguments: \{action}.text_path: one of `text` and `text_path` is required",
+        "invalid arguments: \{action}: one of `text` and `text_path` is required",
       ),
     )
     let both = call_tool(
@@ -269,7 +269,7 @@ async test "wiki create and update need exactly one of text and text_path" {
     assert_eq(
       both.text,
       failure_text(
-        "invalid arguments: \{action}.text_path: `text` and `text_path` cannot be given together",
+        "invalid arguments: \{action}: `text` and `text_path` cannot be given together",
       ),
     )
   }

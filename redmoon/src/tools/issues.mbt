@@ -289,7 +289,7 @@ let create_input : @schema.Schema[IssueAction] = {
         ),
       )
     },
-  )
+  ).allow_one([description.as_member(), description_path.as_member()])
 }
 
 ///|
@@ -409,6 +409,8 @@ let update_input : @schema.Schema[IssueAction] = {
       )
     },
   )
+  .allow_one([description.as_member(), description_path.as_member()])
+  .allow_one([notes.as_member(), notes_path.as_member()])
 }
 
 ///|
@@ -505,14 +507,8 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
     ("show", show_input),
   ]
   let write = [
-    ("create", exclusive_text(create_input, field="description")),
-    (
-      "update",
-      exclusive_text(
-        exclusive_text(update_input, field="description"),
-        field="notes",
-      ),
-    ),
+    ("create", create_input),
+    ("update", update_input),
     ("delete", delete_input),
     (
       "update_note",

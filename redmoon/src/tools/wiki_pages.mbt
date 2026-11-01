@@ -26,7 +26,7 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   )
   let text_path = text_path("text")
   // `text` is absent only while the arguments are validated before the
-  // `text_path` file is read, since `exclusive_text` requires one of the two.
+  // `text_path` file is read, since `require_one` rejects an object with neither.
   fn page_text(v : @schema.Values) -> String raise @schema.SchemaError {
     v.get(text).unwrap_or("")
   }
@@ -64,57 +64,49 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   let write = [
     (
       "create",
-      exclusive_text(
-        field="text",
-        required=true,
-        @schema.record(
-          [
-            project_id.as_member(),
-            title.as_member(),
-            text.as_member(),
-            text_path.as_member(),
-            comments.as_member(),
-            parent_title.as_member(),
-          ],
-          v => {
-            WikiPageAction::Create(
-              v.get(project_id),
-              v.get(title),
-              page_text(v),
-              v.get(comments),
-              v.get(parent_title),
-            )
-          },
-        ),
-      ),
+      @schema.record(
+        [
+          project_id.as_member(),
+          title.as_member(),
+          text.as_member(),
+          text_path.as_member(),
+          comments.as_member(),
+          parent_title.as_member(),
+        ],
+        v => {
+          WikiPageAction::Create(
+            v.get(project_id),
+            v.get(title),
+            page_text(v),
+            v.get(comments),
+            v.get(parent_title),
+          )
+        },
+      ).require_one([text.as_member(), text_path.as_member()]),
     ),
     (
       "update",
-      exclusive_text(
-        field="text",
-        required=true,
-        @schema.record(
-          [
-            project_id.as_member(),
-            title.as_member(),
-            text.as_member(),
-            text_path.as_member(),
-            comments.as_member(),
-            version.as_member(),
-            parent_title.as_member(),
-          ],
-          v => {
-            WikiPageAction::Update(
-              v.get(project_id),
-              v.get(title),
-              page_text(v),
-              v.get(comments),
-              v.get(version),
-              v.get(parent_title),
-            )
-          },
-        ),
-      ),
+      @schema.record(
+        [
+          project_id.as_member(),
+          title.as_member(),
+          text.as_member(),
+          text_path.as_member(),
+          comments.as_member(),
+          version.as_member(),
+          parent_title.as_member(),
+        ],
+        v => {
+          WikiPageAction::Update(
+            v.get(project_id),
+            v.get(title),
+            page_text(v),
+            v.get(comments),
+            v.get(version),
+            v.get(parent_title),
+          )
+        },
+      ).require_one([text.as_member(), text_path.as_member()]),
     ),
     (
       "delete",
