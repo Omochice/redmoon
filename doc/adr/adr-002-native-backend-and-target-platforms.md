@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (refined by [ADR-027](./adr-027-release-distribution.md))
 
 ## Context
 
