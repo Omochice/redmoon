@@ -230,6 +230,35 @@ async test "download refuses a declared size above max_size before saving" {
 }
 
 ///|
+async test "download accepts a max_size above 2 GiB for an attachment that size" {
+  let files = FakeFiles::new()
+  let called = call_tool(
+    attachments_for(FakeAttachments::new(declared_size=3000000000L), files),
+    "redmine_attachments",
+    { "download": { "id": 7, "path": "a", "max_size": 4000000000 } },
+  )
+  assert_eq(called.is_error, false)
+  assert_true(called.text.contains("\"filesize\":3000000000}"))
+  assert_eq(files.saved[0].2, 4000000000L)
+}
+
+///|
+async test "download refuses a declared size above a max_size beyond 2 GiB" {
+  let files = FakeFiles::new()
+  let called = call_tool(
+    attachments_for(FakeAttachments::new(declared_size=5000000000L), files),
+    "redmine_attachments",
+    { "download": { "id": 7, "path": "a", "max_size": 4000000000 } },
+  )
+  assert_eq(called.is_error, true)
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"attachment 7 is 5000000000 bytes, which exceeds the max_size limit of 4000000000 bytes\"]}",
+  )
+  assert_eq(files.saved.length(), 0)
+}
+
+///|
 async test "download reports a file failure with status 0" {
   let called = call_tool(
     attachments_for(

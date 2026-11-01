@@ -1,12 +1,21 @@
 ///|
 priv enum AttachmentAction {
   Show(Int32)
-  Download(Int32, String, Int32)
+  Download(Int32, String, Int64)
   Attach(Int32, String, String?, String?, String?)
 }
 
 ///|
-const DEFAULT_MAX_SIZE : Int32 = 524288000
+const DEFAULT_MAX_SIZE : Int64 = 524288000L
+
+///|
+/// Core encodes `Int64` as a JSON string, which would advertise the `max_size` default as one.
+priv struct ByteLimit(Int64)
+
+///|
+impl ToJson for ByteLimit with fn to_json(self) {
+  Json::number(self.0.to_double())
+}
 
 ///|
 fn attachment_path(description : String) -> @schema.Schema[String] {
@@ -22,12 +31,13 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       "Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.",
     ),
   )
+  let byte_limit = @schema.integer64(min=1).map(n => ByteLimit(n))
   let max_size = @schema.optional_or(
     "max_size",
-    @schema.integer(min=1).describe(
+    byte_limit.describe(
       "Maximum number of bytes to write, \{DEFAULT_MAX_SIZE} (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.",
     ),
-    DEFAULT_MAX_SIZE,
+    ByteLimit(DEFAULT_MAX_SIZE),
   )
   let read = [
     (
@@ -38,7 +48,7 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       "download",
       @schema.record(
         [id.as_member(), download_path.as_member(), max_size.as_member()],
-        v => Download(v.get(id), v.get(download_path), v.get(max_size)),
+        v => Download(v.get(id), v.get(download_path), v.get(max_size).0),
       ),
     ),
   ]
@@ -192,7 +202,7 @@ pub fn attachments_tool(
       match action {
         Show(id) => respond(() => port.show_attachment(id))
         Download(id, path, max_size) =>
-          download_attachment(port, files, id, path, max_size.to_int64())
+          download_attachment(port, files, id, path, max_size)
         Attach(issue_id, path, filename, description, notes) =>
           attach_file(port, files, issue_id, path, filename, description, notes)
       }
