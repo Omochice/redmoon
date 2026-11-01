@@ -432,6 +432,25 @@ async test "readonly drops attach from the schema and the description" {
 }
 
 ///|
+test "max_size advertises an integer schema with a numeric default" {
+  let schema = attachment_input(Readonly).to_json_schema()
+  guard schema
+    is {
+      "properties": {
+        "download": { "properties": { "max_size": max_size, .. }, .. },
+        ..
+      },
+      ..
+    } else {
+    fail("no download.max_size in \{schema.stringify()}")
+  }
+  guard max_size is { "type": "integer", "default": default, .. } else {
+    fail("max_size is not an integer: \{max_size.stringify()}")
+  }
+  assert_eq(default, Json::number(524288000.0))
+}
+
+///|
 async test "tools/list advertises each mode" {
   let full = list_tools(
     attachments_for(FakeAttachments::new(), FakeFiles::new()),
