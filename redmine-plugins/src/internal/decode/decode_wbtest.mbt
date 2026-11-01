@@ -11,7 +11,7 @@ test "decode_field reports an answer without the envelope's key as Decode" {
   try decode_field(Json::object({}), "row") catch {
     Decode(message~) =>
       assert_eq(
-        message, "Redmine answered, but the response could not be read: it has no `row`",
+        message, "The server answered, but the response could not be read: it has no `row`",
       )
     error => fail(Json(error).stringify())
   } noraise {

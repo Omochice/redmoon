@@ -31,7 +31,7 @@ pub(all) suberror RedmineError {
 }
 ```
 
-`Decode` is raised when Redmine answered 2xx but the body could not be read: a body that is not JSON, an envelope without its expected key, or a value whose shape does not match the type it decodes into.
+`Decode` is raised when the server answered 2xx but the body could not be read: a body that is not JSON, an envelope without its expected key, or a value whose shape does not match the type it decodes into.
 `Transport` keeps the failures where no usable answer arrived: connection, TLS, an unusable endpoint, and a download's redirects.
 `omochice/redmine-plugins` decodes plugin answers the same way and raises `Decode` too.
 
@@ -41,7 +41,7 @@ Adding a case to a `pub(all)` suberror breaks every exhaustive match outside the
 ### 2. `Decode` carries no HTTP status
 
 **Revised Design**: `Decode` holds a message only.
-Its message opens with `Redmine answered, but the response could not be read`, followed by the cause:
+Its message opens with `The server answered, but the response could not be read`, followed by the cause:
 
 - for a body that is not JSON, that the endpoint may point at something other than Redmine's API, such as a proxy or a login page;
 - for an envelope without its key, the key;
@@ -49,7 +49,7 @@ Its message opens with `Redmine answered, but the response could not be read`, f
 - for an unknown relation type, the wire value Redmine sent.
 
 **Rationale**: by the time a body is decoded, the classification of the exchange has already returned the JSON and the status is gone.
-Threading the status through `send` and every decode call site would carry a value that is always 2xx, so the message states that Redmine answered instead.
+Threading the status through `send` and every decode call site would carry a value that is always 2xx, so the message states that the server answered instead.
 ADR-007's rule that nothing from the request leaks into an error extends to the response: the message never quotes the body, so the JSON parser's own message, which quotes a character of the body, is dropped.
 
 ### 3. redmoon maps `Decode` to `status: 0`
@@ -64,7 +64,7 @@ ADR-007's rule that nothing from the request leaks into an error extends to the 
 | `Decode(message)`          | `0`      | `[message]` |
 | `Transport(message)`       | `0`      | `[message]` |
 
-`status: 0` now means that the failure has no usable HTTP error status, and the message tells whether Redmine answered.
+`status: 0` now means that the failure has no usable HTTP error status, and the message tells whether the server answered.
 
 **Rationale**: the payload shape stays the one ADR-005 fixed, and a model already reads the message to learn what went wrong.
 Reporting the 2xx status instead of 0 would present a failure as a success code.

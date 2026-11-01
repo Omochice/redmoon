@@ -33,8 +33,8 @@ test "a transport error has status 0" {
 ///|
 test "a decode error has status 0 and keeps its message" {
   assert_eq(
-    text_of(failure_of(Decode(message="Redmine answered, but no"))),
-    "{\"status\":0,\"errors\":[\"Redmine answered, but no\"]}",
+    text_of(failure_of(Decode(message="The server answered, but no"))),
+    "{\"status\":0,\"errors\":[\"The server answered, but no\"]}",
   )
 }
 

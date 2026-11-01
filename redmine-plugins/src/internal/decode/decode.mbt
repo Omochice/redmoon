@@ -1,7 +1,7 @@
 ///|
 /// Opens every `Decode` message this package raises, so that a reader can tell an answer that arrived but could not be read
 /// from a failure to reach Redmine at all.
-const UNREADABLE : String = "Redmine answered, but the response could not be read"
+const UNREADABLE : String = "The server answered, but the response could not be read"
 
 ///|
 /// Decodes `json` into `T`, reporting a shape mismatch as `Decode` with the JSON path it occurred at.

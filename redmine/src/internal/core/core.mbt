@@ -73,7 +73,7 @@ pub enum Interpretation {
 ///|
 /// Names the likely cause, because a proxy or single sign-on gateway in front of Redmine answers
 /// a request with a 2xx HTML page.
-const NOT_JSON : String = "Redmine answered, but the response could not be read: the body is not JSON, so the endpoint may point at something other than Redmine's API, such as a proxy or a login page"
+const NOT_JSON : String = "The server answered, but the response could not be read: the body is not JSON, so the endpoint may point at something other than Redmine's API, such as a proxy or a login page"
 
 ///|
 /// Classifies a status and body: a 2xx answer yields its JSON with `null` members removed,
