@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (refined by [ADR-012](./adr-012-design-evolution-from-adr-006.md) and [ADR-016](./adr-016-design-evolution-from-adr-006.md))
+Superseded by [ADR-026](./adr-026-typed-redmine-sdk.md)
 
 ## Context
 

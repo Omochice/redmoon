@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Superseded by [ADR-026](./adr-026-typed-redmine-sdk.md)
 
 ## Context
 
