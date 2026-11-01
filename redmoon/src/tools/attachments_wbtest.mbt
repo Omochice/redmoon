@@ -2,7 +2,7 @@
 struct FakeAttachments {
   failure : @redmine.RedmineError?
   content : Bytes
-  declared_size : Int32
+  declared_size : Int64
   content_type : String?
   uploads : Array[(Int64, String)]
   updates : Array[(Int32, @issues.Update)]
@@ -12,7 +12,7 @@ struct FakeAttachments {
 fn FakeAttachments::new(
   failure? : @redmine.RedmineError,
   content~ : Bytes = b"hello",
-  declared_size~ : Int32 = 5,
+  declared_size~ : Int64 = 5,
   content_type~ : String = "text/plain",
 ) -> FakeAttachments {
   {
@@ -36,13 +36,13 @@ fn FakeAttachments::check(
 
 ///|
 fn fake_attachment(
-  filesize : Int32,
+  filesize : Int64,
   content_type~ : String? = Some("text/plain"),
 ) -> @attachments.Attachment {
   {
     id: 7,
     filename: "report.txt",
-    filesize,
+    filesize: @attachments.ByteSize(filesize),
     content_type,
     description: None,
     content_url: "http://redmine.test/attachments/download/7/report.txt",
@@ -168,6 +168,20 @@ async test "show answers the attachment metadata" {
   assert_eq(called.is_error, false)
   assert_true(called.text.contains("\"filename\":\"report.txt\""))
   assert_true(called.text.contains("\"content_type\":\"text/plain\""))
+}
+
+///|
+async test "show answers a filesize above 2 GiB as a JSON number" {
+  let called = call_tool(
+    attachments_for(
+      FakeAttachments::new(declared_size=3000000000L),
+      FakeFiles::new(),
+    ),
+    "redmine_attachments",
+    { "show": { "id": 7 } },
+  )
+  assert_eq(called.is_error, false)
+  assert_true(called.text.contains("\"filesize\":3000000000,"))
 }
 
 ///|

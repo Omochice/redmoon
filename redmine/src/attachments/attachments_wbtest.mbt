@@ -40,3 +40,24 @@ test "an attachment without a content type is decoded" {
   let attachment : Attachment = @decode.decode(@wire.strip_nulls(json))
   assert_eq(attachment.content_type, None)
 }
+
+///|
+test "an attachment larger than 2 GiB is decoded and encoded as a number" {
+  let text =
+    #|{"id":5,"filename":"big.iso","filesize":3000000000,"content_url":"http://localhost:3000/attachments/download/5/big.iso","author":{"id":1,"name":"Redmine Admin"},"created_on":"2026-10-16T01:02:03Z"}
+  let attachment : Attachment = @decode.decode(@json.parse(text))
+  assert_eq(attachment.filesize.to_int64(), 3000000000L)
+  assert_eq(attachment.to_json().stringify(), text)
+}
+
+///|
+test "a filesize that is not a non-negative integer number is rejected" {
+  for filesize in ["\"5\"", "1.5", "-1"] {
+    let decoded : Result[ByteSize, _] = Ok(
+      @json.from_json(@json.parse(filesize)),
+    ) catch {
+      e => Err(e)
+    }
+    assert_true(decoded is Err(_), msg="filesize \{filesize}")
+  }
+}
