@@ -97,16 +97,10 @@ let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
         comments: v.get(time_entry_comments),
       })
     },
-  ).refine(
-    action => {
-      action is CreateEntry({ issue_id: Some(_), .. }) ||
-      action is CreateEntry({ project_id: Some(_), .. })
-    },
-    "one of `issue_id` and `project_id` is required",
-    keywords=[
-      ("anyOf", [{ "required": ["issue_id"] }, { "required": ["project_id"] }]),
-    ],
-  )
+  ).require_any([
+    time_entry_issue_id.as_member(),
+    time_entry_project_id.as_member(),
+  ])
 }
 
 ///|
