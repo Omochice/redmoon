@@ -40,12 +40,25 @@ Redmine stores an issue description's line breaks as `\r\n` whatever was sent, w
 A separate argument keeps each field a plain string instead of a string-or-object `anyOf`.
 The limits stop a mistaken path from posting a binary or a log, a byte order mark would break the first line's markup, and blank notes would erase the comment, which `delete_note` exists for.
 
-### 2. Text is not edited on the server
+### 2. `show` can save the text to a local file
+
+**Original Design (ADR-005)**: `show` returns every field.
+
+**Revised Design**: issue `show` takes `description_path` and wiki `show` takes `text_path`.
+The text is written there with `\r\n` turned into `\n`, and the response carries the written path under that key instead of the text.
+An existing file is never replaced, and `--readonly` keeps the argument, as for `download`.
+Journal notes have no such argument.
+
+**Rationale**: the model can save, edit only the changed parts, and send the same file back, without writing the whole body or reading it into its context.
+Its edit tool matches `\n`, and since Redmine turns an issue description back into `\r\n`, the round trip leaves it unchanged.
+One path cannot say which of an issue's many journals to save, and notes are usually short.
+
+### 3. Text is not edited on the server
 
 A `description_edits` argument of old and new strings was rejected.
 Redmine has no partial update of a text field, so redmoon would read and write back the whole text and lose a change made in between, and it would repeat what the client's edit tool already does.
 
-### 3. Files are read into the arguments before they are parsed
+### 4. Files are read into the arguments before they are parsed
 
 **Original Design (ADR-005)**: the arguments are parsed into the tool's action, and the handler runs it.
 
@@ -60,15 +73,18 @@ Validating first reports a mistaken argument without touching the filesystem.
 ### Positive
 
 1. **Long bodies no longer depend on JSON escaping.**
+2. **Small edits to large bodies stay small, and the body stays out of the context.**
 
 ### Negative
 
 1. **The arguments no longer match denomine-mcp's.**
 2. **The server and the model's tools must share a filesystem.**
+3. **`description_path` is read in `create` and `update` but written in `show`.**
 
 ### Mitigations
 
 - redmoon runs over stdio under the MCP client, and the string arguments remain for any other setup.
+- Each argument's description says whether the file is read or written.
 
 ## References
 
