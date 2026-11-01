@@ -91,4 +91,4 @@ Reporting the 2xx status instead of 0 would present a failure as a success code.
 
 - [ADR-007](./adr-007-error-handling.md) — the decision this ADR refines.
 - [ADR-005](./adr-005-tool-surface.md) — the failure payload.
-- [ADR-019](./adr-019-redmineup-agile-data.md) — the plugin decoder, which reported a shape mismatch as `Transport`.
+- [ADR-025](./adr-025-redmineup-agile-data.md) — the plugin decoder, which reported a shape mismatch as `Transport`.
