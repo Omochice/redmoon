@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Superseded by [ADR-028](./adr-028-tool-surface.md)
 
 ## Context
 

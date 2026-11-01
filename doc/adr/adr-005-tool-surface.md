@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (refined by [ADR-019](./adr-019-design-evolution-from-adr-005.md) and [ADR-021](./adr-021-design-evolution-from-adr-005.md))
+Superseded by [ADR-028](./adr-028-tool-surface.md)
 
 ## Context
 
