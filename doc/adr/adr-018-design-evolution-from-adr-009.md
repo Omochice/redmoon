@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Superseded by [ADR-029](./adr-029-testing-strategy.md)
 
 ## Context
 

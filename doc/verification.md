@@ -41,7 +41,7 @@ The task runs `rails runner` through `docker compose exec`, which runs outside t
 
 ## Run the integration tests
 
-The tests that need a real Redmine ([ADR-009](./adr/adr-009-testing-strategy.md)) live in `integration-test/`, a module with its own `moon.work` that the root workspace does not list as a member.
+The tests that need a real Redmine ([ADR-029](./adr/adr-029-testing-strategy.md)) live in `integration-test/`, a module with its own `moon.work` that the root workspace does not list as a member.
 A plain `moon test` at the root therefore never compiles or runs them.
 They read the instance from `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY`, and fail naming the missing variable when either is unset, because a skipped test would count as passed.
 The module uses only the public API of the SDK, the plugin SDK, and the server, since another module cannot reach their `internal/` packages.
