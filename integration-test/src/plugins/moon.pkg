@@ -1,6 +1,8 @@
 import {
   "moonbitlang/async",
   "omochice/integration-test/livetest",
+  "omochice/redmine",
+  "omochice/redmine-plugins/additional_tags",
   "omochice/redmine-plugins/issue_templates",
 } for "test"
 

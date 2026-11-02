@@ -3,6 +3,7 @@ version: "3"
 vars:
   REDMINE_URL: http://localhost:3000
   API_KEY_FILE: _build/redmine-api-key
+  MEMBER_API_KEY_FILE: _build/redmine-member-api-key
   COVERAGE_REPORT: _build/coverage/cobertura.xml
   KEYRING_COVERAGE_REPORT: _build/coverage/keyring.xml
 
@@ -107,7 +108,7 @@ tasks:
         exit 1
 
   redmine:seed:
-    desc: Enable the REST API, load the default data, create project demo with issue templates, a saved query, a group member, and issue tags switched on, and project demo-custom-fields with custom fields, and save the admin API key
+    desc: Enable the REST API, load the default data, create project demo with issue templates, a saved query, a group member, and issue tags switched on, and project demo-custom-fields with custom fields, and save the API keys of the admin and the member
     silent: true
     cmds:
       - |
@@ -157,8 +158,14 @@ tasks:
           'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-memberships.rb'
       - docker compose cp docker/redmine/seed-additional-tags.rb redmine:/tmp/seed-additional-tags.rb
       - |
-        docker compose exec -T redmine sh -c \
-          'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-additional-tags.rb'
+        key=$(docker compose exec -T redmine sh -c \
+          'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-additional-tags.rb' \
+          | tail -n 1)
+        if [ -z "$key" ]; then
+          echo "rails runner produced no API key for redmoon-member" >&2
+          exit 1
+        fi
+        printf '%s' "$key" > {{.MEMBER_API_KEY_FILE}}
 
   redmine:down:
     desc: Stop the throwaway Redmine and keep its data volumes
@@ -172,8 +179,10 @@ tasks:
     preconditions:
       - sh: test -s {{.ROOT_DIR}}/{{.API_KEY_FILE}}
         msg: "{{.API_KEY_FILE}} is missing; run `task redmine:seed` first"
+      - sh: test -s {{.ROOT_DIR}}/{{.MEMBER_API_KEY_FILE}}
+        msg: "{{.MEMBER_API_KEY_FILE}} is missing; run `task redmine:seed` first"
     cmds:
-      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.ROOT_DIR}}/{{.API_KEY_FILE}})" moon test {{if .COVERAGE}}--enable-coverage {{end}}{{.CLI_ARGS}}
+      - REDMOON_TEST_ENDPOINT={{.REDMINE_URL}} REDMOON_TEST_API_KEY="$(cat {{.ROOT_DIR}}/{{.API_KEY_FILE}})" REDMOON_TEST_MEMBER_API_KEY="$(cat {{.ROOT_DIR}}/{{.MEMBER_API_KEY_FILE}})" moon test {{if .COVERAGE}}--enable-coverage {{end}}{{.CLI_ARGS}}
 
   test:integration:coverage:
     desc: Run the unit tests and the integration-test module against the seeded Redmine with coverage and write {{.COVERAGE_REPORT}}
