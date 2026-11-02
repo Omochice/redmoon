@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/Omochice/redmoon/compare/v0.4.0...v0.5.0) (2026-11-02)
+
+
+### Features
+
+* report an unreadable Redmine answer as a Decode error ([#47](https://github.com/Omochice/redmoon/issues/47)) ([dceb586](https://github.com/Omochice/redmoon/commit/dceb586004ddf0b87767767dd034c89a610234c9))
+
+
+### Bug Fixes
+
+* read and download attachments larger than 2 GiB ([#48](https://github.com/Omochice/redmoon/issues/48)) ([5b9107c](https://github.com/Omochice/redmoon/commit/5b9107c362a3fd5188376a7581a90ac751c41751))
+
 ## [0.4.0](https://github.com/Omochice/redmoon/compare/v0.3.0...v0.4.0) (2026-11-01)
 
 
