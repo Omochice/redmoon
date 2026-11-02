@@ -1,8 +1,8 @@
-# ADR-019: The Agile Data of RedmineUP Agile as a Second Plugin Package
+# ADR-025: The Agile Data of RedmineUP Agile as a Second Plugin Package
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 

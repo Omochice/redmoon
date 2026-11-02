@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Superseded by [ADR-029](./adr-029-testing-strategy.md)
 
 ## Context
 
@@ -61,4 +61,4 @@ Living in another module also limits the tests to the public API that a consumer
 
 - [ADR-009](./adr-009-testing-strategy.md) — the decision this ADR refines.
 - [ADR-017](./adr-017-redmine-plugin-sdk-module.md) — the plugin SDK module whose `internal/livetest` this ADR removes.
-- [verification.md](./verification.md) — how to run the integration tests.
+- [verification.md](../verification.md) — how to run the integration tests.

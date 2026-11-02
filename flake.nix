@@ -194,6 +194,26 @@
                 zizmor .github/workflows .github/actions
                 touch $out
               '';
+          # ADR numbers: two pull requests can each take the next free number, and neither branch alone shows the clash.
+          docs =
+            pkgs.runCommand "check-docs"
+              {
+                buildInputs = [
+                  pkgs.cacert
+                  pkgs.lychee
+                ];
+                src = self;
+              }
+              ''
+                cd $src
+                duplicates=$(ls doc/adr | grep -oE '^adr-[0-9]+' | sort | uniq -d)
+                if [ -n "$duplicates" ]; then
+                  echo "ADR numbers used more than once: $duplicates"
+                  exit 1
+                fi
+                lychee --offline --include-fragments --no-progress --exclude-path CHANGELOG.md .
+                touch $out
+              '';
           formatting = treefmt.config.build.check self;
           pre-commit = pre-commit-check;
           renovate =

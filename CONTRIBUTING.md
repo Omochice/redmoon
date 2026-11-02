@@ -24,7 +24,7 @@ task test:integration
 
 ## Layout
 
-Each SDK is a separate module so that another MoonBit program can use it without pulling in the server, as [ADR-001](doc/adr-001-five-module-moonbit-workspace.md) explains.
+Each SDK is a separate module so that another MoonBit program can use it without pulling in the server, as [ADR-001](doc/adr/adr-001-five-module-moonbit-workspace.md) explains.
 
 - `redmoon/` is the server and its CLI.
 - `mcp/` is the MCP SDK.
@@ -34,7 +34,7 @@ Each SDK is a separate module so that another MoonBit program can use it without
 - `keyring/` is the OS credential store binding.
 - `integration-test/` holds the tests that run against a real Redmine.
 
-The decisions behind the design are recorded as ADRs under [doc/](./doc/).
+The decisions behind the design are recorded as ADRs under [doc/adr/](./doc/adr/).
 
 ## Versioning
 
