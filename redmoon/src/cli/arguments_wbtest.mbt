@@ -67,7 +67,7 @@ test "an unknown plugin is rejected with the known names" {
     error =>
       assert_eq(
         error.to_string(),
-        "unknown plugin `checklists`; known plugins: issue_templates, agile",
+        "unknown plugin `checklists`; known plugins: issue_templates, agile, additional_tags",
       )
   } noraise {
     _ => fail("an unknown plugin was accepted")
@@ -84,6 +84,18 @@ test "serve enables the agile plugin alongside issue templates" {
     Serve(endpoint="https://r.example.com", read_only=false, plugins=[
       Agile,
       IssueTemplates,
+    ]),
+  )
+}
+
+///|
+test "serve enables the additional tags plugin" {
+  assert_eq(
+    parse_arguments(argv=[
+      "serve", "--endpoint", "https://r.example.com", "--plugin", "additional_tags",
+    ]),
+    Serve(endpoint="https://r.example.com", read_only=false, plugins=[
+      AdditionalTags,
     ]),
   )
 }

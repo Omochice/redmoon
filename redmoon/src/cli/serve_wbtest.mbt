@@ -55,6 +55,7 @@ async test "the server lists the registered tools" {
   assert_true(names.contains("redmine_enumerations"))
   assert_false(names.contains("redmine_issue_templates"))
   assert_false(names.contains("redmine_agile"))
+  assert_false(names.contains("redmine_tags"))
   assert_true(names.contains("redmoon_info"))
 }
 
@@ -105,5 +106,33 @@ async test "the agile plugin adds its tool, without update in readonly mode" {
     }
     assert_true(actions.contains("get"))
     assert_eq(actions.contains("update"), !read_only)
+  }
+}
+
+///|
+async test "the additional tags plugin adds its tool, without add and remove in readonly mode" {
+  let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
+  for read_only in [false, true] {
+    let responses = exchange(
+      build_server(redmine, read_only, [AdditionalTags]),
+      [request(2, "tools/list", {})],
+    )
+    guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {
+      fail("no tools/list result")
+    }
+    guard tools.search_by(tool => tool is { "name": "redmine_tags", .. })
+      is Some(index) else {
+      fail("redmine_tags is not registered")
+    }
+    guard tools[index]
+      is { "inputSchema": { "properties": Object(actions), .. }, .. } else {
+      fail("redmine_tags has no keyed schema")
+    }
+    for action in ["show", "list", "list_issues"] {
+      assert_true(actions.contains(action))
+    }
+    for action in ["add", "remove"] {
+      assert_eq(actions.contains(action), !read_only)
+    }
   }
 }
