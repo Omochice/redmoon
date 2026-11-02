@@ -107,7 +107,7 @@ tasks:
         exit 1
 
   redmine:seed:
-    desc: Enable the REST API, load the default data, create project demo with issue templates, a saved query, and a group member, and project demo-custom-fields with custom fields, and save the admin API key
+    desc: Enable the REST API, load the default data, create project demo with issue templates, a saved query, a group member, and issue tags switched on, and project demo-custom-fields with custom fields, and save the admin API key
     silent: true
     cmds:
       - |
@@ -155,6 +155,10 @@ tasks:
       - |
         docker compose exec -T redmine sh -c \
           'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-memberships.rb'
+      - docker compose cp docker/redmine/seed-additional-tags.rb redmine:/tmp/seed-additional-tags.rb
+      - |
+        docker compose exec -T redmine sh -c \
+          'SECRET_KEY_BASE="$REDMINE_SECRET_KEY_BASE" bundle exec rails runner /tmp/seed-additional-tags.rb'
 
   redmine:down:
     desc: Stop the throwaway Redmine and keep its data volumes
