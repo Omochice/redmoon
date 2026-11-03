@@ -905,7 +905,7 @@ async test "readonly omits every write action" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "issues: a Redmine failure becomes a failure payload" {
   let fake = FakeIssues::new(failure=Response(status=404, errors=["Not Found"]))
   let calls : Array[Json] = [
     { "show": { "id": 1 } },

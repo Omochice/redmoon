@@ -93,7 +93,7 @@ async test "show passes the relation id to the port" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "relations: a Redmine failure becomes a failure payload" {
   let tools = [
     relations_tool(
       FakeRelations::new(failure=Response(status=403, errors=["Forbidden"])),
@@ -122,7 +122,7 @@ async test "a non-positive issue id is reported with its action path" {
 }
 
 ///|
-async test "a stray argument is reported with its action path" {
+async test "relations: a stray argument is reported with its action path" {
   let called = call_tool(
     [relations_tool(FakeRelations::new(), Full)],
     "redmine_issue_relations",

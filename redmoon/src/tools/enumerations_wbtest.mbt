@@ -72,7 +72,7 @@ async test "each listing reaches its own port method" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "enumerations: a Redmine failure becomes a failure payload" {
   let tools = enumerations_tools(
     FakeEnumerations::new(failure=Response(status=403, errors=["Forbidden"])),
   )
@@ -98,7 +98,7 @@ async test "an unknown action is reported with the invalid arguments wording" {
 }
 
 ///|
-async test "a stray argument is reported with its action path" {
+async test "enumerations: a stray argument is reported with its action path" {
   let called = call_tool(
     enumerations_tools(FakeEnumerations::new()),
     "redmine_enumerations",

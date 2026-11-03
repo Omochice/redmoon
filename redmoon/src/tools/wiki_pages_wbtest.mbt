@@ -171,7 +171,7 @@ async test "create and update answer ok and pass every argument" {
 }
 
 ///|
-async test "delete answers ok" {
+async test "wiki: delete answers ok" {
   let fake = FakeWikiPages::new()
   let deleted = call_tool(wiki_tools(fake), "redmine_wiki_pages", {
     "delete": { "project_id": "demo", "title": "Page" },
@@ -258,7 +258,7 @@ async test "validation reports missing fields, bad projects, and bad versions" {
 }
 
 ///|
-async test "readonly mode makes the write actions unknown" {
+async test "wiki: readonly mode makes the write actions unknown" {
   let fake = FakeWikiPages::new()
   let tools = wiki_tools(fake, mode=Readonly)
   let called = call_tool(tools, "redmine_wiki_pages", {
@@ -272,7 +272,7 @@ async test "readonly mode makes the write actions unknown" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "wiki: a Redmine failure becomes a failure payload" {
   let tools = wiki_tools(
     FakeWikiPages::new(failure=Response(status=409, errors=["Conflict"])),
   )

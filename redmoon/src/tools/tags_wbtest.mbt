@@ -165,7 +165,7 @@ async test "list_wiki_pages passes the project and the name and answers the page
 }
 
 ///|
-async test "validation reports the exact message for each rule" {
+async test "tags: validation reports the exact message for each rule" {
   let tools = tags_tools(FakeTags::new())
   let cases : Array[(Json, String)] = [
     ({ "show": {} }, "invalid arguments: show.issue_id: is required"),

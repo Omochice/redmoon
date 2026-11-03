@@ -378,7 +378,7 @@ async test "an id below one is rejected with its bound" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "time entries: a Redmine failure becomes a failure payload" {
   let fake = FakeTimeEntries::new(
     failure=Response(status=422, errors=["Hours cannot be blank"]),
   )

@@ -166,7 +166,7 @@ async test "a camelCase flag is rejected as an unknown field" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "search: a Redmine failure becomes a failure payload" {
   let called = call_tool(
     [
       search_tool(

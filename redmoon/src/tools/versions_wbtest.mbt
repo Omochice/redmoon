@@ -178,7 +178,7 @@ async test "update maps the supplied arguments and answers ok" {
 }
 
 ///|
-async test "delete answers ok" {
+async test "versions: delete answers ok" {
   let fake = FakeVersions::new()
   let called = call_tool(versions_tools(fake), "redmine_versions", {
     "delete": { "id": 7 },
@@ -188,7 +188,7 @@ async test "delete answers ok" {
 }
 
 ///|
-async test "validation reports the exact message for each rule" {
+async test "versions: validation reports the exact message for each rule" {
   let tools = versions_tools(FakeVersions::new())
   let cases : Array[(Json, String)] = [
     (
@@ -231,9 +231,42 @@ async test "validation reports the exact message for each rule" {
 }
 
 ///|
+async test "versions: readonly mode makes the write actions unknown" {
+  let fake = FakeVersions::new()
+  let called = call_tool(
+    versions_tools(fake, mode=Readonly),
+    "redmine_versions",
+    { "delete": { "id": 7 } },
+  )
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
+  )
+  assert_eq(fake.calls, [])
+}
+
+///|
+async test "versions: a Redmine failure becomes a failure payload" {
+  let tools = versions_tools(
+    FakeVersions::new(failure=Response(status=404, errors=["Not Found"])),
+  )
+  let requests : Array[Json] = [
+    { "show": { "id": 7 } },
+    { "delete": { "id": 7 } },
+  ]
+  for arguments in requests {
+    let called = call_tool(tools, "redmine_versions", arguments)
+    assert_eq(called.is_error, true)
+    assert_eq(called.text, "{\"status\":404,\"errors\":[\"Not Found\"]}")
+  }
+}
+
+///|
+
+///|
 async fn rejected_version(arguments : Json) -> String {
   let fake = FakeVersions::new()
-  let called = call_tool(version_tools(fake), "redmine_versions", arguments)
+  let called = call_tool(versions_tools(fake), "redmine_versions", arguments)
   assert_eq(called.is_error, true, msg="accepted \{arguments.stringify()}")
   assert_eq(fake.calls, [])
   called.text
@@ -267,7 +300,7 @@ async test "a name over 60 characters is rejected on create and update, as Redmi
 ///|
 async test "a name of exactly 60 characters is accepted on create and update" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let name = String::make(60, 'a')
   let created = call_tool(tools, "redmine_versions", {
     "create": { "project_id": 1, "name": name },
@@ -299,7 +332,7 @@ async test "a description over 255 characters is rejected on create and update" 
 ///|
 async test "a description of exactly 255 characters is accepted on create and update" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let description = String::make(255, 'a')
   let created = call_tool(tools, "redmine_versions", {
     "create": { "project_id": 1, "name": "n", "description": description },
@@ -331,7 +364,7 @@ async test "a wiki_page_title over 255 characters is rejected on create and upda
 ///|
 async test "a wiki_page_title of exactly 255 characters is accepted on create and update" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let title = String::make(255, 'a')
   let created = call_tool(tools, "redmine_versions", {
     "create": { "project_id": 1, "name": "n", "wiki_page_title": title },
@@ -343,37 +376,6 @@ async test "a wiki_page_title of exactly 255 characters is accepted on create an
   })
   assert_eq(updated.is_error, false, msg=updated.text)
   assert_eq(fake.updated[0].1.wiki_page_title, Some(title))
-}
-
-///|
-async test "readonly mode makes the write actions unknown" {
-  let fake = FakeVersions::new()
-  let called = call_tool(
-    versions_tools(fake, mode=Readonly),
-    "redmine_versions",
-    { "delete": { "id": 7 } },
-  )
-  assert_eq(
-    called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
-  )
-  assert_eq(fake.calls, [])
-}
-
-///|
-async test "a Redmine failure becomes a failure payload" {
-  let tools = versions_tools(
-    FakeVersions::new(failure=Response(status=404, errors=["Not Found"])),
-  )
-  let requests : Array[Json] = [
-    { "show": { "id": 7 } },
-    { "delete": { "id": 7 } },
-  ]
-  for arguments in requests {
-    let called = call_tool(tools, "redmine_versions", arguments)
-    assert_eq(called.is_error, true)
-    assert_eq(called.text, "{\"status\":404,\"errors\":[\"Not Found\"]}")
-  }
 }
 
 ///|

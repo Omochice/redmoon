@@ -99,7 +99,7 @@ async test "update sets the given fields, clears the null ones, and leaves the r
 }
 
 ///|
-async test "validation reports the exact message for each rule" {
+async test "agile: validation reports the exact message for each rule" {
   let tools = agile_tools(FakeAgile::new())
   let cases : Array[(Json, String)] = [
     ({ "get": {} }, "invalid arguments: get.issue_id: is required"),
