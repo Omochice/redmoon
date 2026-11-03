@@ -1,6 +1,6 @@
 ///|
-/// One piece of tool output. Only text is offered because redmoon returns JSON
-/// documents as text.
+/// One piece of tool output.
+/// Only text is offered, because a tool server that answers with documents serialized as text needs no other content type.
 pub(all) enum Content {
   Text(String)
 }
