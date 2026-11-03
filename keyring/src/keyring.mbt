@@ -139,9 +139,12 @@ pub fn get(service : String, account : String) -> String? raise KeyringError {
 
 ///|
 /// Stores `secret` for `service` and `account`, replacing any existing one.
+/// A secret containing a NUL character is refused with `INTERNAL` on every
+/// platform, because the Secret Service takes a C string and would otherwise
+/// store a truncated secret on Linux only.
 ///
 /// # Raises
-/// `NoStore` when no credential store is reachable, `Refused` when the store rejects the write.
+/// `NoStore` when no credential store is reachable, `Refused` when the store rejects the write or the secret contains NUL.
 ///
 /// ```mbt check
 /// #skip("touches the OS credential store")
@@ -154,6 +157,9 @@ pub fn set(
   account : String,
   secret : String,
 ) -> Unit raise KeyringError {
+  if secret.contains("\u{0}") {
+    raise Refused(INTERNAL)
+  }
   check(
     ffi_set(@utf8.encode(service), @utf8.encode(account), @utf8.encode(secret)),
   )

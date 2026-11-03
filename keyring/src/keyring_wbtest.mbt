@@ -64,6 +64,16 @@ test "a secret that is not UTF-8 is refused" {
 }
 
 ///|
+test "a secret containing NUL is refused before any store is reached" {
+  try set("svc", "alice", "abc\u{0}def") catch {
+    Refused(INTERNAL) => ()
+    _ => fail("raised a different error")
+  } noraise {
+    _ => fail("expected an error")
+  }
+}
+
+///|
 test "account text splits into one account per line" {
   assert_eq(parse_accounts("alice\nbob\n"), ["alice", "bob"])
 }
