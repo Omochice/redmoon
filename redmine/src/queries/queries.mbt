@@ -21,7 +21,7 @@ pub extend Query with Eq::{equal, not_equal}
 pub extend Query with @debug.Debug::{to_repr}
 
 ///|
-/// Lists the saved issue queries the user can see, global and project ones alike.
+/// Lists the saved issue queries the user can see, global and project ones alike, following every page unless `limit` caps the count.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
@@ -37,7 +37,8 @@ pub extend Query with @debug.Debug::{to_repr}
 /// ```
 pub async fn list(
   redmine : @redmine.Redmine,
+  limit? : Int32,
 ) -> Array[Query] raise @redmine.RedmineError {
   // Redmine ignores project_id here and answers 404 under /projects/:id, so there is no way to ask for one project's queries.
-  @paging.list_all(redmine, ["queries.json"], key="queries")
+  @paging.list_all(redmine, ["queries.json"], key="queries", limit?)
 }
