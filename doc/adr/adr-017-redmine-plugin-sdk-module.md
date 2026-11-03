@@ -46,11 +46,11 @@ It can use the public `@redmine.send`, `RedmineError`, and `ProjectRef`, which A
 redmine/src/issue_templates/
 ```
 
-**Pros:**
+#### Pros
 
 - Reuses `internal/decode` and `internal/livetest` as they are.
 
-**Cons:**
+#### Cons
 
 - The SDK of Redmine itself would describe an API that most Redmine instances do not serve, and its version would move with a plugin.
 
@@ -61,11 +61,11 @@ redmine_issue_templates/   module omochice/redmine_issue_templates
 redmine_<next_plugin>/     module omochice/redmine_<next_plugin>
 ```
 
-**Pros:**
+#### Pros
 
 - Each plugin's SDK is versioned with the plugin it follows.
 
-**Cons:**
+#### Cons
 
 - A manifest, a `moon.work` entry, and a copy of the decode and live-test helpers per plugin.
 
@@ -78,12 +78,12 @@ redmine-plugins/           module omochice/redmine-plugins
     └── internal/          decode and live-test helpers shared by the plugin packages
 ```
 
-**Pros:**
+#### Pros
 
 - Plugin code stays out of the Redmine SDK, and a consumer imports only the packages of the plugins it uses.
 - The helpers that cannot be imported from `omochice/redmine` are written once for every plugin.
 
-**Cons:**
+#### Cons
 
 - Every plugin package shares one version, so a breaking change for one plugin is a breaking change of the module.
 

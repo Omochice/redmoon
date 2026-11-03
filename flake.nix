@@ -63,6 +63,9 @@
               MD004.style = "dash";
               MD007.indent = 4;
               MD007.style = "fixed";
+              MD036.fix = true;
+              MD036.heading-level = 4;
+              MD036.punctuation = "";
               MD041.enabled = false;
               MD049.style = "underscore";
               MD050.style = "asterisk";

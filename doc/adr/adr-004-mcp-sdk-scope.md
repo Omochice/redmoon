@@ -29,31 +29,31 @@ No MoonBit MCP SDK was adopted; [ADR-001](./adr-001-five-module-moonbit-workspac
 
 ### Option 1: Legacy only, `2025-11-25`
 
-**Pros:**
+#### Pros
 
 - One lifecycle, identical to what denomine-mcp speaks.
 
-**Cons:**
+#### Cons
 
 - A modern-only client cannot use the server, and the SDK is outdated on release.
 
 ### Option 2: Modern only, `2026-07-28`
 
-**Pros:**
+#### Pros
 
 - No session state at all.
 
-**Cons:**
+#### Cons
 
 - Every legacy client fails at `initialize`, with no fallback on its side.
 
 ### Option 3: Dual-era (chosen)
 
-**Pros:**
+#### Pros
 
 - Both kinds of client work, and the modern path follows the current revision.
 
-**Cons:**
+#### Cons
 
 - Two ways of establishing the protocol version in one server.
 

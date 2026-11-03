@@ -42,11 +42,11 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 {"update": {"id": 42, "subject": "...", "story_points": 3}}
 ```
 
-**Pros:**
+#### Pros
 
 - One call reads or writes an issue together with its agile data, as jztan/redmine-mcp-server does.
 
-**Cons:**
+#### Cons
 
 - `redmine_issues` would describe and accept fields that most instances do not have, or change its schema with `--plugin`.
 - A show would need a second request whose failure has to be either reported, failing a read of the issue itself, or swallowed, hiding why the fields are missing.
@@ -57,11 +57,11 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 {"update": {"issue_id": 42, "story_points": 3}}
 ```
 
-**Pros:**
+#### Pros
 
 - The issue tools stay unchanged on every instance, and the plugin's failures belong to the tool that calls the plugin.
 
-**Cons:**
+#### Cons
 
 - Reading an issue and its agile data takes two tool calls.
 
@@ -71,11 +71,11 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 {"list_sprints": {"project_id": "demo"}}
 ```
 
-**Pros:**
+#### Pros
 
 - A model could look up the id of a sprint by its name.
 
-**Cons:**
+#### Cons
 
 - RedmineUP documents a sprint API, `/projects/{id}/agile_sprints.json`, without its answer or the edition that serves it, and jztan/redmine-mcp-server does not use it, so there is nothing to build its types on.
 - RedmineUP documents no API for the board itself, so there is no board API to call.

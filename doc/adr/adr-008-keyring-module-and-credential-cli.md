@@ -26,31 +26,31 @@ The same probe showed that a `-framework` link flag works only when written in t
 
 ### Option 1: Call `security` and `secret-tool` as processes
 
-**Pros:**
+#### Pros
 
 - No C code.
 
-**Cons:**
+#### Cons
 
 - `security add-generic-password` takes the password as an argument, so it appears in the process list, and Windows has no equivalent command for reading.
 
 ### Option 2: Reuse denomine-mcp's Rust cdylib
 
-**Pros:**
+#### Pros
 
 - Already proven on all three platforms.
 
-**Cons:**
+#### Cons
 
 - A Rust toolchain in every build, and a second library to ship next to the binary.
 
 ### Option 3: C stubs in a MoonBit module (chosen)
 
-**Pros:**
+#### Pros
 
 - One self-contained module and one executable, with no extra toolchain.
 
-**Cons:**
+#### Cons
 
 - Platform C code written and maintained here.
 

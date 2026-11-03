@@ -42,11 +42,11 @@ The options differ in what the SDK returns and in how its operations are grouped
 
 ### Option 1: Typed input, `Json` output
 
-**Pros:**
+#### Pros
 
 - Every field Redmine returns reaches the caller, with no output types to maintain.
 
-**Cons:**
+#### Cons
 
 - A consumer of the published SDK has no types for what it reads.
 
@@ -57,11 +57,11 @@ redmine.list_issues(query, limit=10)
 redmine.show_wiki_page(project, title)
 ```
 
-**Pros:**
+#### Pros
 
 - Mirrors `@omochice/redmine`'s single class, and calls read as method calls.
 
-**Cons:**
+#### Cons
 
 - A MoonBit package is one namespace, so types of different resources have to be told apart by prefixes, such as `IssueStatus` and `TimeEntryIssue`.
 - Helpers such as URL parsing and paging are private only because they share the package with everything else.
@@ -73,12 +73,12 @@ redmine |> @issues.list(query, limit=10)
 redmine |> @wiki.show(project, title)
 ```
 
-**Pros:**
+#### Pros
 
 - The SDK is a complete library to publish, and the compiler checks every field access.
 - The package names the resource, so types are named by what they are within it, and helpers live in `internal` packages.
 
-**Cons:**
+#### Cons
 
 - Every response shape has to be modelled, and unmodelled fields are dropped.
 - A consumer imports one package per resource it uses.

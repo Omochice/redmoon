@@ -24,11 +24,11 @@ The schema also has to express the action-keyed tool shape of [ADR-005](./adr-00
 
 ### Option 1: `derive(FromJson)` plus a hand-written JSON Schema
 
-**Pros:**
+#### Pros
 
 - Least code to write.
 
-**Cons:**
+#### Cons
 
 - Two definitions per tool, which drift apart as fields are added.
 
@@ -36,11 +36,11 @@ The schema also has to express the action-keyed tool shape of [ADR-005](./adr-00
 
 A JSON Schema validator with a zod-like builder.
 
-**Pros:**
+#### Pros
 
 - Already published.
 
-**Cons:**
+#### Cons
 
 - Its README lists `minProperties` and `maxProperties` as unsupported.
 - Its validator answers on a JSON value, so a typed value still needs `derive(FromJson)`, which brings back the two definitions of option 1.
@@ -49,11 +49,11 @@ A JSON Schema validator with a zod-like builder.
 
 A `Schema[T]` carries both a JSON Schema and a parser to `T`, and object schemas are built field by field into a constructor.
 
-**Pros:**
+#### Pros
 
 - One definition, typed output, and exactly the keywords the tools need.
 
-**Cons:**
+#### Cons
 
 - A library to write and maintain.
 

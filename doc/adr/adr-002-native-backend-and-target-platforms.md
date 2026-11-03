@@ -32,31 +32,31 @@ denomine-mcp ships macOS (Apple silicon and Intel), Linux (x86_64 and arm64), an
 
 ### Option 1: JavaScript backend on Node.js
 
-**Pros:**
+#### Pros
 
 - Runs wherever Node.js does, including Intel macOS.
 
-**Cons:**
+#### Cons
 
 - The user needs Node.js, and the OS credential store is out of reach without a native addon.
 
 ### Option 2: Native backend, macOS and Linux only
 
-**Pros:**
+#### Pros
 
 - Every build runs in the nix devShell.
 
-**Cons:**
+#### Cons
 
 - Windows users, who denomine-mcp serves, are left out.
 
 ### Option 3: Native backend on all three operating systems (chosen)
 
-**Pros:**
+#### Pros
 
 - One executable per platform, with direct access to the OS credential store.
 
-**Cons:**
+#### Cons
 
 - The Windows build cannot use nix.
 

@@ -33,21 +33,21 @@ It fails on an `Option` field whose value is `null`: `JsonDecodeError((/assigned
 
 ### Option 1: Typed input, `Json` output
 
-**Pros:**
+#### Pros
 
 - Every field Redmine returns reaches the caller, with no output types to maintain.
 
-**Cons:**
+#### Cons
 
 - A consumer of the published SDK has no types for what it reads.
 
 ### Option 2: Typed input and typed output (chosen)
 
-**Pros:**
+#### Pros
 
 - The SDK is a complete library to publish, and the compiler checks every field access.
 
-**Cons:**
+#### Cons
 
 - Every response shape has to be modelled, and unmodelled fields are dropped.
 

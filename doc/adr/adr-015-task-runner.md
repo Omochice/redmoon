@@ -23,44 +23,44 @@ On Windows there is no POSIX shell unless one is installed.
 
 ### Option 1: just
 
-**Pros:**
+#### Pros
 
 - Widely used, small, in nixpkgs (1.58.0 at the time of writing).
 
-**Cons:**
+#### Cons
 
 - Recipes run through `sh` by default, so Windows needs a shell setting or a POSIX shell on the runner.
 
 ### Option 2: Task (go-task) (chosen)
 
-**Pros:**
+#### Pros
 
 - In nixpkgs (3.53.1 at the time of writing).
 - Commands run through the Go shell interpreter `mvdan.cc/sh`, and on Windows Task enables Go implementations of common core utilities (`cat`, `cp`, `mkdir`, `mv`, `rm`, and others), so one command line serves every OS.
 - `sources` and `generates` let a task be skipped when its inputs have not changed.
 
-**Cons:**
+#### Cons
 
 - YAML is less pleasant to read than a `justfile`.
 
 ### Option 3: pkfire
 
-**Pros:**
+#### Pros
 
 - Typed task definitions in Pkl, content-addressed caching, and a remote cache; written in MoonBit.
 
-**Cons:**
+#### Cons
 
 - Its README states that Windows is not supported, which conflicts with the Windows build of ADR-002.
 - Not in nixpkgs, and it also needs the Pkl CLI.
 
 ### Option 4: flake apps run with `nix run`
 
-**Pros:**
+#### Pros
 
 - No new tool.
 
-**Cons:**
+#### Cons
 
 - The Windows and Linux arm64 runners have no nix, so the tasks could not run there.
 

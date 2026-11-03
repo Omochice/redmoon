@@ -36,31 +36,31 @@ The options below were weighed for where the version lives, how modules are vers
 
 ### Option 1: An inline `x-release-please-version` marker in `moon.mod` and in a MoonBit constant
 
-**Pros:**
+#### Pros
 
 - No extra file; the version sits where MoonBit and readers expect it.
 
-**Cons:**
+#### Cons
 
 - The inline marker has to share a line with the version, and `moonfmt` moves a trailing comment onto a line of its own, in `moon.mod` and in MoonBit source alike, after which release-please no longer updates it.
 
 ### Option 2: The version in a JSON file only, with `moon.mod` bumped by hand
 
-**Pros:**
+#### Pros
 
 - release-please updates a JSON value by path without any marker, so formatting cannot break it.
 
-**Cons:**
+#### Cons
 
 - The hand bump was forgotten, and `moon.mod` lagged the release by several versions.
 
 ### Option 3: A release-please package per module
 
-**Pros:**
+#### Pros
 
 - A module's version would rise only when that module changes.
 
-**Cons:**
+#### Cons
 
 - The root package `.` would still receive every commit.
 - The generic markers cannot name another package's version, so the `omochice/*` imports would need `moon work sync` on the release pull request branch, which release-please force-pushes on every update.
@@ -68,22 +68,22 @@ The options below were weighed for where the version lives, how modules are vers
 
 ### Option 4: Each release job runs `moon build --target native --release`
 
-**Pros:**
+#### Pros
 
 - Works on any runner that has the MoonBit installer, including those without Nix.
 
-**Cons:**
+#### Cons
 
 - The release assets and the Nix package would come from two build paths that can drift apart.
 
 ### Option 5: One shared version bumped through block markers and a JSON file, with assets built as the flake package (chosen)
 
-**Pros:**
+#### Pros
 
 - The block form, `x-release-please-start-version` and `x-release-please-end` each on its own line, survives `moonfmt`, so nothing is bumped by hand.
 - The asset is the Nix package.
 
-**Cons:**
+#### Cons
 
 - Only platforms with a moonbit-overlay toolchain can build an asset this way (Decision section 6).
 

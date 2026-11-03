@@ -38,21 +38,21 @@ omochice/redmoon
 └── ...
 ```
 
-**Pros:**
+#### Pros
 
 - One version, one manifest, one release.
 
-**Cons:**
+#### Cons
 
 - A program that only needs the keyring depends on all of redmoon, and every SDK is versioned with the application.
 
 ### Option 2: One repository per module
 
-**Pros:**
+#### Pros
 
 - Each SDK has its own history and issue tracker.
 
-**Cons:**
+#### Cons
 
 - A change across an SDK and the application needs coordinated releases before it can be tested together.
 
@@ -68,11 +68,11 @@ redmoon/            (this repository)
 └── redmoon/        module omochice/redmoon
 ```
 
-**Pros:**
+#### Pros
 
 - Each SDK is published and versioned on its own, yet a cross-module change is one commit.
 
-**Cons:**
+#### Cons
 
 - Five manifests, and a dependency between members has to be kept in step with what is published.
 
