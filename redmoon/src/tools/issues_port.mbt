@@ -1,16 +1,23 @@
 ///|
 /// The Redmine operations behind `redmine_issues`.
 pub(open) trait IssuePort {
-  async fn list_issues(Self, @issues.ListQuery, Int32?) -> Array[@issues.Issue] raise @redmine.RedmineError
-  async fn list_saved_issues(Self, @issues.SavedQuery, Int32?) -> Array[
+  async fn list_issues(Self, query : @issues.ListQuery, limit : Int32?) -> Array[
+    @issues.Issue,
+  ] raise @redmine.RedmineError
+  async fn list_saved_issues(Self, query : @issues.SavedQuery, limit : Int32?) -> Array[
     @issues.Issue,
   ] raise @redmine.RedmineError
   async fn list_queries(Self) -> Array[@queries.Query] raise @redmine.RedmineError
-  async fn show_issue(Self, Int32, Array[@issues.Include]) -> @issues.Issue raise @redmine.RedmineError
-  async fn create_issue(Self, @issues.Create) -> @issues.Issue raise @redmine.RedmineError
-  async fn update_issue(Self, Int32, @issues.Update) -> Unit raise @redmine.RedmineError
-  async fn delete_issue(Self, Int32) -> Unit raise @redmine.RedmineError
-  async fn update_journal(Self, Int32, String?, Bool?) -> Unit raise @redmine.RedmineError
+  async fn show_issue(Self, id : Int32, includes : Array[@issues.Include]) -> @issues.Issue raise @redmine.RedmineError
+  async fn create_issue(Self, issue : @issues.Create) -> @issues.Issue raise @redmine.RedmineError
+  async fn update_issue(Self, id : Int32, update : @issues.Update) -> Unit raise @redmine.RedmineError
+  async fn delete_issue(Self, id : Int32) -> Unit raise @redmine.RedmineError
+  async fn update_journal(
+    Self,
+    id : Int32,
+    notes : String?,
+    private_notes : Bool?,
+  ) -> Unit raise @redmine.RedmineError
 }
 
 ///|
