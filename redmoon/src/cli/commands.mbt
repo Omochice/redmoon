@@ -23,6 +23,9 @@ pub async fn run_login(
 
 ///|
 /// Removes the stored API key for `endpoint` and returns its account.
+///
+/// # Raises
+/// `Message` for an invalid endpoint or a failing store.
 pub fn run_logout(
   endpoint : String,
   store : &KeyringPort,
@@ -34,6 +37,9 @@ pub fn run_logout(
 
 ///|
 /// Returns the endpoints that have a stored API key, sorted for stable output.
+///
+/// # Raises
+/// `Message` for a failing store.
 pub fn run_list(store : &KeyringPort) -> Array[String] raise CliError {
   let endpoints = store.list()
   endpoints.sort()
@@ -43,7 +49,9 @@ pub fn run_list(store : &KeyringPort) -> Array[String] raise CliError {
 ///|
 /// An endpoint paired with the API key stored for it.
 pub(all) struct Credential {
+  /// The canonical endpoint, which is also the keyring account.
   endpoint : String
+  /// The Redmine API key stored for `endpoint`.
   api_key : String
 }
 
