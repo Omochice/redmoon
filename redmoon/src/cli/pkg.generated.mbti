@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmoon/cli"
+
+import {
+  "moonbitlang/core/debug",
+  "omochice/mcp",
+  "omochice/redmine",
+  "omochice/redmoon/tools",
+}
+
+// Values
+pub const SERVICE : String = "redmoon"
+
+pub fn build_server(@redmine.Redmine, Bool, Array[Plugin]) -> @mcp.Server
+
+pub fn canonicalize_endpoint(String) -> String raise CliError
+
+pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise
+
+pub fn registered_tools(@redmine.Redmine, @tools.Mode, Array[Plugin]) -> Array[@mcp.Tool]
+
+pub fn resolve_api_key(String, &CredentialStore) -> Credential raise CliError
+
+pub fn run_list(&CredentialStore) -> Array[String] raise CliError
+
+pub async fn run_login(String, &CredentialStore, async () -> String) -> String
+
+pub fn run_logout(String, &CredentialStore) -> String raise CliError
+
+pub async fn run_serve(String, Bool, Array[Plugin], &CredentialStore) -> Unit
+
+// Errors
+pub suberror CliError {
+  Message(String)
+}
+pub fn CliError::output(Self, &Logger) -> Unit
+pub fn CliError::to_string(Self) -> String
+pub impl Show for CliError
+
+// Types and methods
+pub(all) struct Credential {
+  endpoint : String
+  api_key : String
+}
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Invocation {
+  Serve(endpoint~ : String, read_only~ : Bool, plugins~ : Array[Plugin])
+  Login(endpoint~ : String)
+  Logout(endpoint~ : String)
+  List
+}
+pub fn Invocation::equal(Self, Self) -> Bool
+pub fn Invocation::not_equal(Self, Self) -> Bool
+pub fn Invocation::to_repr(Self) -> @debug.Repr
+
+pub(all) struct OsKeyring {
+}
+pub fn OsKeyring::delete(Self, String) -> Unit raise CliError
+pub fn OsKeyring::get(Self, String) -> String? raise CliError
+pub fn OsKeyring::list(Self) -> Array[String] raise CliError
+pub fn OsKeyring::set(Self, String, String) -> Unit raise CliError
+pub impl CredentialStore for OsKeyring
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Plugin {
+  IssueTemplates
+  Agile
+  AdditionalTags
+}
+pub fn Plugin::equal(Self, Self) -> Bool
+pub fn Plugin::not_equal(Self, Self) -> Bool
+pub fn Plugin::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
+pub(open) trait CredentialStore {
+  fn get(Self, String) -> String? raise CliError
+  fn set(Self, String, String) -> Unit raise CliError
+  fn delete(Self, String) -> Unit raise CliError
+  fn list(Self) -> Array[String] raise CliError
+}

@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/memberships"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn list(@redmine.Redmine, @redmine.ProjectRef, limit? : Int32) -> Array[Membership] raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct Membership {
+  id : Int32
+  project : @redmine.IdName
+  principal : Principal
+  roles : Array[Role]
+}
+pub fn Membership::equal(Self, Self) -> Bool
+pub fn Membership::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Membership::not_equal(Self, Self) -> Bool
+pub fn Membership::to_json(Self) -> @json.Json
+pub fn Membership::to_repr(Self) -> @debug.Repr
+pub impl @json.FromJson for Membership
+pub impl @json.ToJson for Membership
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Principal {
+  User(@redmine.IdName)
+  Group(@redmine.IdName)
+  AnonymousGroup(@redmine.IdName)
+  NonMemberGroup(@redmine.IdName)
+}
+pub fn Principal::equal(Self, Self) -> Bool
+pub fn Principal::not_equal(Self, Self) -> Bool
+pub fn Principal::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Role {
+  id : Int32
+  name : String
+  inherited : Bool
+}
+pub fn Role::equal(Self, Self) -> Bool
+pub fn Role::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Role::not_equal(Self, Self) -> Bool
+pub fn Role::to_json(Self) -> @json.Json
+pub fn Role::to_repr(Self) -> @debug.Repr
+pub impl @json.FromJson for Role
+pub impl @json.ToJson for Role
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/keyring"
+
+// Values
+pub fn delete(String, String) -> Unit raise KeyringError
+
+pub fn get(String, String) -> String? raise KeyringError
+
+pub fn list(String) -> Array[String] raise KeyringError
+
+pub fn set(String, String, String) -> Unit raise KeyringError
+
+// Errors
+pub suberror KeyringError {
+  NoStore(String)
+  Refused(Int32)
+}
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/schema"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn[T] array(Schema[T], min_items? : Int32) -> Schema[Array[T]]
+
+pub fn boolean() -> Schema[Bool]
+
+pub fn[T] by_key(Array[(String, Schema[T])], otherwise? : Schema[T]) -> Schema[T]
+
+pub fn[T] choice(Array[(String, T)]) -> Schema[T]
+
+pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32]
+
+pub fn integer64(min? : Int64, max? : Int64) -> Schema[Int64]
+
+pub fn iso_date() -> Schema[String]
+
+pub fn[T] keyed(Array[(String, Schema[T])]) -> Schema[T]
+
+pub fn literal(String) -> Schema[String]
+
+pub fn not_blank() -> Schema[String]
+
+pub fn[T] nullable(Schema[T]) -> Schema[T?]
+
+pub fn number(min? : Double, max? : Double) -> Schema[Double]
+
+pub fn[T] optional(String, Schema[T]) -> Field[T?]
+
+pub fn[T : @json.ToJson] optional_or(String, Schema[T], T) -> Field[T]
+
+pub fn picklist(Array[String]) -> Schema[String]
+
+pub fn[T] record(Array[Member], (Values) -> T raise SchemaError) -> Schema[T]
+
+pub fn[T] required(String, Schema[T]) -> Field[T]
+
+pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String]
+
+pub fn[T] union(Array[Schema[T]]) -> Schema[T]
+
+// Errors
+pub(all) suberror SchemaError {
+  Invalid(path~ : Array[String], message~ : String)
+  Many(Array[SchemaError])
+}
+pub fn SchemaError::message(Self) -> String
+pub fn SchemaError::messages(Self) -> Array[String]
+pub fn SchemaError::output(Self, &Logger) -> Unit
+pub fn SchemaError::to_string(Self) -> String
+pub impl Show for SchemaError
+
+// Types and methods
+type Field[T]
+pub fn[T] Field::as_member(Self[T]) -> Member
+
+type Member
+
+pub(all) struct Schema[T] {
+  json : () -> @json.Json
+  decode : (@json.Json, Array[String]) -> T raise SchemaError
+}
+pub fn[T] Schema::allow_one(Self[T], Array[Member]) -> Self[T]
+pub fn[T] Schema::describe(Self[T], String) -> Self[T]
+pub fn[A, B] Schema::map(Self[A], (A) -> B) -> Self[B]
+pub fn[T] Schema::parse(Self[T], @json.Json) -> T raise SchemaError
+pub fn[T] Schema::parse_at(Self[T], @json.Json, Array[String]) -> T raise SchemaError
+pub fn[T] Schema::refine(Self[T], (T) -> Bool, String, keywords? : Array[(String, @json.Json)]) -> Self[T]
+pub fn[T] Schema::require_any(Self[T], Array[Member]) -> Self[T]
+pub fn[T] Schema::require_one(Self[T], Array[Member]) -> Self[T]
+pub fn[T] Schema::to_json_schema(Self[T]) -> @json.Json
+
+type Values
+pub fn[T] Values::get(Self, Field[T]) -> T raise SchemaError
+
+// Type aliases
+
+// Traits

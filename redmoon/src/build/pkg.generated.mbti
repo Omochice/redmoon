@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmoon/build"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub let build : BuildInfo?
+
+pub let version : String
+
+// Errors
+
+// Types and methods
+#derive(@json.ToJson)
+pub(all) struct BuildInfo {
+  commit : String
+  dirty : Bool
+}
+pub fn BuildInfo::to_json(Self) -> @json.Json
+
+// Type aliases
+
+// Traits

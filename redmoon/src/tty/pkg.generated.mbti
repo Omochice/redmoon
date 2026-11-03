@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmoon/tty"
+
+// Values
+pub async fn read_secret(String) -> String
+
+// Errors
+pub suberror TtyError {
+  Message(String)
+}
+pub fn TtyError::output(Self, &Logger) -> Unit
+pub fn TtyError::to_string(Self) -> String
+pub impl Show for TtyError
+
+// Types and methods
+
+// Type aliases
+
+// Traits

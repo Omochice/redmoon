@@ -1,0 +1,355 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/issues"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+  "omochice/redmine/attachments",
+}
+
+// Values
+pub async fn create(@redmine.Redmine, Create) -> Issue raise @redmine.RedmineError
+
+pub async fn delete(@redmine.Redmine, Int32) -> Unit raise @redmine.RedmineError
+
+pub async fn[S : Selection] list(@redmine.Redmine, S, limit? : Int32) -> Array[Issue] raise @redmine.RedmineError
+
+pub async fn show(@redmine.Redmine, Int32, includes? : Array[Include]) -> Issue raise @redmine.RedmineError
+
+pub async fn update(@redmine.Redmine, Int32, Update) -> Unit raise @redmine.RedmineError
+
+pub async fn update_journal(@redmine.Redmine, Int32, notes? : String, private_notes? : Bool) -> Unit raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) enum AssigneeFilter {
+  User(Int32)
+  Me
+}
+pub fn AssigneeFilter::equal(Self, Self) -> Bool
+pub fn AssigneeFilter::not_equal(Self, Self) -> Bool
+pub fn AssigneeFilter::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Child {
+  id : Int32
+  tracker : @redmine.IdName
+  subject : String
+}
+pub fn Child::equal(Self, Self) -> Bool
+pub fn Child::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Child::not_equal(Self, Self) -> Bool
+pub fn Child::to_json(Self) -> @json.Json
+pub fn Child::to_repr(Self) -> @debug.Repr
+
+pub struct Create {
+  project_id : Int32
+  tracker_id : Int32
+  status_id : Int32
+  priority_id : Int32
+  subject : String
+  description : String?
+  category_id : Int32?
+  fixed_version_id : Int32?
+  assigned_to_id : Int32?
+  parent_issue_id : Int32?
+  watcher_user_ids : Array[Int32]?
+  is_private : Bool?
+  estimated_hours : Double?
+  start_date : String?
+  due_date : String?
+  custom_fields : Array[CustomFieldInput]?
+  uploads : Array[UploadToken]?
+}
+pub fn Create::new(project_id~ : Int32, tracker_id~ : Int32, status_id~ : Int32, priority_id~ : Int32, subject~ : String, description? : String, category_id? : Int32, fixed_version_id? : Int32, assigned_to_id? : Int32, parent_issue_id? : Int32, watcher_user_ids? : Array[Int32], is_private? : Bool, estimated_hours? : Double, start_date? : String, due_date? : String, custom_fields? : Array[CustomFieldInput], uploads? : Array[UploadToken]) -> Self
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct CustomField {
+  id : Int32
+  name : String
+  value : CustomFieldValue?
+  multiple : Bool?
+}
+pub fn CustomField::equal(Self, Self) -> Bool
+pub fn CustomField::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CustomField::not_equal(Self, Self) -> Bool
+pub fn CustomField::to_json(Self) -> @json.Json
+pub fn CustomField::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct CustomFieldInput {
+  id : Int32
+  value : CustomFieldValue
+}
+pub fn CustomFieldInput::equal(Self, Self) -> Bool
+pub fn CustomFieldInput::not_equal(Self, Self) -> Bool
+pub fn CustomFieldInput::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CustomFieldValue {
+  Single(String)
+  Multiple(Array[String])
+}
+pub fn CustomFieldValue::equal(Self, Self) -> Bool
+pub fn CustomFieldValue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CustomFieldValue::not_equal(Self, Self) -> Bool
+pub fn CustomFieldValue::to_json(Self) -> @json.Json
+pub fn CustomFieldValue::to_repr(Self) -> @debug.Repr
+pub impl @json.FromJson for CustomFieldValue
+pub impl @json.ToJson for CustomFieldValue
+
+#derive(Eq, @debug.Debug)
+pub(all) enum DateFilter {
+  Past(PastDateFilter)
+  Tomorrow
+  NextWeek
+  NextMonth
+  DaysFromNow(Int32)
+  SinceDaysFromNow(Int32)
+  UntilDaysFromNow(Int32)
+  NextDays(Int32)
+}
+pub fn DateFilter::equal(Self, Self) -> Bool
+pub fn DateFilter::not_equal(Self, Self) -> Bool
+pub fn DateFilter::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum DatePeriod {
+  Today
+  Yesterday
+  ThisWeek
+  LastWeek
+  LastTwoWeeks
+  ThisMonth
+  LastMonth
+  ThisYear
+  Any
+  Blank
+}
+pub fn DatePeriod::equal(Self, Self) -> Bool
+pub fn DatePeriod::not_equal(Self, Self) -> Bool
+pub fn DatePeriod::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Include {
+  Children
+  Attachments
+  Relations
+  Changesets
+  Journals
+  Watchers
+  AllowedStatuses
+}
+pub fn Include::equal(Self, Self) -> Bool
+pub fn Include::not_equal(Self, Self) -> Bool
+pub fn Include::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Issue {
+  id : Int32
+  project : @redmine.IdName
+  tracker : @redmine.IdName
+  status : Status
+  priority : @redmine.IdName
+  author : @redmine.IdName
+  assigned_to : @redmine.IdName?
+  category : @redmine.IdName?
+  fixed_version : @redmine.IdName?
+  parent : Parent?
+  subject : String
+  description : String?
+  start_date : String?
+  due_date : String?
+  done_ratio : Int32
+  is_private : Bool
+  estimated_hours : Double?
+  total_estimated_hours : Double?
+  spent_hours : Double?
+  total_spent_hours : Double?
+  created_on : String
+  updated_on : String
+  closed_on : String?
+  custom_fields : Array[CustomField]?
+  journals : Array[Journal]?
+  attachments : Array[@attachments.Attachment]?
+  relations : Array[Relation]?
+  children : Array[Child]?
+  changesets : Array[@json.Json]?
+  watchers : Array[@redmine.IdName]?
+  allowed_statuses : Array[Status]?
+}
+pub fn Issue::equal(Self, Self) -> Bool
+pub fn Issue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Issue::not_equal(Self, Self) -> Bool
+pub fn Issue::to_json(Self) -> @json.Json
+pub fn Issue::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Journal {
+  id : Int32
+  user : @redmine.IdName
+  notes : String?
+  created_on : String
+  private_notes : Bool
+  details : Array[JournalDetail]
+}
+pub fn Journal::equal(Self, Self) -> Bool
+pub fn Journal::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Journal::not_equal(Self, Self) -> Bool
+pub fn Journal::to_json(Self) -> @json.Json
+pub fn Journal::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct JournalDetail {
+  property : String
+  name : String
+  old_value : String?
+  new_value : String?
+}
+pub fn JournalDetail::equal(Self, Self) -> Bool
+pub fn JournalDetail::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn JournalDetail::not_equal(Self, Self) -> Bool
+pub fn JournalDetail::to_json(Self) -> @json.Json
+pub fn JournalDetail::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum ListInclude {
+  Attachments
+  Relations
+}
+pub fn ListInclude::equal(Self, Self) -> Bool
+pub fn ListInclude::not_equal(Self, Self) -> Bool
+pub fn ListInclude::to_repr(Self) -> @debug.Repr
+
+pub struct ListQuery {
+  includes : Array[ListInclude]
+  project_id : Int32?
+  tracker_id : Int32?
+  status_id : StatusFilter?
+  fixed_version_id : Int32?
+  assigned_to_id : AssigneeFilter?
+  start_date : DateFilter?
+  due_date : DateFilter?
+  created_on : PastDateFilter?
+  updated_on : PastDateFilter?
+  closed_on : PastDateFilter?
+}
+pub fn ListQuery::new(includes? : Array[ListInclude], project_id? : Int32, tracker_id? : Int32, status_id? : StatusFilter, fixed_version_id? : Int32, assigned_to_id? : AssigneeFilter, start_date? : DateFilter, due_date? : DateFilter, created_on? : PastDateFilter, updated_on? : PastDateFilter, closed_on? : PastDateFilter) -> Self
+pub fn ListQuery::to_query(Self) -> Array[(String, String)]
+pub impl Selection for ListQuery
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Parent {
+  id : Int32
+}
+pub fn Parent::equal(Self, Self) -> Bool
+pub fn Parent::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Parent::not_equal(Self, Self) -> Bool
+pub fn Parent::to_json(Self) -> @json.Json
+pub fn Parent::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum PastDateFilter {
+  On(String)
+  Period(DatePeriod)
+  Between(from~ : String, to~ : String)
+  Since(String)
+  Until(String)
+  DaysAgo(Int32)
+  SinceDaysAgo(Int32)
+  LastDays(Int32)
+  UntilDaysAgo(Int32)
+}
+pub fn PastDateFilter::equal(Self, Self) -> Bool
+pub fn PastDateFilter::not_equal(Self, Self) -> Bool
+pub fn PastDateFilter::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Relation {
+  id : Int32?
+  issue_id : Int32?
+  issue_to_id : Int32?
+  relation_type : String?
+  delay : Int32?
+}
+pub fn Relation::equal(Self, Self) -> Bool
+pub fn Relation::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Relation::not_equal(Self, Self) -> Bool
+pub fn Relation::to_json(Self) -> @json.Json
+pub fn Relation::to_repr(Self) -> @debug.Repr
+
+pub struct SavedQuery {
+  query_id : Int32
+  project_id : Int32?
+  includes : Array[ListInclude]
+}
+pub fn SavedQuery::new(Int32, project_id? : Int32, includes? : Array[ListInclude]) -> Self
+pub fn SavedQuery::to_query(Self) -> Array[(String, String)]
+pub impl Selection for SavedQuery
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Status {
+  id : Int32
+  name : String
+  is_closed : Bool?
+}
+pub fn Status::equal(Self, Self) -> Bool
+pub fn Status::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Status::not_equal(Self, Self) -> Bool
+pub fn Status::to_json(Self) -> @json.Json
+pub fn Status::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum StatusFilter {
+  Id(Int32)
+  Open
+  Closed
+  All
+}
+pub fn StatusFilter::equal(Self, Self) -> Bool
+pub fn StatusFilter::not_equal(Self, Self) -> Bool
+pub fn StatusFilter::to_repr(Self) -> @debug.Repr
+
+pub struct Update {
+  subject : String?
+  description : String?
+  notes : String?
+  private_notes : Bool?
+  done_ratio : Int32?
+  is_private : Bool?
+  estimated_hours : Double?
+  status_id : Int32?
+  priority_id : Int32?
+  tracker_id : Int32?
+  assigned_to_id : @redmine.Clearable[Int32]?
+  category_id : @redmine.Clearable[Int32]?
+  parent_issue_id : @redmine.Clearable[Int32]?
+  fixed_version_id : @redmine.Clearable[Int32]?
+  start_date : @redmine.Clearable[String]?
+  due_date : @redmine.Clearable[String]?
+  custom_fields : Array[CustomFieldInput]?
+  uploads : Array[UploadToken]?
+}
+pub fn Update::new(subject? : String, description? : String, notes? : String, private_notes? : Bool, done_ratio? : Int32, is_private? : Bool, estimated_hours? : Double, status_id? : Int32, priority_id? : Int32, tracker_id? : Int32, assigned_to_id? : @redmine.Clearable[Int32], category_id? : @redmine.Clearable[Int32], parent_issue_id? : @redmine.Clearable[Int32], fixed_version_id? : @redmine.Clearable[Int32], start_date? : @redmine.Clearable[String], due_date? : @redmine.Clearable[String], custom_fields? : Array[CustomFieldInput], uploads? : Array[UploadToken]) -> Self
+
+#derive(Eq, @debug.Debug)
+pub(all) struct UploadToken {
+  token : String
+  filename : String?
+  description : String?
+  content_type : String?
+}
+pub fn UploadToken::equal(Self, Self) -> Bool
+pub fn UploadToken::new(String, filename? : String, description? : String, content_type? : String) -> Self
+pub fn UploadToken::not_equal(Self, Self) -> Bool
+pub fn UploadToken::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
+pub trait Selection {
+  fn to_query(Self) -> Array[(String, String)]
+}

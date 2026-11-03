@@ -1,0 +1,52 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/attachments"
+
+import {
+  "moonbitlang/async/io",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn download(@redmine.Redmine, Int32, async (Attachment, &@io.Reader) -> Unit) -> Unit
+
+pub async fn show(@redmine.Redmine, Int32) -> Attachment raise @redmine.RedmineError
+
+pub async fn upload(@redmine.Redmine, &@io.Reader, Int64, filename~ : String) -> String raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Attachment {
+  id : Int32
+  filename : String
+  filesize : ByteSize
+  content_type : String?
+  description : String?
+  content_url : String
+  thumbnail_url : String?
+  author : @redmine.IdName
+  created_on : String
+}
+pub fn Attachment::equal(Self, Self) -> Bool
+pub fn Attachment::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Attachment::not_equal(Self, Self) -> Bool
+pub fn Attachment::to_json(Self) -> @json.Json
+pub fn Attachment::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct ByteSize(Int64)
+pub fn ByteSize::equal(Self, Self) -> Bool
+pub fn ByteSize::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ByteSize::not_equal(Self, Self) -> Bool
+pub fn ByteSize::to_int64(Self) -> Int64
+pub fn ByteSize::to_json(Self) -> @json.Json
+pub fn ByteSize::to_repr(Self) -> @debug.Repr
+pub impl @json.FromJson for ByteSize
+pub impl @json.ToJson for ByteSize
+
+// Type aliases
+
+// Traits

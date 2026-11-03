@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine-plugins/agile"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn get(@redmine.Redmine, Int32) -> AgileData raise @redmine.RedmineError
+
+pub async fn update(@redmine.Redmine, Int32, Update) -> Unit raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct AgileData {
+  id : Int32
+  issue_id : Int32
+  story_points : Int32?
+  agile_sprint_id : Int32?
+  position : Int32?
+}
+pub fn AgileData::equal(Self, Self) -> Bool
+pub fn AgileData::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AgileData::not_equal(Self, Self) -> Bool
+pub fn AgileData::to_json(Self) -> @json.Json
+pub fn AgileData::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct Update {
+  story_points : @redmine.Clearable[Int32]?
+  agile_sprint_id : @redmine.Clearable[Int32]?
+  position : @redmine.Clearable[Int32]?
+}
+pub fn Update::equal(Self, Self) -> Bool
+pub fn Update::new(story_points? : @redmine.Clearable[Int32], agile_sprint_id? : @redmine.Clearable[Int32], position? : @redmine.Clearable[Int32]) -> Self
+pub fn Update::not_equal(Self, Self) -> Bool
+pub fn Update::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,207 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmoon/tools"
+
+import {
+  "moonbitlang/async/io",
+  "moonbitlang/core/json",
+  "omochice/mcp",
+  "omochice/redmine",
+  "omochice/redmine-plugins/additional_tags",
+  "omochice/redmine-plugins/agile",
+  "omochice/redmine-plugins/issue_templates",
+  "omochice/redmine/attachments",
+  "omochice/redmine/enumerations",
+  "omochice/redmine/issues",
+  "omochice/redmine/memberships",
+  "omochice/redmine/queries",
+  "omochice/redmine/relations",
+  "omochice/redmine/search",
+  "omochice/redmine/time_entries",
+  "omochice/redmine/versions",
+  "omochice/redmine/wiki",
+  "omochice/redmoon/build",
+  "omochice/schema",
+}
+
+// Values
+pub fn[T] actions(Mode, read~ : Array[(String, @schema.Schema[T])], write~ : Array[(String, @schema.Schema[T])]) -> @schema.Schema[T]
+
+pub fn agile_tool(&AgilePort, Mode) -> @mcp.Tool
+
+pub fn attachments_tool(&AttachmentPort, &FilePort, Mode) -> @mcp.Tool
+
+pub fn date_filter() -> @schema.Schema[@issues.DateFilter]
+
+pub fn describe_crud_tool(String, Mode, full_verbs? : String) -> String
+
+pub fn enumerations_tool(&EnumerationPort) -> @mcp.Tool
+
+pub fn failure(Int32, Array[String]) -> @mcp.ToolResult
+
+pub fn failure_of(@redmine.RedmineError) -> @mcp.ToolResult
+
+pub fn issue_templates_tool(&IssueTemplatePort) -> @mcp.Tool
+
+pub fn issues_tool(&IssuePort, &FilePort, Mode) -> @mcp.Tool
+
+pub fn local_failure(Array[String]) -> @mcp.ToolResult
+
+pub fn memberships_tool(&MembershipPort) -> @mcp.Tool
+
+pub fn on_invalid(@schema.SchemaError) -> @mcp.ToolResult
+
+pub let operation_key_hint : String
+
+pub fn past_date_filter() -> @schema.Schema[@issues.PastDateFilter]
+
+pub fn project_ref() -> @schema.Schema[@redmine.ProjectRef]
+
+pub fn record_id() -> @schema.Schema[Int32]
+
+pub fn relations_tool(&RelationPort, Mode) -> @mcp.Tool
+
+pub async fn[T : @json.ToJson] respond(async () -> T raise @redmine.RedmineError) -> @mcp.ToolResult
+
+pub async fn respond_ok(async () -> Unit raise @redmine.RedmineError) -> @mcp.ToolResult
+
+pub fn search_tool(&SearchPort) -> @mcp.Tool
+
+pub fn server_info_tool(build? : @build.BuildInfo?) -> @mcp.Tool
+
+pub fn[T : @json.ToJson] success(T) -> @mcp.ToolResult
+
+pub fn success_ok() -> @mcp.ToolResult
+
+pub fn tags_tool(&TagPort, Mode) -> @mcp.Tool
+
+pub fn time_entries_tool(&TimeEntryPort, Mode) -> @mcp.Tool
+
+pub fn versions_tool(&VersionPort, Mode) -> @mcp.Tool
+
+pub fn wiki_pages_tool(&WikiPagePort, &FilePort, Mode) -> @mcp.Tool
+
+// Errors
+pub suberror FileError {
+  FileError(message~ : String)
+}
+
+// Types and methods
+pub(all) struct LocalContent {
+  filename : String
+  size : Int64
+  reader : &@io.Reader
+  close : () -> Unit
+}
+
+pub struct LocalFile {
+}
+pub fn LocalFile::new() -> Self
+pub async fn LocalFile::open(Self, String) -> LocalContent raise FileError
+pub async fn LocalFile::save(Self, String, &@io.Reader, Int64) -> String raise FileError
+pub impl FilePort for LocalFile
+
+pub(all) enum Mode {
+  Full
+  Readonly
+}
+
+// Type aliases
+
+// Traits
+pub(open) trait AgilePort {
+  async fn get_agile_data(Self, Int32) -> @agile.AgileData raise @redmine.RedmineError
+  async fn update_agile_data(Self, Int32, @agile.Update) -> Unit raise @redmine.RedmineError
+}
+pub impl AgilePort for @redmine.Redmine
+
+pub(open) trait AttachmentPort {
+  async fn show_attachment(Self, Int32) -> @attachments.Attachment raise @redmine.RedmineError
+  async fn download_attachment(Self, Int32, async (@attachments.Attachment, &@io.Reader) -> Unit) -> Unit
+  async fn upload_file(Self, &@io.Reader, Int64, String) -> String raise @redmine.RedmineError
+  async fn attach_uploads(Self, Int32, @issues.Update) -> Unit raise @redmine.RedmineError
+}
+pub impl AttachmentPort for @redmine.Redmine
+
+pub(open) trait EnumerationPort {
+  async fn list_time_entry_activities(Self) -> Array[@enumerations.Enumeration] raise @redmine.RedmineError
+  async fn list_issue_priorities(Self) -> Array[@enumerations.Enumeration] raise @redmine.RedmineError
+  async fn list_document_categories(Self) -> Array[@enumerations.Enumeration] raise @redmine.RedmineError
+}
+pub impl EnumerationPort for @redmine.Redmine
+
+pub(open) trait FilePort {
+  async fn save(Self, String, &@io.Reader, Int64) -> String raise FileError
+  async fn open(Self, String) -> LocalContent raise FileError
+}
+
+pub(open) trait IssuePort {
+  async fn list_issues(Self, @issues.ListQuery, Int32?) -> Array[@issues.Issue] raise @redmine.RedmineError
+  async fn list_saved_issues(Self, @issues.SavedQuery, Int32?) -> Array[@issues.Issue] raise @redmine.RedmineError
+  async fn list_queries(Self) -> Array[@queries.Query] raise @redmine.RedmineError
+  async fn show_issue(Self, Int32, Array[@issues.Include]) -> @issues.Issue raise @redmine.RedmineError
+  async fn create_issue(Self, @issues.Create) -> @issues.Issue raise @redmine.RedmineError
+  async fn update_issue(Self, Int32, @issues.Update) -> Unit raise @redmine.RedmineError
+  async fn delete_issue(Self, Int32) -> Unit raise @redmine.RedmineError
+  async fn update_journal(Self, Int32, String?, Bool?) -> Unit raise @redmine.RedmineError
+}
+pub impl IssuePort for @redmine.Redmine
+
+pub(open) trait IssueTemplatePort {
+  async fn list_issue_templates(Self, @redmine.ProjectRef, Int32) -> @issue_templates.Templates raise @redmine.RedmineError
+}
+pub impl IssueTemplatePort for @redmine.Redmine
+
+pub(open) trait MembershipPort {
+  async fn list_memberships(Self, @redmine.ProjectRef, Int32?) -> Array[@memberships.Membership] raise @redmine.RedmineError
+}
+pub impl MembershipPort for @redmine.Redmine
+
+pub(open) trait RelationPort {
+  async fn list_relations(Self, Int32) -> Array[@relations.Relation] raise @redmine.RedmineError
+  async fn show_relation(Self, Int32) -> @relations.Relation raise @redmine.RedmineError
+  async fn create_relation(Self, Int32, Int32, @relations.Type, Int32?) -> @relations.Relation raise @redmine.RedmineError
+  async fn delete_relation(Self, Int32) -> Unit raise @redmine.RedmineError
+}
+pub impl RelationPort for @redmine.Redmine
+
+pub(open) trait SearchPort {
+  async fn search(Self, @search.Query) -> Array[@search.Match] raise @redmine.RedmineError
+}
+pub impl SearchPort for @redmine.Redmine
+
+pub(open) trait TagPort {
+  async fn issue_tags(Self, Int32) -> Array[String] raise @redmine.RedmineError
+  async fn add_issue_tags(Self, Int32, Array[String]) -> Array[String] raise @redmine.RedmineError
+  async fn remove_issue_tags(Self, Int32, Array[String]) -> Array[String] raise @redmine.RedmineError
+  async fn list_issue_tags(Self) -> Array[@additional_tags.Tag] raise @redmine.RedmineError
+  async fn list_tagged_issues(Self, Array[String], Int32?, @issues.StatusFilter?, Int32?) -> Array[@issues.Issue] raise @redmine.RedmineError
+  async fn list_tagged_wiki_pages(Self, @redmine.ProjectRef, String) -> Array[@wiki.PageSummary] raise @redmine.RedmineError
+}
+pub impl TagPort for @redmine.Redmine
+
+pub(open) trait TimeEntryPort {
+  async fn list_time_entries(Self, @time_entries.ListQuery) -> Array[@time_entries.Entry] raise @redmine.RedmineError
+  async fn show_time_entry(Self, Int32) -> @time_entries.Entry raise @redmine.RedmineError
+  async fn create_time_entry(Self, @time_entries.Create) -> @time_entries.Entry raise @redmine.RedmineError
+  async fn update_time_entry(Self, Int32, @time_entries.Update) -> Unit raise @redmine.RedmineError
+  async fn delete_time_entry(Self, Int32) -> Unit raise @redmine.RedmineError
+}
+pub impl TimeEntryPort for @redmine.Redmine
+
+pub(open) trait VersionPort {
+  async fn list_versions(Self, @redmine.ProjectRef) -> Array[@versions.Version] raise @redmine.RedmineError
+  async fn show_version(Self, Int32) -> @versions.Version raise @redmine.RedmineError
+  async fn create_version(Self, @redmine.ProjectRef, @versions.Create) -> @versions.Version raise @redmine.RedmineError
+  async fn update_version(Self, Int32, @versions.Update) -> Unit raise @redmine.RedmineError
+  async fn delete_version(Self, Int32) -> Unit raise @redmine.RedmineError
+}
+pub impl VersionPort for @redmine.Redmine
+
+pub(open) trait WikiPagePort {
+  async fn list_wiki_pages(Self, @redmine.ProjectRef) -> Array[@wiki.PageSummary] raise @redmine.RedmineError
+  async fn show_wiki_page(Self, @redmine.ProjectRef, String, version? : Int32) -> @wiki.Page raise @redmine.RedmineError
+  async fn create_wiki_page(Self, @redmine.ProjectRef, String, String, comments? : String, parent_title? : String) -> Unit raise @redmine.RedmineError
+  async fn update_wiki_page(Self, @redmine.ProjectRef, String, String, comments? : String, version? : Int32, parent_title? : String) -> Unit raise @redmine.RedmineError
+  async fn delete_wiki_page(Self, @redmine.ProjectRef, String) -> Unit raise @redmine.RedmineError
+}
+pub impl WikiPagePort for @redmine.Redmine
