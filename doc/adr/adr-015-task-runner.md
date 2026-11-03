@@ -8,7 +8,7 @@ Accepted (refined by [ADR-027](./adr-027-release-distribution.md), whose section
 
 The repository has no task runner.
 Every command is typed in full, such as `nix develop -c moon check --deny-warn`, and each GitHub Actions job repeats the same commands in its own YAML.
-Preparing the throwaway Redmine for integration tests (enabling the REST API with `rails runner`, reading the admin key, loading default data, creating the `demo` project) is written twice, in `.github/workflows/ci.yaml` and in `docs/verification.md`.
+Preparing the throwaway Redmine for integration tests (enabling the REST API with `rails runner`, reading the admin key, loading default data, creating the `demo` project) is written twice, in `.github/workflows/ci.yaml` and in `doc/verification.md`.
 
 The commands have to run on every runner of [ADR-002](./adr-002-native-backend-and-target-platforms.md): macOS and Linux x86_64 inside the nix devShell, and Linux arm64 and Windows with the official MoonBit installer and no nix.
 On Windows there is no POSIX shell unless one is installed.
