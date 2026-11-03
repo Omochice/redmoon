@@ -51,7 +51,7 @@ pub(all) struct Credential {
 /// Looks up the API key for `endpoint`.
 ///
 /// # Raises
-/// `Message` telling the user to run `login` when no key is stored.
+/// `Message` telling the user to run `redmoon login` when no key is stored.
 pub fn resolve_api_key(
   endpoint : String,
   store : &CredentialStore,
@@ -61,7 +61,7 @@ pub fn resolve_api_key(
     Some(api_key) => { endpoint: account, api_key, }
     None =>
       raise Message(
-        "no stored API key for \{account}; run `login --endpoint \{account}` first",
+        "no stored API key for \{account}; run `redmoon login --endpoint \{account}` first",
       )
   }
 }

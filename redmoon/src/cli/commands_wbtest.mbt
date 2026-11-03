@@ -64,7 +64,7 @@ test "resolve tells the user to log in when no key is stored" {
     e =>
       inspect(
         e,
-        content="no stored API key for https://r.example.com; run `login --endpoint https://r.example.com` first",
+        content="no stored API key for https://r.example.com; run `redmoon login --endpoint https://r.example.com` first",
       )
   } noraise {
     _ => fail("a missing key was resolved")
