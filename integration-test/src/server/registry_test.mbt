@@ -33,9 +33,11 @@ async test "build_server lists every plugin tool and the write actions in full m
       @cli.AdditionalTags,
     ]),
   )
-  let names = tools.map(tool => match tool {
-    { "name": String(name), .. } => name
-    _ => ""
+  let names = tools.map(tool => {
+    match tool {
+      { "name": String(name), .. } => name
+      _ => ""
+    }
   })
   for name in ["redmine_issue_templates", "redmine_agile", "redmine_tags"] {
     assert_true(names.contains(name), msg="\{name} is not listed")
