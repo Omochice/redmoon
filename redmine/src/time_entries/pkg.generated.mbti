@@ -39,7 +39,7 @@ pub fn Create::to_repr(Self) -> @debug.Repr
 pub(all) struct CustomField {
   id : Int32
   name : String
-  value : @json.Json?
+  value : @redmine.CustomFieldValue?
 }
 pub fn CustomField::equal(Self, Self) -> Bool
 pub fn CustomField::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError

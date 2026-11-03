@@ -47,12 +47,12 @@ pub extend Issue with Eq::{equal, not_equal}
 pub extend Issue with @debug.Debug::{to_repr}
 
 ///|
-/// A custom field value attached to a time entry.
+/// A custom field as it appears on a time entry.
 #derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct CustomField {
   id : Int32
   name : String
-  value : Json?
+  value : @redmine.CustomFieldValue?
 }
 
 ///|

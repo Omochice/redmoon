@@ -75,3 +75,21 @@ test "a time entry response decodes with an issue and null comments" {
   assert_eq(entry.hours, 1.5)
   assert_eq(entry.custom_fields, None)
 }
+
+///|
+test "a time entry's custom field values decode as one string or several" {
+  let text =
+    #|{"time_entry":{"id":7,"project":{"id":1,"name":"Demo"},"user":{"id":1,"name":"Redmine Admin"},"activity":{"id":8,"name":"Design"},"hours":1.5,"spent_on":"2026-10-10","created_on":"2026-10-15T18:06:58Z","updated_on":"2026-10-15T18:06:58Z","custom_fields":[{"id":1,"name":"Billable","value":"1"},{"id":2,"name":"Tags","value":["a","b"]},{"id":3,"name":"Note","value":null}]}}
+  let json = @wire.strip_nulls(@json.parse(text))
+  let entry : Entry = @decode.decode_field(json, "time_entry") catch {
+    _ => abort("decode failed")
+  }
+  assert_eq(
+    entry.custom_fields,
+    Some([
+      { id: 1, name: "Billable", value: Some(Single("1")), },
+      { id: 2, name: "Tags", value: Some(Multiple(["a", "b"])), },
+      { id: 3, name: "Note", value: None, },
+    ]),
+  )
+}
