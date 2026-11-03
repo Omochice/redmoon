@@ -95,3 +95,39 @@ async test "a member who may create tags adds a name no issue carries yet" {
   ])
   assert_eq(redmine |> @additional_tags.tags(id), ["redmoon-probe-created"])
 }
+
+///|
+/// The SDK cannot write wiki tags, so the page is tagged by a request built here.
+/// Redmine refuses `tag_list` without the page text, so the request carries both.
+async test "a tagged wiki page is found by its tag in any case, by an administrator and by a member" {
+  let redmine = @livetest.redmine()
+  let title = "Redmoon_probe_wiki_tag_\{@async.now()}"
+  let page = ["projects", "demo", "wiki", "\{title}.json"]
+  ignore(
+    @redmine.send(redmine, Put, page, body={
+      "wiki_page": { "text": "probe", "tag_list": ["redmoon-probe-wiki"] },
+    }),
+  )
+  defer ignore(@redmine.send(redmine, Delete, page))
+  let found = redmine
+    |> @additional_tags.list_wiki_pages(
+      Identifier("demo"),
+      "REDMOON-PROBE-WIKI",
+    )
+  assert_eq(found.map(page => page.title), [title])
+  let colleague = @livetest.as_member()
+  let seen = colleague
+    |> @additional_tags.list_wiki_pages(
+      Identifier("demo"),
+      "redmoon-probe-wiki",
+    )
+  assert_eq(seen.map(page => page.title), [title])
+  assert_eq(
+    redmine
+    |> @additional_tags.list_wiki_pages(
+      Identifier("demo"),
+      "redmoon-probe-wiki-nobody",
+    ),
+    [],
+  )
+}

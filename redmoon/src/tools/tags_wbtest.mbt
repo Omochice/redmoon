@@ -2,12 +2,13 @@
 struct FakeTags {
   calls : Array[String]
   listed_issues : Array[(Array[String], Int32?, @issues.StatusFilter?, Int32?)]
+  listed_wiki_pages : Array[(@redmine.ProjectRef, String)]
   failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeTags::new(failure? : @redmine.RedmineError) -> FakeTags {
-  { calls: [], listed_issues: [], failure, }
+  { calls: [], listed_issues: [], listed_wiki_pages: [], failure, }
 }
 
 ///|
@@ -56,6 +57,24 @@ impl TagPort for FakeTags with fn list_tagged_issues(
   self.record("list_issues")
   self.listed_issues.push((names, project_id, status_id, limit))
   [fake_issue(1, "first")]
+}
+
+///|
+fn fake_wiki_page() -> @wiki.PageSummary {
+  {
+    title: "Guide",
+    version: 1,
+    created_on: "2026-11-01T00:00:00Z",
+    updated_on: "2026-11-02T00:00:00Z",
+    parent: None,
+  }
+}
+
+///|
+impl TagPort for FakeTags with fn list_tagged_wiki_pages(self, project, name) {
+  self.record("list_wiki_pages")
+  self.listed_wiki_pages.push((project, name))
+  [fake_wiki_page()]
 }
 
 ///|
@@ -127,6 +146,25 @@ async test "list_issues passes the names and the filters and answers the issues 
 }
 
 ///|
+async test "list_wiki_pages passes the project and the name and answers the pages as redmine_wiki_pages lists them" {
+  let fake = FakeTags::new()
+  let called = call_tool(tags_tools(fake), "redmine_tags", {
+    "list_wiki_pages": { "project_id": "demo", "tag": "howto" },
+  })
+  assert_eq(called.is_error, false)
+  assert_eq(called.text, "[\{fake_wiki_page().to_json().stringify()}]")
+  ignore(
+    call_tool(tags_tools(fake, mode=Readonly), "redmine_tags", {
+      "list_wiki_pages": { "project_id": 3, "tag": "Beta Tag" },
+    }),
+  )
+  assert_eq(fake.listed_wiki_pages, [
+    (Identifier("demo"), "howto"),
+    (Id(3), "Beta Tag"),
+  ])
+}
+
+///|
 async test "validation reports the exact message for each rule" {
   let tools = tags_tools(FakeTags::new())
   let cases : Array[(Json, String)] = [
@@ -171,6 +209,26 @@ async test "validation reports the exact message for each rule" {
       { "list": { "type": "issue" } },
       "invalid arguments: list.type: unknown field",
     ),
+    (
+      { "list_wiki_pages": { "tag": "howto" } },
+      "invalid arguments: list_wiki_pages.project_id: is required",
+    ),
+    (
+      { "list_wiki_pages": { "project_id": "demo" } },
+      "invalid arguments: list_wiki_pages.tag: is required",
+    ),
+    (
+      { "list_wiki_pages": { "project_id": "demo", "tag": "a,b" } },
+      "invalid arguments: list_wiki_pages.tag: must be a name without a comma and not blank",
+    ),
+    (
+      { "list_wiki_pages": { "project_id": "demo", "tag": " " } },
+      "invalid arguments: list_wiki_pages.tag: must be a name without a comma and not blank",
+    ),
+    (
+      { "list_wiki_pages": { "project_id": "demo", "tag": ["howto"] } },
+      "invalid arguments: list_wiki_pages.tag:",
+    ),
   ]
   for entry in cases {
     let called = call_tool(tools, "redmine_tags", entry.0)
@@ -194,7 +252,7 @@ async test "readonly mode makes add and remove unknown" {
     )
     assert_eq(
       called.text,
-      "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `\{action}`, one of: show, list, list_issues\"]}",
+      "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `\{action}`, one of: show, list, list_issues, list_wiki_pages\"]}",
     )
   }
   assert_eq(fake.calls, [])
@@ -241,7 +299,7 @@ async test "tools/list advertises the tags tool in full mode" {
   let listed = list_tools(tags_tools(FakeTags::new()))
   assert_eq(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_tags\",\"description\":\"Read and change the tags that the Additional Tags plugin puts on Redmine issues: `show` answers an issue's tag names, `list` answers every issue tag with the number of issues that carry it, and `list_issues` lists the issues carrying any of the given names.\\n`add` and `remove` attach and detach only the names they are given, matched in any case, and answer the issue's tag names after the write; `add` should reuse a name as `show` returns it, because a name that differs from an existing tag only in case is dropped for a user without create_issue_tags.\\nA tag name must not contain a comma, which the plugin would split into several tags.\\n`list_issues` takes `project_id`, `status_id`, and `limit` as `list` of `redmine_issues` does, lists only open issues unless `status_id` says otherwise, and answers issues of the same shape that carry no tags; `show` reads each issue's tags.\\n`list` needs a Redmine administrator and answers 403 to anyone else, who can learn the names in use from `show` on related issues.\\nNeeds the Additional Tags plugin with its issue tags switched on; reading needs the view_issue_tags permission, `add` and `remove` need edit_issue_tags, and `add` of a name no issue carries yet needs create_issue_tags.\\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"show\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"list\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issues\":{\"type\":\"object\",\"properties\":{\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"open\",\"closed\",\"*\"]}]},\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"tags\"],\"additionalProperties\":false},\"add\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1}},\"required\":[\"issue_id\",\"tags\"],\"additionalProperties\":false},\"remove\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1}},\"required\":[\"issue_id\",\"tags\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_tags\",\"description\":\"Read and change the tags that the Additional Tags plugin puts on Redmine issues, and find wiki pages by tag: `show` answers an issue's tag names, `list` answers every issue tag with the number of issues that carry it, `list_issues` lists the issues carrying any of the given names, and `list_wiki_pages` lists the wiki pages of one project carrying one name.\\n`add` and `remove` attach and detach only the names they are given, matched in any case, and answer the issue's tag names after the write; `add` should reuse a name as `show` returns it, because a name that differs from an existing tag only in case is dropped for a user without create_issue_tags.\\nA tag name must not contain a comma, which the plugin would split into several tags.\\n`list_issues` takes `project_id`, `status_id`, and `limit` as `list` of `redmine_issues` does, lists only open issues unless `status_id` says otherwise, and answers issues of the same shape that carry no tags; `show` reads each issue's tags.\\n`list` needs a Redmine administrator and answers 403 to anyone else, who can learn the names in use from `show` on related issues.\\n`list_wiki_pages` takes `project_id` and a single `tag`, and answers pages as `list` of `redmine_wiki_pages` does; a page's own tags cannot be read.\\nNeeds the Additional Tags plugin with its issue tags, and its wiki tags for `list_wiki_pages`, switched on; reading needs the view_issue_tags permission, `add` and `remove` need edit_issue_tags, and `add` of a name no issue carries yet needs create_issue_tags.\\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"show\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"list\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issues\":{\"type\":\"object\",\"properties\":{\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"open\",\"closed\",\"*\"]}]},\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"tags\"],\"additionalProperties\":false},\"list_wiki_pages\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"tag\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"}},\"required\":[\"project_id\",\"tag\"],\"additionalProperties\":false},\"add\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1}},\"required\":[\"issue_id\",\"tags\"],\"additionalProperties\":false},\"remove\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1}},\"required\":[\"issue_id\",\"tags\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
 
@@ -250,6 +308,6 @@ async test "tools/list advertises the tags tool in readonly mode without add and
   let listed = list_tools(tags_tools(FakeTags::new(), mode=Readonly))
   assert_eq(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_tags\",\"description\":\"Read the tags that the Additional Tags plugin puts on Redmine issues: `show` answers an issue's tag names, `list` answers every issue tag with the number of issues that carry it, and `list_issues` lists the issues carrying any of the given names.\\nA tag name must not contain a comma, which the plugin would split into several tags.\\n`list_issues` takes `project_id`, `status_id`, and `limit` as `list` of `redmine_issues` does, lists only open issues unless `status_id` says otherwise, and answers issues of the same shape that carry no tags; `show` reads each issue's tags.\\n`list` needs a Redmine administrator and answers 403 to anyone else, who can learn the names in use from `show` on related issues.\\nNeeds the Additional Tags plugin with its issue tags switched on and the view_issue_tags permission.\\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"show\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"list\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issues\":{\"type\":\"object\",\"properties\":{\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"open\",\"closed\",\"*\"]}]},\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"tags\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_tags\",\"description\":\"Read the tags that the Additional Tags plugin puts on Redmine issues, and find wiki pages by tag: `show` answers an issue's tag names, `list` answers every issue tag with the number of issues that carry it, `list_issues` lists the issues carrying any of the given names, and `list_wiki_pages` lists the wiki pages of one project carrying one name.\\nA tag name must not contain a comma, which the plugin would split into several tags.\\n`list_issues` takes `project_id`, `status_id`, and `limit` as `list` of `redmine_issues` does, lists only open issues unless `status_id` says otherwise, and answers issues of the same shape that carry no tags; `show` reads each issue's tags.\\n`list` needs a Redmine administrator and answers 403 to anyone else, who can learn the names in use from `show` on related issues.\\n`list_wiki_pages` takes `project_id` and a single `tag`, and answers pages as `list` of `redmine_wiki_pages` does; a page's own tags cannot be read.\\nNeeds the Additional Tags plugin with its issue tags, and its wiki tags for `list_wiki_pages`, switched on, and the view_issue_tags permission.\\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"show\":{\"type\":\"object\",\"properties\":{\"issue_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"issue_id\"],\"additionalProperties\":false},\"list\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"list_issues\":{\"type\":\"object\",\"properties\":{\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"},\"minItems\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"status_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"enum\":[\"open\",\"closed\",\"*\"]}]},\"limit\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"tags\"],\"additionalProperties\":false},\"list_wiki_pages\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"tag\":{\"type\":\"string\",\"pattern\":\"^[^,]*\\\\S[^,]*$\"}},\"required\":[\"project_id\",\"tag\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }

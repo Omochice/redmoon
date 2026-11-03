@@ -1,6 +1,6 @@
-# Additional Tags saves no tag until its issue tags are switched on, and the setting starts off.
+# Additional Tags ignores issue and wiki page tags until each kind is switched on, and both settings start off.
 # The plugin reads its settings by symbol, so a string key would be stored beside the default and never read.
-Setting.plugin_additional_tags = Setting.plugin_additional_tags.symbolize_keys.merge(active_issue_tags: "1")
+Setting.plugin_additional_tags = Setting.plugin_additional_tags.symbolize_keys.merge(active_issue_tags: "1", active_wiki_tags: "1")
 
 # The member seeded by seed-memberships.rb acts through the Developer role.
 # The role may attach existing tags but not create new ones, so the live tests can see both a saved write and one the plugin drops.

@@ -34,7 +34,7 @@ It then creates the project `demo-custom-fields` with a required string field `r
 The fields belong to that project alone because a required field in `demo` would reject every issue the other integration tests create there.
 It also saves the public issue query `Demo open issues` on `demo`, filtering open issues, through `docker/redmine/seed-queries.rb`, because Redmine offers no API to save a query.
 The default data provides only global queries, and the integration tests need a project query to show that it answers only under its own `project_id`.
-It switches on the issue tags of Additional Tags and lets the Developer role attach existing tags but not create new ones, through `docker/redmine/seed-additional-tags.rb`, because the plugin keeps tags off until its setting is changed and drops a write the user may not make.
+It switches on the issue and wiki page tags of Additional Tags and lets the Developer role attach existing tags but not create new ones, through `docker/redmine/seed-additional-tags.rb`, because the plugin keeps tags off until its setting is changed and drops a write the user may not make.
 It also adds `redmoon-tagger` to `demo` with a role that may create tags as well.
 The script prints the API keys of `redmoon-member` and `redmoon-tagger`, and the task writes them to `_build/redmine-member-api-key` and `_build/redmine-tagger-api-key`, because a dropped write, the administrator-only tag list, and the permission to create tags show only for a user who is not the admin.
 The keys go to files instead of the terminal so that no log carries them, and `_build/` is already gitignored.

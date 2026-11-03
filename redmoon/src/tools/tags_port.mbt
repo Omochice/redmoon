@@ -16,6 +16,11 @@ pub(open) trait TagPort {
     status_id : @issues.StatusFilter?,
     limit : Int32?,
   ) -> Array[@issues.Issue] raise @redmine.RedmineError
+  async fn list_tagged_wiki_pages(
+    Self,
+    project : @redmine.ProjectRef,
+    name : String,
+  ) -> Array[@wiki.PageSummary] raise @redmine.RedmineError
 }
 
 ///|
@@ -55,4 +60,13 @@ pub impl TagPort for @redmine.Redmine with fn list_tagged_issues(
   limit,
 ) {
   self |> @additional_tags.list_issues(names, project_id?, status_id?, limit?)
+}
+
+///|
+pub impl TagPort for @redmine.Redmine with fn list_tagged_wiki_pages(
+  self,
+  project,
+  name,
+) {
+  self |> @additional_tags.list_wiki_pages(project, name)
 }

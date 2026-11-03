@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/json",
   "omochice/redmine",
   "omochice/redmine/issues",
+  "omochice/redmine/wiki",
   "omochice/redmine-plugins/internal/decode",
   "omochice/redmine-plugins/internal/paging",
 }
