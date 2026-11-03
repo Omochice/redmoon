@@ -1,32 +1,15 @@
 #!/usr/bin/env bash
 # Usage: build-info.sh stamp | verify
 #
-# `stamp` overwrites the build-info source with the checkout's commit and dirty
-# flag; `verify` fails unless the committed file is in its `None` form.
+# `stamp` rewrites the `pub let build` line of the build-info source with the
+# checkout's commit and dirty flag; `verify` fails unless that line is in its
+# `None` form.
+# Only the one line is touched so that the rest of the file is owned by the
+# source alone and a comment edit there needs no change here.
 set -euo pipefail
 
 target="redmoon/src/build/info.mbt"
-
-render() {
-  local build="$1"
-  cat <<MBT
-///|
-/// The commit a binary was built from.
-#derive(ToJson)
-pub(all) struct BuildInfo {
-  commit : String
-  dirty : Bool
-}
-
-///|
-pub extend BuildInfo with ToJson::{to_json}
-
-///|
-/// The build info embedded in this binary; CI overwrites this file before a
-/// release build, so a build from source reports \`None\`.
-pub let build : BuildInfo? = ${build}
-MBT
-}
+prefix="pub let build : BuildInfo? = "
 
 case "${1:-}" in
 stamp)
@@ -36,10 +19,15 @@ stamp)
   else
     dirty=false
   fi
-  render "Some({ commit: \"${commit}\", dirty: ${dirty} })" >"$target"
+  BUILD="Some({ commit: \"${commit}\", dirty: ${dirty} })" PREFIX="$prefix" \
+    perl -pi -e 's/^\Q$ENV{PREFIX}\E.*$/$ENV{PREFIX}$ENV{BUILD}/' "$target"
+  if ! grep -Fq "${prefix}Some(" "$target"; then
+    echo "$target has no '${prefix}' line to stamp" >&2
+    exit 1
+  fi
   ;;
 verify)
-  if ! render None | diff -u - "$target"; then
+  if ! grep -Fxq "${prefix}None" "$target"; then
     echo "$target must be committed in its None form" >&2
     exit 1
   fi
