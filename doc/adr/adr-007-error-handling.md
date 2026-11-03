@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-023](./adr-023-design-evolution-from-adr-007.md))
+Accepted (refined by [ADR-023](./adr-023-design-evolution-from-adr-007.md), whose code shows the current cases of `RedmineError` with `status~ : Int32`, and by the design evolution from ADR-023)
 
 ## Context
 
