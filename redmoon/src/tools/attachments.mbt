@@ -139,9 +139,9 @@ async fn download_attachment(
     })
   catch {
     FileError(message~) => local_failure([message])
-    @redmine.Response(status~, errors~) => failure(status, errors)
-    @redmine.Decode(message~) | @redmine.Transport(message~) =>
-      local_failure([message])
+    (@redmine.Response(..) as error)
+    | (@redmine.Decode(..) as error)
+    | (@redmine.Transport(..) as error) => failure_of(error)
     other => raise other
   } noraise {
     _ => success(saved.unwrap())
