@@ -8,10 +8,10 @@ import {
 
 import {
   "moonbitlang/async",
-} for "wbtest"
+} for "test"
 
 import {
   "moonbitlang/async",
-} for "test"
+} for "wbtest"
 
 supported_targets = "+native"
