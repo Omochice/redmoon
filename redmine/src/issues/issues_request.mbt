@@ -215,19 +215,6 @@ pub fn Update::new(
 }
 
 ///|
-fn[T] @redmine.Clearable::to_member(
-  clearable : @redmine.Clearable[T]?,
-  clear~ : Json = Json::null(),
-  set~ : (T) -> Json,
-) -> Json? {
-  match clearable {
-    None => None
-    Some(Clear) => Some(clear)
-    Some(Set(value)) => Some(set(value))
-  }
-}
-
-///|
 fn UploadToken::to_json_object(self : UploadToken) -> Json {
   @wire.present_members([
     ("token", Some(Json(self.token))),

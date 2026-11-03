@@ -36,6 +36,7 @@ pub(all) enum Clearable[T] {
 }
 pub fn[T : Eq] Clearable::equal(Self[T], Self[T]) -> Bool
 pub fn[T : Eq] Clearable::not_equal(Self[T], Self[T]) -> Bool
+pub fn[T] Clearable::to_member(Self[T]?, clear? : @json.Json, set~ : (T) -> @json.Json) -> @json.Json?
 pub fn[T : @debug.Debug] Clearable::to_repr(Self[T]) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
