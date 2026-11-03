@@ -51,3 +51,9 @@ let list_limit : @schema.Field[Int32?] = @schema.optional(
   "limit",
   @schema.integer(min=1),
 )
+
+///|
+/// A local file path argument described by `description`.
+fn path_schema(description : String) -> @schema.Schema[String] {
+  @schema.not_blank().describe(description)
+}

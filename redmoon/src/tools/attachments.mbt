@@ -18,16 +18,11 @@ impl ToJson for ByteLimit with fn to_json(self) {
 }
 
 ///|
-fn attachment_path(description : String) -> @schema.Schema[String] {
-  @schema.not_blank().describe(description)
-}
-
-///|
 fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let id = @schema.required("id", record_id())
   let download_path = @schema.required(
     "path",
-    attachment_path(
+    path_schema(
       "Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.",
     ),
   )
@@ -55,7 +50,7 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let issue_id = @schema.required("issue_id", record_id())
   let path = @schema.required(
     "path",
-    attachment_path(
+    path_schema(
       "Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process.",
     ),
   )
