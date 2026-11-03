@@ -1,10 +1,10 @@
 ///|
 priv enum TimeEntryAction {
-  ListEntries(@time_entries.ListQuery)
-  ShowEntry(Int32)
-  CreateEntry(@time_entries.Create)
-  UpdateEntry(Int32, @time_entries.Update)
-  DeleteEntry(Int32)
+  List(@time_entries.ListQuery)
+  Show(Int32)
+  Create(@time_entries.Create)
+  Update(Int32, @time_entries.Update)
+  Delete(Int32)
 }
 
 ///|
@@ -26,7 +26,7 @@ let time_entry_list_input : @schema.Schema[TimeEntryAction] = {
       to.as_member(),
     ],
     v => {
-      ListEntries({
+      TimeEntryAction::List({
         project_id: v.get(project_id),
         user_id: v.get(user_id),
         spent_on: v.get(spent_on),
@@ -40,7 +40,7 @@ let time_entry_list_input : @schema.Schema[TimeEntryAction] = {
 ///|
 let time_entry_show_input : @schema.Schema[TimeEntryAction] = @schema.record(
   [time_entry_id.as_member()],
-  v => ShowEntry(v.get(time_entry_id)),
+  v => TimeEntryAction::Show(v.get(time_entry_id)),
 )
 
 ///|
@@ -88,7 +88,7 @@ let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
       time_entry_comments.as_member(),
     ],
     v => {
-      CreateEntry({
+      TimeEntryAction::Create({
         hours: v.get(hours),
         issue_id: v.get(time_entry_issue_id),
         project_id: v.get(time_entry_project_id),
@@ -117,7 +117,7 @@ let time_entry_update_input : @schema.Schema[TimeEntryAction] = {
       time_entry_comments.as_member(),
     ],
     v => {
-      UpdateEntry(v.get(time_entry_id), {
+      TimeEntryAction::Update(v.get(time_entry_id), {
         hours: v.get(hours),
         issue_id: v.get(time_entry_issue_id),
         project_id: v.get(time_entry_project_id),
@@ -132,7 +132,7 @@ let time_entry_update_input : @schema.Schema[TimeEntryAction] = {
 ///|
 let time_entry_delete_input : @schema.Schema[TimeEntryAction] = @schema.record(
   [time_entry_id.as_member()],
-  v => DeleteEntry(v.get(time_entry_id)),
+  v => TimeEntryAction::Delete(v.get(time_entry_id)),
 )
 
 ///|
@@ -157,13 +157,12 @@ pub fn time_entries_tool(port : &TimeEntryPort, mode : Mode) -> @mcp.Tool {
     input=time_entry_input(mode),
     handler=async fn(action) {
       match action {
-        ListEntries(query) => respond(() => port.list_time_entries(query))
-        ShowEntry(id) => respond(() => port.show_time_entry(id))
-        CreateEntry(time_entry) =>
-          respond(() => port.create_time_entry(time_entry))
-        UpdateEntry(id, time_entry) =>
+        List(query) => respond(() => port.list_time_entries(query))
+        Show(id) => respond(() => port.show_time_entry(id))
+        Create(time_entry) => respond(() => port.create_time_entry(time_entry))
+        Update(id, time_entry) =>
           respond_ok(() => port.update_time_entry(id, time_entry))
-        DeleteEntry(id) => respond_ok(() => port.delete_time_entry(id))
+        Delete(id) => respond_ok(() => port.delete_time_entry(id))
       }
     },
   )
