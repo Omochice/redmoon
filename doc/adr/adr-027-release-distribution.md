@@ -98,7 +98,9 @@ Tags are `vX.Y.Z` without a component name.
 `release.yaml` runs release-please on every push to `main`; it opens the release pull request from Conventional Commits, and merging that pull request creates the tag and a draft GitHub release.
 `releases_created` gates the build and publish jobs, so a push that releases nothing builds nothing there.
 
-**Rationale**: the commit history is already in Conventional Commits, and one tool both versions and tags.
+#### Rationale
+
+The commit history is already in Conventional Commits, and one tool both versions and tags.
 
 ### 2. Every module carries the release version
 
@@ -107,7 +109,9 @@ Each `moon.mod` wraps its `version` in a marker block, and wraps its `omochice/*
 Third-party imports such as `moonbitlang/async` stay outside the blocks, and release-please leaves them untouched.
 A new module needs both blocks and its own extra-file entry, alongside its `moon.work` entry; without them it stays at its first version.
 
-**Rationale**: the block form avoids the failures of Options 1 and 2.
+#### Rationale
+
+The block form avoids the failures of Options 1 and 2.
 One shared version avoids every cost of a package per module listed under Option 3.
 A module's version therefore says when it was released, not whether it changed.
 
@@ -119,7 +123,9 @@ The generated `version_json.mbt` is ignored by git; `moon check`, `moon test`, a
 A test reads the embedded file and compares it with the parsed version, so a malformed `version.json` fails CI instead of stopping a released binary at start-up.
 `version.json` stays next to the `moon.mod` versions because the embedding does not read `moon.mod`.
 
-**Rationale**: release-please updates a JSON value by path without any marker, and `:embed` needs no shell, so the rule behaves the same on every runner.
+#### Rationale
+
+release-please updates a JSON value by path without any marker, and `:embed` needs no shell, so the rule behaves the same on every runner.
 MoonBit's documentation asks for generated files to be committed because `dev_build` does not run for a package used as a dependency from the registry.
 `omochice/redmoon` is not consumed that way: `omochice/integration-test` builds it from the local tree through its `moon.work`.
 Regenerating the file on every build removes any chance of it lagging the JSON in a release pull request.
@@ -130,7 +136,9 @@ Regenerating the file on every build removes any chance of it lagging the JSON i
 Before every build in `build.yaml`, `task build-info:stamp` overwrites it with the checkout's commit and dirty flag.
 The `check` job in `ci.yaml` runs `task build-info:verify`, which fails unless the committed file is in its `None` form.
 
-**Rationale**: the information has to be compiled in, and a generated source file needs no lookup at run time.
+#### Rationale
+
+The information has to be compiled in, and a generated source file needs no lookup at run time.
 
 ### 5. Each asset is the flake package built on its own runner
 
@@ -140,7 +148,9 @@ The flake package is built with moon-nix from the locked mooncakes index, and th
 The package strips the binary and forbids references to the toolchain and the build tree, so its closure is the binary alone.
 `ci.yaml` calls the same workflow on every pull request and every push to `main`, without attaching anything to a release.
 
-**Rationale**: one build path means the asset attached to a release is the binary `nix build github:Omochice/redmoon` produces, and the smoke run of the asset also covers the Nix package.
+#### Rationale
+
+One build path means the asset attached to a release is the binary `nix build github:Omochice/redmoon` produces, and the smoke run of the asset also covers the Nix package.
 Building on pull requests surfaces a broken platform before a tag exists.
 
 ### 6. Only aarch64-darwin and x86_64-linux are built for now
@@ -149,7 +159,9 @@ moonbit-overlay publishes MoonBit only for these two platforms, so they are the 
 ADR-002 also lists `aarch64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` among the target platforms, but neither has a release asset or a CI job at the moment.
 When those two return, each needs a job that runs `moon build --target native --release` with the official installer beside the Nix jobs, and the asset path then differs from section 5.
 
-**Rationale**: the single build path of section 5 was chosen knowing that it leaves these two platforms out; dropping them for good has not been decided.
+#### Rationale
+
+The single build path of section 5 was chosen knowing that it leaves these two platforms out; dropping them for good has not been decided.
 
 ### 7. The publish job attaches the assets and publishes the draft
 
@@ -163,7 +175,9 @@ Publishing a module to mooncakes is a manual `moon publish` from its directory, 
 When a module needs to be versioned apart from redmoon, for example because it gains users outside this repository or a release cadence of its own, it moves to a repository of its own instead of receiving its own release-please package here.
 `git subtree split` carries its history over; the `vX.Y.Z` tags of its earlier versions stay in this repository, and the new repository starts tags of its own.
 
-**Rationale**: the wish for a separate version and the wish for a separate repository arise from the same cause, so one rule covers both and this repository keeps one release package.
+#### Rationale
+
+The wish for a separate version and the wish for a separate repository arise from the same cause, so one rule covers both and this repository keeps one release package.
 mooncakes resolves a module by name, and an import names no repository, so a move changes nothing for consumers beyond the `repository` field of later versions.
 A module that did not change can be left unpublished, so a gap between its published versions does no harm to a consumer.
 

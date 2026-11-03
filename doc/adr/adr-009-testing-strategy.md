@@ -20,27 +20,35 @@ We will test each module on fakes, and test the Redmine SDK and the assembled se
 
 redmoon's tools depend on traits for the Redmine operations, the credential store, and the filesystem, and each trait has a fake in the same package.
 
-**Rationale**: handlers, schemas, and CLI logic then run in `moon test` on every platform with no network, store, or files.
+#### Rationale
+
+Handlers, schemas, and CLI logic then run in `moon test` on every platform with no network, store, or files.
 
 ### 2. The Redmine SDK has integration tests gated by the environment
 
 They run when `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY` are set, and are skipped otherwise.
 `compose.yaml` and the CI seeding steps are taken from denomine-mcp.
 
-**Rationale**: request encoding and response decoding are what a fake cannot check, and running them against the same Redmine version as denomine-mcp's tests compares like with like.
+#### Rationale
+
+Request encoding and response decoding are what a fake cannot check, and running them against the same Redmine version as denomine-mcp's tests compares like with like.
 
 ### 3. The server is exercised in process with the real SDK
 
 An integration test builds the MCP server with the real Redmine client and a fake keyring holding the test key, sends JSON-RPC lines in, and checks the lines that come out.
 
-**Rationale**: this covers the whole path from a `tools/call` line to Redmine and back without adding a way to pass the key outside the keyring, which the product deliberately lacks.
+#### Rationale
+
+This covers the whole path from a `tools/call` line to Redmine and back without adding a way to pass the key outside the keyring, which the product deliberately lacks.
 
 ### 4. The keyring module is tested against the real store only on request
 
 The status mapping and the account-list parsing are plain unit tests.
 The round trip that writes, reads, lists, and deletes an entry in the OS store runs only when `REDMOON_TEST_KEYRING=1` is set, which `task test:keyring` and the macOS CI job do.
 
-**Rationale**: the C stubs are the part most likely to break, and only a real store exercises them.
+#### Rationale
+
+The C stubs are the part most likely to break, and only a real store exercises them.
 
 ## Consequences
 

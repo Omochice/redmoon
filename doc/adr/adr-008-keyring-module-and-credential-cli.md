@@ -69,7 +69,9 @@ pub fn list(service : String) -> Array[String] raise KeyringError
 
 `KeyringError` distinguishes a store that cannot be reached at all (`NoStore`) from an operation the store refused (`Refused(code)`).
 
-**Rationale**: these four are what the CLI uses; `NoStore` is separate because on Linux it means no Secret Service provider is running, which the user fixes differently from a refused write.
+#### Rationale
+
+These four are what the CLI uses; `NoStore` is separate because on Linux it means no Secret Service provider is running, which the user fixes differently from a refused write.
 
 ### 2. One backend per platform, loaded without link flags
 
@@ -79,20 +81,26 @@ pub fn list(service : String) -> Array[String] raise KeyringError
 | Linux   | Secret Service, through libsecret       | `dlopen("libsecret-1.so.0")`                                    |
 | Windows | Credential Manager, generic credentials | `CredReadW` and friends, `#pragma comment(lib, "advapi32.lib")` |
 
-**Rationale**: this is how `moonbitlang/async` loads its platform libraries, and it keeps every link requirement inside the module.
+#### Rationale
+
+This is how `moonbitlang/async` loads its platform libraries, and it keeps every link requirement inside the module.
 
 ### 3. redmoon's CLI is denomine-mcp's
 
 `serve`, `login`, `logout`, and `list` with the same options, messages, and endpoint canonicalization; the service name is `redmoon`.
 The `license` subcommand of denomine-mcp is not carried over.
 
-**Rationale**: the CLI is part of the behaviour to satisfy, and a separate service name keeps redmoon's credentials apart from denomine-mcp's on a machine that has both.
+#### Rationale
+
+The CLI is part of the behaviour to satisfy, and a separate service name keeps redmoon's credentials apart from denomine-mcp's on a machine that has both.
 
 ### 4. The hidden prompt lives in redmoon
 
 A `tty` package in `omochice/redmoon` turns off echo with `termios` on macOS and Linux and with `SetConsoleMode` on Windows, and `login` falls back to reading all of stdin when stdin is not a terminal.
 
-**Rationale**: a prompt is not part of a credential store, so it stays out of the keyring module.
+#### Rationale
+
+A prompt is not part of a credential store, so it stays out of the keyring module.
 
 ## Consequences
 

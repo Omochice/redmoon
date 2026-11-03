@@ -56,12 +56,16 @@ Each tool keeps the arguments, constraints, defaults, and description text of it
 In `--readonly` mode the write actions are left out of both the schema and the description, so a call naming one fails as `unknown action` like any other unknown key.
 `download` and a `show` that saves text to a file stay in `--readonly`, because they write only to the caller's own filesystem and change nothing in Redmine.
 
-**Rationale**: the tool list, the per-action shapes, and the descriptions are what a model sees, so keeping them is what keeps the behaviour models already relied on.
+#### Rationale
+
+The tool list, the per-action shapes, and the descriptions are what a model sees, so keeping them is what keeps the behaviour models already relied on.
 Removing a write action from the schema makes a write inexpressible rather than rejected, so a read-only server cannot be talked into one.
 
 ### 2. snake_case arguments and responses
 
-**Rationale**: denomine-mcp's `{ "list": { "projectId": 1 } }` answered with `assignedTo` becomes `{ "list": { "project_id": 1 } }` answered with `assigned_to`.
+#### Rationale
+
+denomine-mcp's `{ "list": { "projectId": 1 } }` answered with `assignedTo` becomes `{ "list": { "project_id": 1 } }` answered with `assigned_to`.
 A model reads `project_id` in a response and passes it back unchanged, and the same names hold from the Redmine wire through the SDK structs to the tool, so no layer renames anything.
 Keeping denomine-mcp's camelCase would have needed a renaming layer between the SDK and the tools in both directions.
 
@@ -81,7 +85,9 @@ Each tool's input is built with `keyed` from [ADR-003](./adr-003-typed-schema-ds
 An action spread over several shapes, such as `update_note` or a `list` of issues that takes either filters or a saved `query_id`, picks its shape by the keys it carries and is advertised as an `anyOf` inside its own property.
 `--readonly` builds the list without the write actions.
 
-**Rationale**: the top level stays a plain object, which is what the Anthropic Messages API accepts.
+#### Rationale
+
+The top level stays a plain object, which is what the Anthropic Messages API accepts.
 denomine-mcp re-keyed a discriminated union after generating its JSON Schema, which needed a conversion step and a reverse conversion of each call; building the keyed shape directly removes both, and a pruned list makes a write absent from both the schema and the parser.
 
 ### 4. Results and failures
@@ -99,7 +105,9 @@ A failure is one text content holding `{"status": <int>, "errors": [<string>]}` 
 | Redmine answered 2xx but the body was unreadable | `0`             | a message that says the server answered         |
 | Redmine was not reached                          | `0`             | the transport's message                         |
 
-**Rationale**: this is the payload denomine-mcp returns, and the `errors` array is Redmine's own validation messages, which is what lets a model correct a field.
+#### Rationale
+
+This is the payload denomine-mcp returns, and the `errors` array is Redmine's own validation messages, which is what lets a model correct a field.
 The split between an unreadable answer and an unreachable Redmine, and why both keep status `0`, is the subject of ADR-023.
 
 ### 5. `redmoon_info` replaces `denomine_mcp_info`
@@ -107,7 +115,9 @@ The split between an unreadable answer and an unreachable Redmine, and why both 
 It answers `{ "version": "<release>", "build": { "commit": "<sha>", "dirty": <bool> } }`, with `build` null when the server was built from source rather than as a release.
 Its description says it describes the MCP server, not a Redmine version.
 
-**Rationale**: the tool list is the only channel a model can query by itself, so a model can only report the build it is talking to through a tool.
+#### Rationale
+
+The tool list is the only channel a model can query by itself, so a model can only report the build it is talking to through a tool.
 
 ### 6. `redmine_memberships` supplies the ids `assigned_to_id` takes
 
@@ -119,7 +129,9 @@ The tool description states that the id to pass to `assigned_to_id` is `user.id`
 It also states that a listed principal is assignable only when one of its roles allows assignment, that a group additionally needs Redmine's "Allow issue assignment to groups" setting, and that the built-in groups cannot be assigned.
 The `assigned_to_id` descriptions of `redmine_issues` point to this tool.
 
-**Rationale**: the endpoint is gated by the `view_members` permission, which Redmine declares public and read-only, so an ordinary member can call it.
+#### Rationale
+
+The endpoint is gated by the `view_members` permission, which Redmine declares public and read-only, so an ordinary member can call it.
 `/users.json` and `/groups.json` were rejected because Redmine restricts them to administrators.
 Adding a read-only tool removes no behaviour while filling a gap that blocked a common request, and since its only action reads, `--readonly` keeps it.
 Keeping Redmine's keys means the response carries the same names as Redmine's documentation, and a model reading `group.id` passes the right number.
@@ -138,7 +150,9 @@ The rules below govern how a field and its file argument combine and how the fil
 - A file over 1 MiB or not valid UTF-8 is refused with status `0`.
 - `update_note` refuses blank (empty or whitespace only) `notes`, whether inline or from `notes_path`.
 
-**Rationale**: a path is short, and the model writes the text with tools built for files, so a long body no longer depends on JSON escaping.
+#### Rationale
+
+A path is short, and the model writes the text with tools built for files, so a long body no longer depends on JSON escaping.
 A separate argument keeps each field a plain string instead of a string-or-object `anyOf`.
 The limits stop a mistaken path from posting a binary or a log, a byte order mark would break the first line's markup, and blank notes would erase the comment, which `delete_note` exists for.
 
@@ -149,7 +163,9 @@ The text is written there with `\r\n` turned into `\n`, and the response carries
 An existing file is never replaced, as for `download`.
 Journal notes have no such argument.
 
-**Rationale**: the model can save, edit only the changed parts, and send the same file back, without writing the whole body or reading it into its context.
+#### Rationale
+
+The model can save, edit only the changed parts, and send the same file back, without writing the whole body or reading it into its context.
 Redmine stores an issue description's line breaks as `\r\n` whatever was sent, while wiki text is stored as sent; the model's edit tool matches `\n`, and since Redmine turns an issue description back into `\r\n`, the round trip leaves it unchanged.
 One path cannot say which of an issue's many journals to save, and notes are usually short.
 
@@ -157,7 +173,9 @@ One path cannot say which of an issue's many journals to save, and notes are usu
 
 The arguments are first validated whole, then each `_path` file is read into its field, and the result is parsed into the same action a call without files produces.
 
-**Rationale**: parsing is synchronous and reading a file is not, so the text cannot be read while the action is built.
+#### Rationale
+
+Parsing is synchronous and reading a file is not, so the text cannot be read while the action is built.
 Reading it beforehand keeps the actions, handlers, and SDK requests unchanged, instead of carrying paths in the actions and rebuilding each request with the text.
 Validating first reports a mistaken argument without touching the filesystem.
 
@@ -175,7 +193,9 @@ The SDK reports an attachment's size as a `ByteSize` and sets no limit of its ow
 redmoon parses `max_size` with it.
 `optional_or` advertises its default with the value's `ToJson`, which for `Int64` would be a string, so redmoon wraps the limit in a private newtype, `ByteLimit`, whose `ToJson` writes a number.
 
-**Rationale**: Redmine stores attachment sizes as a `bigint`, and an attachment that can be read could still never be downloaded while the limit stayed below 2 GiB.
+#### Rationale
+
+Redmine stores attachment sizes as a `bigint`, and an attachment that can be read could still never be downloaded while the limit stayed below 2 GiB.
 The limit is redmoon's decision rather than a size Redmine reports, so it does not reuse the SDK's `ByteSize`.
 The newtype keeps the workaround for core's `Int64` encoding inside redmoon, so `omochice/schema` gains only the integer schema and `optional_or` keeps its meaning for every other caller.
 

@@ -90,13 +90,17 @@ We will keep five modules in this repository and list them in `moon.work`.
 | `omochice/keyring` | OS credential store                                    | core only                     |
 | `omochice/redmoon` | CLI, tools, and the wiring of the above                | all of the above              |
 
-**Rationale**: the split follows what each piece knows about.
+#### Rationale
+
+The split follows what each piece knows about.
 `redmine` knows nothing of MCP and `mcp` knows nothing of Redmine, so either can be released without the other, and only `redmoon` knows both.
 `schema` is apart from `mcp` because validating a JSON value into a typed value is useful outside MCP, for example for configuration files.
 
 ### 2. The modules share the `omochice/` prefix and no project prefix
 
-**Rationale**: the names say what each SDK is for any consumer, while a `redmoon_` prefix would tie a general SDK to one application.
+#### Rationale
+
+The names say what each SDK is for any consumer, while a `redmoon_` prefix would tie a general SDK to one application.
 
 ## Consequences
 

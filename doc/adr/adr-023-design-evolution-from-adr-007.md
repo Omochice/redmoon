@@ -19,9 +19,13 @@ This ADR records the split of the decoding failures out of `Transport`, so that 
 
 ### 1. A 2xx answer that cannot be read raises `Decode`
 
-**Original Design (ADR-007)**: `Transport` is everything without an HTTP status: connection, TLS, or decoding.
+#### Original Design (ADR-007)
 
-**Revised Design**: `RedmineError` gains a third case.
+`Transport` is everything without an HTTP status: connection, TLS, or decoding.
+
+#### Revised Design
+
+`RedmineError` gains a third case.
 
 ```moonbit
 pub(all) suberror RedmineError {
@@ -35,12 +39,16 @@ pub(all) suberror RedmineError {
 `Transport` keeps the failures where no usable answer arrived: connection, TLS, an unusable endpoint, and a download's redirects.
 `omochice/redmine-plugins` decodes plugin answers the same way and raises `Decode` too.
 
-**Rationale**: whether Redmine was reached is the first thing a caller needs to know to act on a failure, and only a separate case lets a caller of the SDK match on it.
+#### Rationale
+
+Whether Redmine was reached is the first thing a caller needs to know to act on a failure, and only a separate case lets a caller of the SDK match on it.
 Adding a case to a `pub(all)` suberror breaks every exhaustive match outside the SDK; that cost is paid once, while the misleading grouping would be paid on every such failure.
 
 ### 2. `Decode` carries no HTTP status
 
-**Revised Design**: `Decode` holds a message only.
+#### Revised Design
+
+`Decode` holds a message only.
 Its message opens with `The server answered, but the response could not be read`, followed by the cause:
 
 - for a body that is not JSON, that the endpoint may point at something other than Redmine's API, such as a proxy or a login page;
@@ -48,15 +56,21 @@ Its message opens with `The server answered, but the response could not be read`
 - for a shape mismatch, the decoder's reason and the JSON path, such as ``Int::from_json: expected number at `/issues/0/id` ``;
 - for an unknown relation type, the wire value Redmine sent.
 
-**Rationale**: by the time a body is decoded, the classification of the exchange has already returned the JSON and the status is gone.
+#### Rationale
+
+By the time a body is decoded, the classification of the exchange has already returned the JSON and the status is gone.
 Threading the status through `send` and every decode call site would carry a value that is always 2xx, so the message states that the server answered instead.
 ADR-007's rule that nothing from the request leaks into an error extends to the response: the message never quotes the body, so the JSON parser's own message, which quotes a character of the body, is dropped.
 
 ### 3. redmoon maps `Decode` to `status: 0`
 
-**Original Design (ADR-007)**: `Transport(message)` maps to `status: 0` with `[message]`, and `status: 0` marks every failure that did not come from Redmine.
+#### Original Design (ADR-007)
 
-**Revised Design**: `Decode(message)` maps to `status: 0` with `[message]`, like `Transport`.
+`Transport(message)` maps to `status: 0` with `[message]`, and `status: 0` marks every failure that did not come from Redmine.
+
+#### Revised Design
+
+`Decode(message)` maps to `status: 0` with `[message]`, like `Transport`.
 
 | Error                      | `status` | `errors`    |
 | -------------------------- | -------- | ----------- |
@@ -66,7 +80,9 @@ ADR-007's rule that nothing from the request leaks into an error extends to the 
 
 `status: 0` now means that the failure has no usable HTTP error status, and the message tells whether the server answered.
 
-**Rationale**: the payload shape stays the one ADR-005 fixed, and a model already reads the message to learn what went wrong.
+#### Rationale
+
+The payload shape stays the one ADR-005 fixed, and a model already reads the message to learn what went wrong.
 Reporting the 2xx status instead of 0 would present a failure as a success code.
 
 ## Consequences

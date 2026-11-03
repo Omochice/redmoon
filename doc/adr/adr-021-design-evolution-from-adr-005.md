@@ -17,9 +17,13 @@ The model also has its own tools to write a file and to replace an exact string 
 
 ### 1. Free-text fields can be read from a local file
 
-**Original Design (ADR-005)**: a free-text field is a JSON string only.
+#### Original Design (ADR-005)
 
-**Revised Design**: each long free-text field gets a `_path` sibling naming a local file.
+A free-text field is a JSON string only.
+
+#### Revised Design
+
+Each long free-text field gets a `_path` sibling naming a local file.
 
 | Tool                 | Actions                 | Field         | File argument      |
 | -------------------- | ----------------------- | ------------- | ------------------ |
@@ -36,20 +40,28 @@ The model also has its own tools to write a file and to replace an exact string 
 
 Redmine stores an issue description's line breaks as `\r\n` whatever was sent, while wiki text is stored as sent.
 
-**Rationale**: a path is short, and the model writes the text with tools built for files.
+#### Rationale
+
+A path is short, and the model writes the text with tools built for files.
 A separate argument keeps each field a plain string instead of a string-or-object `anyOf`.
 The limits stop a mistaken path from posting a binary or a log, a byte order mark would break the first line's markup, and blank notes would erase the comment, which `delete_note` exists for.
 
 ### 2. `show` can save the text to a local file
 
-**Original Design (ADR-005)**: `show` returns every field.
+#### Original Design (ADR-005)
 
-**Revised Design**: issue `show` takes `description_path` and wiki `show` takes `text_path`.
+`show` returns every field.
+
+#### Revised Design
+
+Issue `show` takes `description_path` and wiki `show` takes `text_path`.
 The text is written there with `\r\n` turned into `\n`, and the response carries the written path under that key instead of the text.
 An existing file is never replaced, and `--readonly` keeps the argument, as for `download`.
 Journal notes have no such argument.
 
-**Rationale**: the model can save, edit only the changed parts, and send the same file back, without writing the whole body or reading it into its context.
+#### Rationale
+
+The model can save, edit only the changed parts, and send the same file back, without writing the whole body or reading it into its context.
 Its edit tool matches `\n`, and since Redmine turns an issue description back into `\r\n`, the round trip leaves it unchanged.
 One path cannot say which of an issue's many journals to save, and notes are usually short.
 
@@ -60,11 +72,17 @@ Redmine has no partial update of a text field, so redmoon would read and write b
 
 ### 4. Files are read into the arguments before they are parsed
 
-**Original Design (ADR-005)**: the arguments are parsed into the tool's action, and the handler runs it.
+#### Original Design (ADR-005)
 
-**Revised Design**: the arguments are first validated whole, then each `_path` file is read into its field, and the result is parsed into the same action a call without files produces.
+The arguments are parsed into the tool's action, and the handler runs it.
 
-**Rationale**: parsing is synchronous and reading a file is not, so the text cannot be read while the action is built.
+#### Revised Design
+
+The arguments are first validated whole, then each `_path` file is read into its field, and the result is parsed into the same action a call without files produces.
+
+#### Rationale
+
+Parsing is synchronous and reading a file is not, so the text cannot be read while the action is built.
 Reading it beforehand keeps the actions, handlers, and SDK requests unchanged, instead of carrying paths in the actions and rebuilding each request with the text.
 Validating first reports a mistaken argument without touching the filesystem.
 

@@ -93,14 +93,18 @@ Each resource has structs whose field names are Redmine's snake_case keys, deriv
 A field Redmine may omit is an `Option`, and ids and counts are `Int32`.
 Where Redmine sends a closed set of strings, such as a relation type or a version status, the type is an enum with a hand-written codec that maps the wire strings.
 
-**Rationale**: matching names let `derive` do the decoding and let redmoon encode the value back with nothing renamed ([ADR-028](./adr-028-tool-surface.md)).
+#### Rationale
+
+Matching names let `derive` do the decoding and let redmoon encode the value back with nothing renamed ([ADR-028](./adr-028-tool-surface.md)).
 
 ### 2. `null` is removed from answers before decoding
 
 Before a 2xx response is decoded, every object member whose value is `null` is removed, recursively; array elements are kept as they are.
 Request bodies are sent as they are given, so a `null` in a request reaches Redmine.
 
-**Rationale**: `derive(FromJson)` already reads a missing key as `None`, so removing `null` makes `null` and absence the same thing in one place, instead of a hand-written decoder per field or a wrapper type in every struct.
+#### Rationale
+
+`derive(FromJson)` already reads a missing key as `None`, so removing `null` makes `null` and absence the same thing in one place, instead of a hand-written decoder per field or a wrapper type in every struct.
 
 ### 3. Clearing a field is its own case in update requests
 
@@ -119,7 +123,9 @@ pub struct Update {
 `None` leaves the field out of the request, `Some(Clear)` sends `null`, and `Some(Set(v))` sends `v`.
 `Clearable` lives in the root package so that every resource, and `omochice/redmine-plugins`, gives "leave alone", "empty", and "set" the same meaning.
 
-**Rationale**: Redmine reads a `null` in an update as "clear this field", so absence and `null` mean different things on the request side, and an `Option` alone cannot carry both.
+#### Rationale
+
+Redmine reads a `null` in an update as "clear this field", so absence and `null` mean different things on the request side, and an `Option` alone cannot carry both.
 
 ### 4. One package per resource, with functions that take the client first
 
@@ -127,7 +133,9 @@ Each resource is its own package, and each operation is a function whose first p
 Helpers that consumers are not meant to depend on live in packages under `internal/`.
 The root package `omochice/redmine` holds the client, `RedmineError`, `send`, and the types shared by several resources, such as `IdName`, `ProjectRef`, and `Clearable`.
 
-**Rationale**: the package becomes the namespace, so `@issues.Parent` and `@wiki.Parent`, or `@issues.Issue` and `@time_entries.Issue`, need no prefixes, and helpers move out of the public surface into `internal`, which the compiler enforces.
+#### Rationale
+
+The package becomes the namespace, so `@issues.Parent` and `@wiki.Parent`, or `@issues.Issue` and `@time_entries.Issue`, need no prefixes, and helpers move out of the public surface into `internal`, which the compiler enforces.
 The pipe gives the method-call reading order without one type owning every operation, which is why Option 2 was not kept.
 
 ### 5. Only `send` is offered for direct use; the transport is internal
@@ -138,7 +146,9 @@ The connection, which holds the endpoint and the API key and opens HTTP clients,
 `connection` hands the connection to the SDK's own resource packages, and `unwrap` lets them turn a classified exchange into a `RedmineError` the way `send` does.
 Both take or return a type of `internal/core`, so outside the module their results cannot be used and `unwrap` cannot be called.
 
-**Rationale**: resource packages are separate packages and need the connection, while consumers see only the operations they need.
+#### Rationale
+
+Resource packages are separate packages and need the connection, while consumers see only the operations they need.
 `RedmineError` stays in the root because consumers pattern-match it, and constructors cannot be matched through an alias of an internal type, so `internal/core` classifies an exchange without naming it and the root converts the classification.
 Making `Redmine` an alias of the internal connection was rejected because the internal path would then appear in every type error and in the generated interface; with a root struct it appears only in the signatures of `connection` and `unwrap`.
 Keeping `send` public turns the one unavoidable exposure into a supported escape hatch.
@@ -149,7 +159,9 @@ Every SDK function raises `RedmineError`, whose cases are defined by [ADR-007](.
 Decoding goes through `internal/decode`, which reports a missing envelope key or a shape mismatch as `Decode` with the JSON path where it occurred.
 Attachment downloads are the one exception, described in decision 8.
 
-**Rationale**: the error type is its own decision, recorded in those ADRs; this ADR fixes only that the SDK reports every failure of its own through it.
+#### Rationale
+
+The error type is its own decision, recorded in those ADRs; this ADR fixes only that the SDK reports every failure of its own through it.
 
 ### 7. Requests follow `@omochice/redmine`
 
@@ -164,7 +176,9 @@ The following request behaviours are copied from `@omochice/redmine` as read fro
 
 Date filters are two enums, `PastDateFilter` for the fields Redmine types as `:date_past` and `DateFilter` for the fields typed as `:date`, so a forward-looking form that Redmine rejects on a `:date_past` field is not constructible for it.
 
-**Rationale**: these decide which issues a query returns, and a mistake still answers 200, so the operators are copied from the library rather than derived anew.
+#### Rationale
+
+These decide which issues a query returns, and a mistake still answers 200, so the operators are copied from the library rather than derived anew.
 
 ### 8. Attachment content streams, and the consumer's errors pass through
 
@@ -172,7 +186,9 @@ Date filters are two enums, `PastDateFilter` for the fields Redmine types as `:d
 The download's own failures are `RedmineError`, but an error raised by `consume` propagates unchanged, so the function's error type is the general `Error`.
 `upload` takes a reader and its length and returns the token that attaches the content to a record.
 
-**Rationale**: the content is never held whole in memory, so an attachment's size does not bound the process.
+#### Rationale
+
+The content is never held whole in memory, so an attachment's size does not bound the process.
 The SDK keeps the connection open only while `consume` runs, so the caller's own failures, such as an existing file or an exceeded size limit, happen inside the SDK's call and reach the caller as they were raised.
 Wrapping them in `RedmineError` was rejected because it would make them look like Redmine's.
 
@@ -183,7 +199,9 @@ Its hand-written `FromJson` reads a non-negative integer JSON number and rejects
 `Attachment` itself keeps `derive(FromJson, ToJson, Eq, Debug)`.
 The SDK reports the size as Redmine sends it and imposes no limit of its own; how large a download may be is decided by the caller.
 
-**Rationale**: a 32-bit `Int` leaves a legal Redmine state unreadable, and the failure is not confined to the large attachment but takes down every record and list that embeds it, while core's `Int64` cannot read the number Redmine sends.
+#### Rationale
+
+A 32-bit `Int` leaves a legal Redmine state unreadable, and the failure is not confined to the large attachment but takes down every record and list that embeds it, while core's `Int64` cannot read the number Redmine sends.
 A hand-written codec for the whole of `Attachment` was weighed against the wrapper type.
 The wrapper confines the custom code to the one field that needs it, so a field added to `Attachment` later needs no codec change.
 2^53 bytes is far beyond any attachment Redmine can store in practice, and once core's `Int64` reads and writes JSON numbers, `ByteSize` can give way to a plain `Int64` field.
@@ -192,7 +210,9 @@ The wrapper confines the custom code to the one field that needs it, so a field 
 
 The resource packages cover issues, journals, wiki pages, versions, issue relations, search, time entries, enumerations, attachments and uploads, project memberships ([ADR-028](./adr-028-tool-surface.md)), and saved issue queries.
 
-**Rationale**: these are the endpoints with a user; the other resources of the REST API are added when something uses them, and `send` reaches them until then.
+#### Rationale
+
+These are the endpoints with a user; the other resources of the REST API are added when something uses them, and `send` reaches them until then.
 
 ## Consequences
 

@@ -15,9 +15,13 @@ This ADR records that the release build now goes through the flake package, so t
 
 ### 1. Release jobs build the flake package
 
-**Original Design (ADR-010)**: each job runs `moon build --target native --release` and uploads the renamed executable from `_build/native/release/build/<package path>/<name>.exe`.
+#### Original Design (ADR-010)
 
-**Revised Design**: each job runs `task build`, which builds the flake package and links the result at `_build/redmoon`; the workflow stages `_build/redmoon/bin/redmoon` under the asset name.
+Each job runs `moon build --target native --release` and uploads the renamed executable from `_build/native/release/build/<package path>/<name>.exe`.
+
+#### Revised Design
+
+Each job runs `task build`, which builds the flake package and links the result at `_build/redmoon`; the workflow stages `_build/redmoon/bin/redmoon` under the asset name.
 
 ```yaml
 build:
@@ -28,7 +32,9 @@ build:
 
 The build-info source is still stamped before the build, and the flake source includes the stamped file because it is tracked by git.
 
-**Rationale**: one build path means the asset attached to a release is the binary `nix build github:Omochice/redmoon` produces, and the CI job that smoke-runs the asset also covers the Nix package.
+#### Rationale
+
+One build path means the asset attached to a release is the binary `nix build github:Omochice/redmoon` produces, and the CI job that smoke-runs the asset also covers the Nix package.
 
 ## Consequences
 

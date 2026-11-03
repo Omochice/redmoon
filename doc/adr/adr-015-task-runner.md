@@ -72,13 +72,17 @@ We will define the project's commands as Task tasks in a `Taskfile.yaml` at the 
 
 Checking, testing, formatting, the release build, stamping and verifying the build information, and preparing the throwaway Redmine for integration tests.
 
-**Rationale**: these are the commands that already appear in more than one place, so they are where a single definition removes drift.
+#### Rationale
+
+These are the commands that already appear in more than one place, so they are where a single definition removes drift.
 
 ### 2. CI installs Task where nix is not available
 
 The nix jobs get `task` from the devShell; the Windows and Linux arm64 jobs install the same version with a pinned setup action.
 
-**Rationale**: the shell interpreter built into Task is what makes one command line work on Windows, so every runner has to run the commands through Task rather than through its own shell.
+#### Rationale
+
+The shell interpreter built into Task is what makes one command line work on Windows, so every runner has to run the commands through Task rather than through its own shell.
 
 ## Consequences
 

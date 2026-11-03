@@ -18,22 +18,32 @@ The `#skip` attribute keeps a test out of every run except one with `--include-s
 
 ### 1. The integration tests live in their own module
 
-**Original Design (ADR-009)**: the SDK's integration tests run when the variables are set and are skipped otherwise, and the server is exercised in process from its own package.
+#### Original Design (ADR-009)
 
-**Revised Design**: every test that needs a real Redmine lives in `integration-test/`, a module named `omochice/integration-test` that the root `moon.work` does not list.
+The SDK's integration tests run when the variables are set and are skipped otherwise, and the server is exercised in process from its own package.
+
+#### Revised Design
+
+Every test that needs a real Redmine lives in `integration-test/`, a module named `omochice/integration-test` that the root `moon.work` does not list.
 The module has its own `moon.work`, which lists itself and every root member, so `task test:integration` runs `moon test` there and covers the unit tests together with the integration tests.
 Its shared helper fails the test, naming the missing variable, when either variable is unset.
 The `live:` prefix is dropped, because the module already says that its tests need Redmine.
 
-**Rationale**: a module the root workspace does not list is never compiled by a plain `moon test`, so its tests can fail on a missing variable without turning a run on a machine without Redmine red.
+#### Rationale
+
+A module the root workspace does not list is never compiled by a plain `moon test`, so its tests can fail on a missing variable without turning a run on a machine without Redmine red.
 A failure cannot be mistaken for a pass, which an early return could.
 Living in another module also limits the tests to the public API that a consumer sees, which the compiler enforces.
 
 ### 2. The coverage report is written from the repository root
 
-**Revised Design**: `task test:integration:coverage` runs the tests in `integration-test/` and then writes the Cobertura report from the repository root.
+#### Revised Design
 
-**Rationale**: `moon coverage report` names a file relative to the directory it runs in and falls back to an absolute path for a file outside it, so a report written inside the module would name every file of the other modules by absolute path and break octocov's comparison with earlier runs.
+`task test:integration:coverage` runs the tests in `integration-test/` and then writes the Cobertura report from the repository root.
+
+#### Rationale
+
+`moon coverage report` names a file relative to the directory it runs in and falls back to an absolute path for a file outside it, so a report written inside the module would name every file of the other modules by absolute path and break octocov's comparison with earlier runs.
 
 ## Consequences
 
