@@ -79,7 +79,7 @@ jobs:
       - name: Enable the REST API and seed the project under test
         run: nix develop --command task redmine:seed
 
-      - name: Mask the admin and member API keys
+      - name: Mask the API keys of the admin, member, and tagger
         run: |
           echo "::add-mask::$(cat _build/redmine-api-key)"
           echo "::add-mask::$(cat _build/redmine-member-api-key)"
