@@ -19,17 +19,6 @@ pub fn[T] Schema::parse(self : Schema[T], input : Json) -> T raise SchemaError {
 }
 
 ///|
-/// Like `parse`, with `path` prepended to every reported path, so a caller can
-/// name the action the value belongs to.
-pub fn[T] Schema::parse_at(
-  self : Schema[T],
-  input : Json,
-  path : Array[String],
-) -> T raise SchemaError {
-  (self.decode)(input, path)
-}
-
-///|
 /// Adds a `description` to the emitted schema.
 pub fn[T] Schema::describe(self : Schema[T], text : String) -> Schema[T] {
   {

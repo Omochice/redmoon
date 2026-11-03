@@ -27,7 +27,7 @@ let anything : Schema[Unit] = {
 
 ///|
 fn[T] outcome_at(schema : Schema[T], input : String) -> String {
-  try schema.parse_at(j(input), ["act"]) catch {
+  try (schema.decode)(j(input), ["act"]) catch {
     e => "error: " + e.message()
   } noraise {
     _ => "ok"

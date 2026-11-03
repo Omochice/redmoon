@@ -178,14 +178,3 @@ test "describe twice keeps the last description" {
     "{\"type\":\"string\",\"description\":\"The name\"}",
   )
 }
-
-///|
-test "parse_at prefixes the path" {
-  let s = integer(min=1)
-  let result = try s.parse_at(j("0"), ["create", "id"]) catch {
-    e => e.message()
-  } noraise {
-    _ => "ok"
-  }
-  assert_eq(result, "create.id: must be at least 1")
-}

@@ -79,7 +79,7 @@ test "by_key without otherwise names the keys when none is present" {
     outcome(lookup, "{}"),
     "error: expected one of the keys `id` and `name`",
   )
-  let result = try lookup.parse_at(j("{}"), ["act"]) catch {
+  let result = try (lookup.decode)(j("{}"), ["act"]) catch {
     e => e.message()
   } noraise {
     _ => "ok"

@@ -93,7 +93,7 @@ test "union errors carry the caller's path" {
   let id = @schema.required("id", integer())
   let s = @schema.record([id.as_member()], v => v.get(id))
   let u = union([s, s])
-  let result = try u.parse_at(j("{}"), ["act"]) catch {
+  let result = try (u.decode)(j("{}"), ["act"]) catch {
     e => e.message()
   } noraise {
     _ => "ok"

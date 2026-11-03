@@ -134,7 +134,7 @@ test "keyed reports the errors of the shape an action selects" {
 
 ///|
 test "keyed can be nested under a caller's path" {
-  let result = try tool.parse_at(j("{\"show\":{}}"), ["tool"]) catch {
+  let result = try (tool.decode)(j("{\"show\":{}}"), ["tool"]) catch {
     e => e.message()
   } noraise {
     _ => "ok"

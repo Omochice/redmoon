@@ -67,7 +67,6 @@ pub fn[T] Schema::allow_one(Self[T], Array[Member]) -> Self[T]
 pub fn[T] Schema::describe(Self[T], String) -> Self[T]
 pub fn[A, B] Schema::map(Self[A], (A) -> B) -> Self[B]
 pub fn[T] Schema::parse(Self[T], @json.Json) -> T raise SchemaError
-pub fn[T] Schema::parse_at(Self[T], @json.Json, Array[String]) -> T raise SchemaError
 pub fn[T] Schema::refine(Self[T], (T) -> Bool, String, keywords? : Array[(String, @json.Json)]) -> Self[T]
 pub fn[T] Schema::require_any(Self[T], Array[Member]) -> Self[T]
 pub fn[T] Schema::require_one(Self[T], Array[Member]) -> Self[T]

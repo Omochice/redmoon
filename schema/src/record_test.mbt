@@ -159,7 +159,7 @@ test "record reports every failing member, but unknown keys alone" {
 ///|
 test "record errors are prefixed by the caller's path" {
   let result = try
-    version_record.parse_at(j("{\"extra\":1}"), ["create"])
+    (version_record.decode)(j("{\"extra\":1}"), ["create"])
   catch {
     e => e.message()
   } noraise {
