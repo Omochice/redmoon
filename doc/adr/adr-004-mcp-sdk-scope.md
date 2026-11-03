@@ -29,31 +29,31 @@ No MoonBit MCP SDK was adopted; [ADR-001](./adr-001-five-module-moonbit-workspac
 
 ### Option 1: Legacy only, `2025-11-25`
 
-**Pros:**
+#### Pros
 
 - One lifecycle, identical to what denomine-mcp speaks.
 
-**Cons:**
+#### Cons
 
 - A modern-only client cannot use the server, and the SDK is outdated on release.
 
 ### Option 2: Modern only, `2026-07-28`
 
-**Pros:**
+#### Pros
 
 - No session state at all.
 
-**Cons:**
+#### Cons
 
 - Every legacy client fails at `initialize`, with no fallback on its side.
 
 ### Option 3: Dual-era (chosen)
 
-**Pros:**
+#### Pros
 
 - Both kinds of client work, and the modern path follows the current revision.
 
-**Cons:**
+#### Cons
 
 - Two ways of establishing the protocol version in one server.
 
@@ -70,7 +70,9 @@ We will implement `omochice/mcp` as a dual-era server that offers tools over std
 
 The supported versions are one constant list.
 
-**Rationale**: the tools subset redmoon uses — `tools/list`, `tools/call`, and text content — reads the same in every listed revision, so accepting the older ones costs nothing and keeps older clients working.
+#### Rationale
+
+The tools subset redmoon uses — `tools/list`, `tools/call`, and text content — reads the same in every listed revision, so accepting the older ones costs nothing and keeps older clients working.
 
 ### 2. How each request finds its era
 
@@ -85,7 +87,9 @@ The supported versions are one constant list.
 
 `server/discover` answers with `supportedVersions`, `capabilities: { tools: {} }`, and `serverInfo`.
 
-**Rationale**: the specification has a dual-era server pick its behaviour from how the client opens, so a legacy client is recognized by its `initialize` and a modern one by its `_meta`, and neither is asked to change.
+#### Rationale
+
+The specification has a dual-era server pick its behaviour from how the client opens, so a legacy client is recognized by its `initialize` and a modern one by its `_meta`, and neither is asked to change.
 
 ### 3. Tools
 
@@ -102,7 +106,9 @@ pub fn[T] tool(
 A call to an unknown tool is a JSON-RPC error `-32602`.
 An argument that fails validation, and any failure inside a handler, is a tool result with `isError: true`.
 
-**Rationale**: the specification separates protocol errors, which a model can rarely fix, from tool execution errors, which carry feedback it can act on.
+#### Rationale
+
+The specification separates protocol errors, which a model can rarely fix, from tool execution errors, which carry feedback it can act on.
 denomine-mcp answered an unknown tool as a tool result; redmoon follows the specification instead, because a well-behaved client never sends a name it was not given.
 
 ### 4. Concurrency, cancellation, and shutdown
@@ -111,13 +117,17 @@ Each request runs in its own task in one `moonbitlang/async` task group, and wri
 `notifications/cancelled` cancels the task for that request id, and no response is written for it.
 End of stdin ends the server once in-flight requests have finished.
 
-**Rationale**: the specification has a server stop a cancelled request and send nothing more for it, which needs the request to be its own task; a server run one request at a time could only ignore the notification.
+#### Rationale
+
+The specification has a server stop a cancelled request and send nothing more for it, which needs the request to be its own task; a server run one request at a time could only ignore the notification.
 
 ### 5. Only protocol output on stdout
 
 The SDK writes protocol messages to stdout and nothing else, and diagnostics go to stderr.
 
-**Rationale**: a single stray line on stdout is read by the client as a malformed message.
+#### Rationale
+
+A single stray line on stdout is read by the client as a malformed message.
 
 ## Consequences
 

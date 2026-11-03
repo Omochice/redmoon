@@ -38,21 +38,21 @@ omochice/redmoon
 └── ...
 ```
 
-**Pros:**
+#### Pros
 
 - One version, one manifest, one release.
 
-**Cons:**
+#### Cons
 
 - A program that only needs the keyring depends on all of redmoon, and every SDK is versioned with the application.
 
 ### Option 2: One repository per module
 
-**Pros:**
+#### Pros
 
 - Each SDK has its own history and issue tracker.
 
-**Cons:**
+#### Cons
 
 - A change across an SDK and the application needs coordinated releases before it can be tested together.
 
@@ -68,11 +68,11 @@ redmoon/            (this repository)
 └── redmoon/        module omochice/redmoon
 ```
 
-**Pros:**
+#### Pros
 
 - Each SDK is published and versioned on its own, yet a cross-module change is one commit.
 
-**Cons:**
+#### Cons
 
 - Five manifests, and a dependency between members has to be kept in step with what is published.
 
@@ -90,13 +90,17 @@ We will keep five modules in this repository and list them in `moon.work`.
 | `omochice/keyring` | OS credential store                                    | core only                     |
 | `omochice/redmoon` | CLI, tools, and the wiring of the above                | all of the above              |
 
-**Rationale**: the split follows what each piece knows about.
+#### Rationale
+
+The split follows what each piece knows about.
 `redmine` knows nothing of MCP and `mcp` knows nothing of Redmine, so either can be released without the other, and only `redmoon` knows both.
 `schema` is apart from `mcp` because validating a JSON value into a typed value is useful outside MCP, for example for configuration files.
 
 ### 2. The modules share the `omochice/` prefix and no project prefix
 
-**Rationale**: the names say what each SDK is for any consumer, while a `redmoon_` prefix would tie a general SDK to one application.
+#### Rationale
+
+The names say what each SDK is for any consumer, while a `redmoon_` prefix would tie a general SDK to one application.
 
 ## Consequences
 

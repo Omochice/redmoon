@@ -30,9 +30,13 @@ This ADR records how decision 2 changed; decisions 1 and 3 of ADR-003 still hold
 
 ### 1. Object members are named typed handles read by a builder
 
-**Original Design (ADR-003)**: an `Obj[F]` holds a curried constructor, `field` and `optional` each fix one parameter, and `Obj::done` produces the strict object schema.
+#### Original Design (ADR-003)
 
-**Revised Design**: each member is declared once as a `Field[T]`, and an object is a list of members plus a function that reads the members by handle.
+An `Obj[F]` holds a curried constructor, `field` and `optional` each fix one parameter, and `Obj::done` produces the strict object schema.
+
+#### Revised Design
+
+Each member is declared once as a `Field[T]`, and an object is a list of members plus a function that reads the members by handle.
 
 ```moonbit
 let project_id : Field[Int] = @schema.required("project_id", record_id())
@@ -52,7 +56,9 @@ let version_create : Schema[VersionCreate] = @schema.record(
 `required` gives `Field[T]`, `optional` gives `Field[T?]` that is `None` when the member is absent, and `optional_or` gives `Field[T]` with a default it also advertises.
 `record` emits `properties`, `required`, and `additionalProperties: false` from the member list, rejects unknown keys, validates every member and collects all their errors before calling the builder, and then lets the builder read each value with `Values::get`, which raises `SchemaError` only for a handle that was not listed.
 
-**Rationale**: the builder is a flat sequence of reads, so formatting cost no longer depends on the number of fields; a 20-field record formats in 0.008 s.
+#### Rationale
+
+The builder is a flat sequence of reads, so formatting cost no longer depends on the number of fields; a 20-field record formats in 0.008 s.
 Each value is read through the handle that names it, so the compiler ties `values.get(project_id)` to `Int` and a read of the wrong member is visible in the source, which removes ADR-003's position-based swap.
 A prototype of exactly this API compiled with moonc v0.10.15 and produced the same JSON Schema and error messages as the curried form:
 
@@ -65,11 +71,17 @@ error: create.extra: unknown field
 
 ### 2. The curried builder is removed
 
-**Original Design (ADR-003)**: `object`, `field`, `optional`, `optional_or`, and `Obj::done` are the only way to build an object schema.
+#### Original Design (ADR-003)
 
-**Revised Design**: those functions are removed once every tool has moved to `record`.
+`object`, `field`, `optional`, `optional_or`, and `Obj::done` are the only way to build an object schema.
 
-**Rationale**: keeping both would give the module two ways to build the same thing, and the curried one would remain a trap for any object with more than about a dozen fields.
+#### Revised Design
+
+Those functions are removed once every tool has moved to `record`.
+
+#### Rationale
+
+Keeping both would give the module two ways to build the same thing, and the curried one would remain a trap for any object with more than about a dozen fields.
 
 ## Consequences
 

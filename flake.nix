@@ -63,6 +63,7 @@
               MD004.style = "dash";
               MD007.indent = 4;
               MD007.style = "fixed";
+              MD036.punctuation = "";
               MD041.enabled = false;
               MD049.style = "underscore";
               MD050.style = "asterisk";
@@ -94,7 +95,7 @@
                 "moon.pkg"
               ];
             };
-            settings.formatter.rumdl-format.options = [
+            settings.formatter.rumdl-check.options = [
               "--config"
               (toString rumdlConfig)
             ];
@@ -102,7 +103,7 @@
               # keep-sorted start block=yes
               keep-sorted.enable = true;
               nixfmt.enable = true;
-              rumdl-format.enable = true;
+              rumdl-check.enable = true;
               toml-sort.enable = true;
               yamlfmt = {
                 enable = true;

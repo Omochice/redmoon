@@ -21,9 +21,13 @@ This ADR records the departure from strict parity with denomine-mcp so that the 
 
 ### 1. A `redmine_memberships` tool beyond denomine-mcp's surface
 
-**Original Design (ADR-005)**: the tool list is exactly that of denomine-mcp.
+#### Original Design (ADR-005)
 
-**Revised Design**: one tool is added.
+The tool list is exactly that of denomine-mcp.
+
+#### Revised Design
+
+One tool is added.
 
 | Tool                  | Actions | Write actions |
 | --------------------- | ------- | ------------- |
@@ -35,7 +39,9 @@ The tool description states that the id to pass to `assigned_to_id` is `user.id`
 It also states that a listed principal is assignable only when one of its roles allows assignment, that a group additionally needs Redmine's "Allow issue assignment to groups" setting, and that the built-in groups cannot be assigned.
 The `assigned_to_id` descriptions of `redmine_issues` point to this tool.
 
-**Rationale**: parity was chosen to keep the behaviour models already relied on, and adding a read-only tool removes no behaviour while filling a gap that blocked a common request.
+#### Rationale
+
+Parity was chosen to keep the behaviour models already relied on, and adding a read-only tool removes no behaviour while filling a gap that blocked a common request.
 Keeping Redmine's keys means the response carries the same names as Redmine's documentation, and a model reading `group.id` passes the right number.
 The membership `id` is the first number a model sees, so the description has to rule it out explicitly.
 

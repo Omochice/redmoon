@@ -32,31 +32,31 @@ denomine-mcp ships macOS (Apple silicon and Intel), Linux (x86_64 and arm64), an
 
 ### Option 1: JavaScript backend on Node.js
 
-**Pros:**
+#### Pros
 
 - Runs wherever Node.js does, including Intel macOS.
 
-**Cons:**
+#### Cons
 
 - The user needs Node.js, and the OS credential store is out of reach without a native addon.
 
 ### Option 2: Native backend, macOS and Linux only
 
-**Pros:**
+#### Pros
 
 - Every build runs in the nix devShell.
 
-**Cons:**
+#### Cons
 
 - Windows users, who denomine-mcp serves, are left out.
 
 ### Option 3: Native backend on all three operating systems (chosen)
 
-**Pros:**
+#### Pros
 
 - One executable per platform, with direct access to the OS credential store.
 
-**Cons:**
+#### Cons
 
 - The Windows build cannot use nix.
 
@@ -76,13 +76,17 @@ We will build redmoon with the native backend on `moonbitlang/async` and distrib
 The flake applies `moonbit-overlay.overlays.default` and puts `pkgs.moonbit-bin.latest` in the devShell, pinned by `flake.lock`.
 The two runners without nix install the same version by setting `MOONBIT_INSTALL_VERSION` for the official installer.
 
-**Rationale**: nix pins the compiler where it can, and the installer's version variable is the only way to match that pin where nix cannot run.
+#### Rationale
+
+Nix pins the compiler where it can, and the installer's version variable is the only way to match that pin where nix cannot run.
 
 ### 2. Platform libraries are loaded the way `moonbitlang/async` loads them
 
 Code that calls a platform library uses `dlopen` on macOS and Linux and `#pragma comment(lib, ...)` on Windows, rather than link flags in `moon.pkg`.
 
-**Rationale**: a probe showed that `cc-link-flags` such as `-framework Security` take effect only in the executable package, not in the library that needs them, and `moon.pkg` gives no per-OS switch.
+#### Rationale
+
+A probe showed that `cc-link-flags` such as `-framework Security` take effect only in the executable package, not in the library that needs them, and `moon.pkg` gives no per-OS switch.
 Following `moonbitlang/async` keeps every library self-contained, and a consumer of an SDK adds nothing to its own build.
 
 ## Consequences

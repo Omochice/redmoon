@@ -20,9 +20,13 @@ This ADR records how the SDK and the tool now handle sizes above 2 GiB, so that 
 
 ### 1. Attachment sizes are a `ByteSize` with its own number codec
 
-**Original Design (ADR-012)**: `Attachment.filesize` is `Int` (32-bit), read from Redmine's JSON number by the derived decoder, and written back as a number.
+#### Original Design (ADR-012)
 
-**Revised Design**: `Attachment.filesize` is a `ByteSize`, a newtype over `Int64` in the attachments package.
+`Attachment.filesize` is `Int` (32-bit), read from Redmine's JSON number by the derived decoder, and written back as a number.
+
+#### Revised Design
+
+`Attachment.filesize` is a `ByteSize`, a newtype over `Int64` in the attachments package.
 `ByteSize` has a hand-written `FromJson` that reads a non-negative integer JSON number and rejects a string, a fraction, or a negative value, and a `ToJson` that writes `Json::number(self.0.to_double())`.
 `Attachment` keeps `derive(FromJson, ToJson, Eq, Debug)`.
 
@@ -34,16 +38,22 @@ pub fn ByteSize::to_int64(self : ByteSize) -> Int64
 
 The SDK reports the size as Redmine sends it and imposes no limit of its own; how large a download may be is still decided by the caller.
 
-**Rationale**: waiting for core leaves a legal Redmine state unreadable, and the failure is not confined to the large attachment itself but takes down every record and list that embeds it.
+#### Rationale
+
+Waiting for core leaves a legal Redmine state unreadable, and the failure is not confined to the large attachment itself but takes down every record and list that embeds it.
 A hand-written codec for the whole of `Attachment` was weighed against the wrapper type.
 The wrapper confines the custom code to the one field that needs it, so `Attachment` stays derived like every other SDK type, and a field added to it later needs no codec change.
 The price is that a caller reads the byte count through `to_int64()` instead of the field itself.
 
 ### 2. The download limit `max_size` is `Int64`
 
-**Original Design (ADR-012)**: `max_size` is not named; the tool parsed it with `@schema.integer`, an `Int32`, with a 500 MiB default.
+#### Original Design (ADR-012)
 
-**Revised Design**: `omochice/schema` gains `integer64(min?, max?) -> Schema[Int64]`, which reads a JSON number, advertises `"type": "integer"`, and writes its bounds as numbers.
+`max_size` is not named; the tool parsed it with `@schema.integer`, an `Int32`, with a 500 MiB default.
+
+#### Revised Design
+
+`omochice/schema` gains `integer64(min?, max?) -> Schema[Int64]`, which reads a JSON number, advertises `"type": "integer"`, and writes its bounds as numbers.
 The tool parses `max_size` with it and keeps the 500 MiB default.
 `optional_or` advertises its default with the value's `ToJson`, which for `Int64` would be a string, so redmoon wraps the limit in a private newtype whose `ToJson` writes a number.
 
@@ -55,7 +65,9 @@ impl ToJson for ByteLimit with fn to_json(self) {
 }
 ```
 
-**Rationale**: an attachment that can now be read could still never be downloaded while the limit stayed below 2 GiB.
+#### Rationale
+
+An attachment that can now be read could still never be downloaded while the limit stayed below 2 GiB.
 The limit is redmoon's decision rather than a size Redmine reports, so it does not reuse the SDK's `ByteSize`.
 The newtype keeps the workaround for core's `Int64` encoding inside redmoon, so `omochice/schema` gains only the integer schema and `optional_or` keeps its meaning for every other caller.
 

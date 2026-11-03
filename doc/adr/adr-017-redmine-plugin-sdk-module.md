@@ -46,11 +46,11 @@ It can use the public `@redmine.send`, `RedmineError`, and `ProjectRef`, which A
 redmine/src/issue_templates/
 ```
 
-**Pros:**
+#### Pros
 
 - Reuses `internal/decode` and `internal/livetest` as they are.
 
-**Cons:**
+#### Cons
 
 - The SDK of Redmine itself would describe an API that most Redmine instances do not serve, and its version would move with a plugin.
 
@@ -61,11 +61,11 @@ redmine_issue_templates/   module omochice/redmine_issue_templates
 redmine_<next_plugin>/     module omochice/redmine_<next_plugin>
 ```
 
-**Pros:**
+#### Pros
 
 - Each plugin's SDK is versioned with the plugin it follows.
 
-**Cons:**
+#### Cons
 
 - A manifest, a `moon.work` entry, and a copy of the decode and live-test helpers per plugin.
 
@@ -78,12 +78,12 @@ redmine-plugins/           module omochice/redmine-plugins
     └── internal/          decode and live-test helpers shared by the plugin packages
 ```
 
-**Pros:**
+#### Pros
 
 - Plugin code stays out of the Redmine SDK, and a consumer imports only the packages of the plugins it uses.
 - The helpers that cannot be imported from `omochice/redmine` are written once for every plugin.
 
-**Cons:**
+#### Cons
 
 - Every plugin package shares one version, so a breaking change for one plugin is a breaking change of the module.
 
@@ -93,9 +93,11 @@ We will add a sixth workspace module, `omochice/redmine-plugins`, with one packa
 
 ### 1. A module of its own, built on `@redmine.send`
 
-**Change from**: five modules in `moon.work`.
+#### Change from
 
-**Change to**:
+Five modules in `moon.work`.
+
+#### Change to
 
 ```text
 members = ["./keyring", "./mcp", "./redmine", "./redmine-plugins", "./redmoon", "./schema"]
@@ -104,7 +106,9 @@ members = ["./keyring", "./mcp", "./redmine", "./redmine-plugins", "./redmoon", 
 `omochice/redmine-plugins` depends on `omochice/redmine` and `moonbitlang/async`, and its packages call `@redmine.send`.
 It keeps its own `internal/decode` and `internal/livetest`, which repeat the corresponding helpers of `omochice/redmine`.
 
-**Rationale**: the split follows the drivers above, and the module boundary is the one the compiler already enforces, so the plugin code reaches Redmine only through the API that ADR-016 published for this purpose.
+#### Rationale
+
+The split follows the drivers above, and the module boundary is the one the compiler already enforces, so the plugin code reaches Redmine only through the API that ADR-016 published for this purpose.
 Widening `omochice/redmine`'s public surface to share its helpers was rejected because ADR-016 moved them into `internal/` so that consumers cannot depend on them.
 The umbrella module was chosen over one module per plugin because the helpers are the same for every plugin and one shared version is acceptable while there is one plugin.
 
@@ -120,7 +124,9 @@ pub(all) struct Templates {
 }
 ```
 
-**Rationale**: it is the only listing that accepts an API key and answers on every project and on both the latest tag and the current master, and it already includes the global templates.
+#### Rationale
+
+It is the only listing that accepts an API key and answers on every project and on both the latest tag and the current master, and it already includes the global templates.
 The project index was the first choice because it lists every tracker in one request, and it was rejected because it cannot answer at all on v1.2.2 and fails on any project that inherits templates on master.
 A tracker is known whenever an issue is about to be created, so asking for one costs a caller nothing it does not already have.
 The types carry no `tracker_name`, because its type differs between template kinds in this response and `tracker_id` already names the tracker.
@@ -129,13 +135,17 @@ Global templates get their own type because they lack three fields, and folding 
 
 ### 3. `redmine_issue_templates`, enabled by `serve --plugin` and read-only
 
-**Change from**: every tool is registered for every endpoint.
+#### Change from
+
+Every tool is registered for every endpoint.
 
 ```json
 "args": ["serve", "--endpoint", "https://redmine.example.com"]
 ```
 
-**Change to**: a plugin's tools are registered only for the plugins named by a repeatable `--plugin` option.
+#### Change to
+
+A plugin's tools are registered only for the plugins named by a repeatable `--plugin` option.
 
 ```json
 "args": ["serve", "--endpoint", "https://redmine.example.com", "--plugin", "issue_templates"]
@@ -149,7 +159,9 @@ Global templates get their own type because they lack three fields, and folding 
 An unknown name fails at start-up with a message that lists the known ones.
 A `404` from an instance that lacks the plugin despite the option is returned as any other `{ status, errors }` failure.
 
-**Rationale**: whether a plugin is installed differs per Redmine, and `serve` already runs for one endpoint, so an option of `serve` is a per-instance setting without anything new to locate or parse.
+#### Rationale
+
+Whether a plugin is installed differs per Redmine, and `serve` already runs for one endpoint, so an option of `serve` is a per-instance setting without anything new to locate or parse.
 It sits in the same `args` as `--readonly`, which is the only way redmoon is configured today.
 A configuration file was rejected for now because its location, format, per-endpoint layout, and precedence over options would all have to be decided while it would hold this one setting; if more per-instance settings appear, it can accept the same names.
 Probing the instance at start-up was rejected because it would add a request and a failure mode to every launch for one tool.

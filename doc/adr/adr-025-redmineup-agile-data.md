@@ -42,11 +42,11 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 {"update": {"id": 42, "subject": "...", "story_points": 3}}
 ```
 
-**Pros:**
+#### Pros
 
 - One call reads or writes an issue together with its agile data, as jztan/redmine-mcp-server does.
 
-**Cons:**
+#### Cons
 
 - `redmine_issues` would describe and accept fields that most instances do not have, or change its schema with `--plugin`.
 - A show would need a second request whose failure has to be either reported, failing a read of the issue itself, or swallowed, hiding why the fields are missing.
@@ -57,11 +57,11 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 {"update": {"issue_id": 42, "story_points": 3}}
 ```
 
-**Pros:**
+#### Pros
 
 - The issue tools stay unchanged on every instance, and the plugin's failures belong to the tool that calls the plugin.
 
-**Cons:**
+#### Cons
 
 - Reading an issue and its agile data takes two tool calls.
 
@@ -71,11 +71,11 @@ A `404` from the read means that the issue has no row yet or that the plugin is 
 {"list_sprints": {"project_id": "demo"}}
 ```
 
-**Pros:**
+#### Pros
 
 - A model could look up the id of a sprint by its name.
 
-**Cons:**
+#### Cons
 
 - RedmineUP documents a sprint API, `/projects/{id}/agile_sprints.json`, without its answer or the edition that serves it, and jztan/redmine-mcp-server does not use it, so there is nothing to build its types on.
 - RedmineUP documents no API for the board itself, so there is no board API to call.
@@ -86,9 +86,11 @@ We will add `agile` as the second package of `omochice/redmine-plugins`, coverin
 
 ### 1. `get` and a carry-forward `update` in the SDK
 
-**Change from**: no client for the plugin.
+#### Change from
 
-**Change to**:
+No client for the plugin.
+
+#### Change to
 
 ```moonbit
 pub async fn get(Redmine, issue_id : Int32) -> AgileData raise RedmineError
@@ -114,7 +116,9 @@ pub(all) struct Update {
 A `404` from the read lets the write go ahead without an `id`, which creates the row; any other failure of the read is raised and nothing is written.
 `Clear` is sent as `null`, which empties a story point estimate and takes the issue out of its sprint.
 
-**Rationale**: the replacement behaviour is a property of the plugin, so the package that speaks the plugin's API is where it is contained, and no caller of the SDK can null a field by forgetting to carry it.
+#### Rationale
+
+The replacement behaviour is a property of the plugin, so the package that speaks the plugin's API is where it is contained, and no caller of the SDK can null a field by forgetting to carry it.
 Leaving the read to the tool layer was rejected because every other consumer of the SDK would then have to know about the same trap.
 Aborting on a failed read other than `404` was chosen because a write without the row's `id` would erase values that could not be read, so a partial answer is worse than none.
 `Clearable` is reused from `omochice/redmine` so that "leave alone", "empty", and "set" mean what they mean for an issue.
@@ -134,7 +138,9 @@ Both actions take `issue_id`; `update` also takes `story_points`, `agile_sprint_
 `--readonly` drops `update` from the schema as it drops the write actions of the other tools ([ADR-005](./adr-005-tool-surface.md)).
 The description says that the tool needs the RedmineUP Agile plugin and the Agile module on the issue's project.
 
-**Rationale**: the opt-in follows ADR-017 for the same reason, that redmoon cannot tell which plugins an instance runs.
+#### Rationale
+
+The opt-in follows ADR-017 for the same reason, that redmoon cannot tell which plugins an instance runs.
 A tool of its own was chosen over Option 1 because a plugin's fields would otherwise appear in a core tool on instances that lack the plugin.
 The position is taken as `position`, its wire name, and not also as the `agile_position` alias of the reference, because two names for one argument would both have to be described and would conflict when given together.
 
@@ -142,7 +148,9 @@ The position is taken as `position`, its wire name, and not also as the `agile_p
 
 A `403` or `404` from either action is returned as the `{ status, errors }` failure of every other tool.
 
-**Rationale**: the reference omits the agile fields when their read fails, which leaves a model unable to tell a missing module from an issue without an estimate.
+#### Rationale
+
+The reference omits the agile fields when their read fails, which leaves a model unable to tell a missing module from an issue without an estimate.
 A missing plugin, a missing module, a missing permission, and a missing row each have a remedy, and the status is what lets a model or a user find it.
 
 ## Consequences

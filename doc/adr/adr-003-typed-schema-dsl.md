@@ -24,11 +24,11 @@ The schema also has to express the action-keyed tool shape of [ADR-005](./adr-00
 
 ### Option 1: `derive(FromJson)` plus a hand-written JSON Schema
 
-**Pros:**
+#### Pros
 
 - Least code to write.
 
-**Cons:**
+#### Cons
 
 - Two definitions per tool, which drift apart as fields are added.
 
@@ -36,11 +36,11 @@ The schema also has to express the action-keyed tool shape of [ADR-005](./adr-00
 
 A JSON Schema validator with a zod-like builder.
 
-**Pros:**
+#### Pros
 
 - Already published.
 
-**Cons:**
+#### Cons
 
 - Its README lists `minProperties` and `maxProperties` as unsupported.
 - Its validator answers on a JSON value, so a typed value still needs `derive(FromJson)`, which brings back the two definitions of option 1.
@@ -49,11 +49,11 @@ A JSON Schema validator with a zod-like builder.
 
 A `Schema[T]` carries both a JSON Schema and a parser to `T`, and object schemas are built field by field into a constructor.
 
-**Pros:**
+#### Pros
 
 - One definition, typed output, and exactly the keywords the tools need.
 
-**Cons:**
+#### Cons
 
 - A library to write and maintain.
 
@@ -74,7 +74,9 @@ struct Schema[T] {
 }
 ```
 
-**Rationale**: holding both in one value is what makes drift impossible; any combinator that builds the parser builds the schema in the same step.
+#### Rationale
+
+Holding both in one value is what makes drift impossible; any combinator that builds the parser builds the schema in the same step.
 
 ### 2. Objects are built by adding fields to a curried constructor
 
@@ -93,7 +95,9 @@ let version_create : Schema[VersionCreate] = object(project_id => name => status
 `field` takes an `Obj[(A) -> R]` and returns an `Obj[R]`, so each added field fixes one parameter and a missing or mistyped field is a compile error.
 `done` rejects unknown keys and emits `additionalProperties: false`.
 
-**Rationale**: MoonBit cannot derive a schema from a struct, so the struct has to be assembled from parsed fields; a curried constructor lets the type checker follow the assembly without one helper per field count.
+#### Rationale
+
+MoonBit cannot derive a schema from a struct, so the struct has to be assembled from parsed fields; a curried constructor lets the type checker follow the assembly without one helper per field count.
 A prototype of exactly this code compiled with moonc v0.10.15 and produced the expected schema and errors:
 
 ```text
@@ -107,7 +111,9 @@ error: create.extra: unknown field
 
 `SchemaError` holds the path from the root and a message, and its text is `<path joined by .>: <message>`.
 
-**Rationale**: denomine-mcp answers `<action>.<field>: <message>`, which lets a model fix one field and retry; keeping the path structured lets the caller prefix the action name.
+#### Rationale
+
+denomine-mcp answers `<action>.<field>: <message>`, which lets a model fix one field and retry; keeping the path structured lets the caller prefix the action name.
 
 ## Consequences
 

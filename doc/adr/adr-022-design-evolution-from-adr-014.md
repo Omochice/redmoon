@@ -21,9 +21,13 @@ This ADR records what was chosen, so that ADR-014's hand bump is not followed af
 
 ### 1. release-please bumps every `moon.mod`
 
-**Original Design (ADR-014)**: release-please updates `version.json` only, and the `version` in `redmoon/moon.mod` is bumped by hand.
+#### Original Design (ADR-014)
 
-**Revised Design**: every module's `moon.mod` carries the block markers, and the root package of `.github/release-please-config.json` lists each one as a `generic` extra file next to `version.json`.
+release-please updates `version.json` only, and the `version` in `redmoon/moon.mod` is bumped by hand.
+
+#### Revised Design
+
+Every module's `moon.mod` carries the block markers, and the root package of `.github/release-please-config.json` lists each one as a `generic` extra file next to `version.json`.
 
 ```text
 // x-release-please-start-version
@@ -34,11 +38,15 @@ version = "0.3.0"
 
 `version.json` stays, because the binary embeds it and the embedding does not read `moon.mod`.
 
-**Rationale**: the block form avoids the same-line requirement that ADR-014 ran into, so the hand bump and the CI check that ADR-014 planned against a forgotten bump are both unnecessary.
+#### Rationale
+
+The block form avoids the same-line requirement that ADR-014 ran into, so the hand bump and the CI check that ADR-014 planned against a forgotten bump are both unnecessary.
 
 ### 2. All modules share one version
 
-**Revised Design**: `omochice/schema`, `omochice/mcp`, `omochice/redmine`, `omochice/redmine-plugins`, `omochice/keyring`, `omochice/redmoon`, and `omochice/integration-test` all carry the redmoon release version.
+#### Revised Design
+
+`omochice/schema`, `omochice/mcp`, `omochice/redmine`, `omochice/redmine-plugins`, `omochice/keyring`, `omochice/redmoon`, and `omochice/integration-test` all carry the redmoon release version.
 The `omochice/*` imports in each `moon.mod` sit inside a marker block too, so they move with the version.
 The versions were first aligned to `0.3.0`, the last release.
 
@@ -51,7 +59,9 @@ import {
 }
 ```
 
-**Rationale**: a version per module within this repository would need a release-please package per module, and the root package `.` would still receive every commit.
+#### Rationale
+
+A version per module within this repository would need a release-please package per module, and the root package `.` would still receive every commit.
 The generic markers cannot name another package's version, so the imports would need `moon work sync` run on the release pull request branch, which release-please force-pushes on every update.
 `releases_created` in `release.yaml` would also turn true for a release of any SDK and start a binary build.
 One version needs none of this.
@@ -59,9 +69,13 @@ Publishing to mooncakes stays manual ([ADR-010](./adr-010-release-distribution.m
 
 ### 3. A module that needs its own version moves to its own repository
 
-**Revised Design**: when a module needs to be versioned apart from redmoon, for example because it gains users outside this repository or a release cadence of its own, it is moved to a repository of its own instead of being given its own release-please package here.
+#### Revised Design
 
-**Rationale**: the wish for a separate version and the wish for a separate repository arise from the same cause, so one rule covers both and this repository keeps a single release package.
+When a module needs to be versioned apart from redmoon, for example because it gains users outside this repository or a release cadence of its own, it is moved to a repository of its own instead of being given its own release-please package here.
+
+#### Rationale
+
+The wish for a separate version and the wish for a separate repository arise from the same cause, so one rule covers both and this repository keeps a single release package.
 mooncakes resolves a module by its name, and an import names no repository, so a move changes nothing for consumers beyond the `repository` field of later versions.
 `git subtree split` carries the module's history over; the `vX.Y.Z` tags that marked its earlier versions stay in this repository, and the new repository starts tags of its own.
 

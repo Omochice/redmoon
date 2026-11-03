@@ -33,21 +33,21 @@ It fails on an `Option` field whose value is `null`: `JsonDecodeError((/assigned
 
 ### Option 1: Typed input, `Json` output
 
-**Pros:**
+#### Pros
 
 - Every field Redmine returns reaches the caller, with no output types to maintain.
 
-**Cons:**
+#### Cons
 
 - A consumer of the published SDK has no types for what it reads.
 
 ### Option 2: Typed input and typed output (chosen)
 
-**Pros:**
+#### Pros
 
 - The SDK is a complete library to publish, and the compiler checks every field access.
 
-**Cons:**
+#### Cons
 
 - Every response shape has to be modelled, and unmodelled fields are dropped.
 
@@ -60,13 +60,17 @@ We will write `omochice/redmine` with typed requests and typed responses.
 Each resource has structs whose field names are Redmine's snake_case keys, deriving `FromJson` and `ToJson`, unwrapped from Redmine's envelope (`{"issue": {...}}` becomes `Issue`).
 A field Redmine may omit is an `Option`.
 
-**Rationale**: matching names let `derive` do the decoding and let redmoon encode the value back with nothing renamed ([ADR-005](./adr-005-tool-surface.md)).
+#### Rationale
+
+Matching names let `derive` do the decoding and let redmoon encode the value back with nothing renamed ([ADR-005](./adr-005-tool-surface.md)).
 
 ### 2. `null` is removed before decoding
 
 Before a response is decoded, every object member whose value is `null` is removed, recursively.
 
-**Rationale**: `derive(FromJson)` already reads a missing key as `None`, so removing `null` makes `null` and absence the same thing in one place, instead of a hand-written decoder per field or a wrapper type in every struct.
+#### Rationale
+
+`derive(FromJson)` already reads a missing key as `None`, so removing `null` makes `null` and absence the same thing in one place, instead of a hand-written decoder per field or a wrapper type in every struct.
 
 ### 3. Clearing a field is its own case in update requests
 
@@ -84,26 +88,34 @@ pub struct IssueUpdate {
 
 `None` leaves the field out of the request, `Some(Clear)` sends `null`, and `Some(Set(v))` sends `v`.
 
-**Rationale**: Redmine reads a `null` in an update as "clear this field", so absence and `null` mean different things on the request side, and an `Option` alone cannot carry both.
+#### Rationale
+
+Redmine reads a `null` in an update as "clear this field", so absence and `null` mean different things on the request side, and an `Option` alone cannot carry both.
 
 ### 4. Requests follow `@omochice/redmine`
 
 Paging, `limit`, the date filter operators, base-path joining, manual redirects that keep the API key on the endpoint's origin, and the upload request are implemented as listed under Context.
 Date filters are an enum whose cases are the filter forms denomine-mcp accepts, so a form Redmine rejects on a `:date_past` field is not constructible for it.
 
-**Rationale**: these decide which issues a query returns, and a mistake still answers 200, so the operators are copied from the library rather than derived anew.
+#### Rationale
+
+These decide which issues a query returns, and a mistake still answers 200, so the operators are copied from the library rather than derived anew.
 
 ### 5. Attachment content streams
 
 `download` returns the metadata and a reader over the body; `upload` takes a reader and its length.
 
-**Rationale**: the content is never held whole in memory, so an attachment's size does not bound the process.
+#### Rationale
+
+The content is never held whole in memory, so an attachment's size does not bound the process.
 
 ### 6. The first version covers what redmoon uses
 
 Issues, journals, wiki pages, versions, issue relations, search, time entries, enumerations, attachments, and uploads.
 
-**Rationale**: these are the endpoints with a user; the other resources of the REST API are added when something uses them.
+#### Rationale
+
+These are the endpoints with a user; the other resources of the REST API are added when something uses them.
 
 ## Consequences
 

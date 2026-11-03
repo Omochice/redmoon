@@ -41,15 +41,23 @@ We will expose the same tools, actions, and modes as denomine-mcp, with every ar
 
 Each tool keeps the arguments, constraints, defaults, and description text of its denomine-mcp counterpart, with names converted to snake_case.
 
-**Rationale**: the tool list, the per-action shapes, and the descriptions are what a model sees, so keeping them is what keeps the behaviour.
+#### Rationale
+
+The tool list, the per-action shapes, and the descriptions are what a model sees, so keeping them is what keeps the behaviour.
 
 ### 2. snake_case arguments and responses
 
-**Change from**: `{ "list": { "projectId": 1, "statusId": "open" } }` answered with `[{ "id": 1, "assignedTo": { ... } }]`
+#### Change from
 
-**Change to**: `{ "list": { "project_id": 1, "status_id": "open" } }` answered with `[{ "id": 1, "assigned_to": { ... } }]`
+`{ "list": { "projectId": 1, "statusId": "open" } }` answered with `[{ "id": 1, "assignedTo": { ... } }]`
 
-**Rationale**: a model reads `project_id` in a response and passes it back unchanged, and the same names hold from the Redmine wire through the SDK structs to the tool, so no layer renames anything.
+#### Change to
+
+`{ "list": { "project_id": 1, "status_id": "open" } }` answered with `[{ "id": 1, "assigned_to": { ... } }]`
+
+#### Rationale
+
+A model reads `project_id` in a response and passes it back unchanged, and the same names hold from the Redmine wire through the SDK structs to the tool, so no layer renames anything.
 
 ### 3. The action-keyed schema is a combinator of `omochice/schema`
 
@@ -65,21 +73,27 @@ Each tool keeps the arguments, constraints, defaults, and description text of it
 An action spread over several shapes, such as `update_note`, is an `anyOf` inside its own property.
 `--readonly` builds the list without the write actions.
 
-**Rationale**: denomine-mcp re-keyed a discriminated union after generating its JSON Schema, which needed a conversion step and a reverse conversion of each call; building the keyed shape directly removes both, and a pruned list makes a write absent from both the schema and the parser.
+#### Rationale
+
+denomine-mcp re-keyed a discriminated union after generating its JSON Schema, which needed a conversion step and a reverse conversion of each call; building the keyed shape directly removes both, and a pruned list makes a write absent from both the schema and the parser.
 
 ### 4. Results and failures
 
 A success is one text content holding the JSON of the SDK value, or `{"ok":true}` when the operation returns nothing.
 A failure is one text content holding `{"status": <int>, "errors": [<string>]}` with `isError: true`; a failure with no HTTP status, such as invalid arguments or a local file error, has status `0`.
 
-**Rationale**: this is the payload denomine-mcp returns, and the `errors` array is Redmine's own validation messages, which is what lets a model correct a field.
+#### Rationale
+
+This is the payload denomine-mcp returns, and the `errors` array is Redmine's own validation messages, which is what lets a model correct a field.
 
 ### 5. `redmoon_info` replaces `denomine_mcp_info`
 
 It answers `{ "version": "<release>", "build": { "commit": "<sha>", "dirty": <bool> } }`, with `build` null when the commit is unknown.
 Its description says it describes the MCP server, not a Redmine version.
 
-**Rationale**: the tool list is the only channel a model can query by itself, so a model can only report the build it is talking to through a tool.
+#### Rationale
+
+The tool list is the only channel a model can query by itself, so a model can only report the build it is talking to through a tool.
 
 ## Consequences
 

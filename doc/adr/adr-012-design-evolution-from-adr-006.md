@@ -14,18 +14,26 @@ This ADR records them so that ADR-006 is not read as promising more than the SDK
 
 ### 1. Attachment sizes are decoded as a JSON number into `Int`
 
-**Original Design (ADR-006)**: response fields mirror Redmine's JSON through `derive(FromJson)`, without saying how large numbers are typed.
+#### Original Design (ADR-006)
 
-**Revised Design**: `Attachment.filesize` is `Int` (32-bit), read from Redmine's JSON number by the derived decoder, and written back as a number.
+Response fields mirror Redmine's JSON through `derive(FromJson)`, without saying how large numbers are typed.
 
-**Rationale**: in moonc v0.10.15, `Int64`'s `FromJson` accepts only a string, so an `Int64` field fails on the plain number Redmine sends, and its `ToJson` would change the number the tools return into a string.
+#### Revised Design
+
+`Attachment.filesize` is `Int` (32-bit), read from Redmine's JSON number by the derived decoder, and written back as a number.
+
+#### Rationale
+
+In moonc v0.10.15, `Int64`'s `FromJson` accepts only a string, so an `Int64` field fails on the plain number Redmine sends, and its `ToJson` would change the number the tools return into a string.
 Keeping the field a number on both sides was preferred over a hand-written decoder for one field, at the cost of the range below.
 
 ### 2. `download_attachment` raises an untyped error
 
-**Original Design (ADR-006, with [ADR-007](./adr-007-error-handling.md))**: every SDK function raises `RedmineError`.
+#### Original Design (ADR-006, with [ADR-007](./adr-007-error-handling.md))
 
-**Revised Design**:
+Every SDK function raises `RedmineError`.
+
+#### Revised Design
 
 ```moonbit
 pub async fn Redmine::download_attachment(
@@ -37,7 +45,9 @@ pub async fn Redmine::download_attachment(
 
 The download's own failures are still `RedmineError`, but an error raised by `consume` propagates unchanged, so the function's error type is the general `Error`.
 
-**Rationale**: the SDK keeps the HTTP connection open only while `consume` runs, so the caller's own failures, such as an existing file or an exceeded size limit, happen inside the SDK's call and must reach the caller as they were raised; wrapping them in `RedmineError` would make them look like Redmine's.
+#### Rationale
+
+The SDK keeps the HTTP connection open only while `consume` runs, so the caller's own failures, such as an existing file or an exceeded size limit, happen inside the SDK's call and must reach the caller as they were raised; wrapping them in `RedmineError` would make them look like Redmine's.
 
 ## Consequences
 

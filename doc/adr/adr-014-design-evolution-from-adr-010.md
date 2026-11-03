@@ -14,9 +14,13 @@ This ADR records where the version lives instead, so that ADR-010 is not followe
 
 ### 1. The release version lives in a JSON file that the build embeds
 
-**Original Design (ADR-010)**: release-please bumps the version in `redmoon/moon.mod` and in a MoonBit constant marked `x-release-please-version`.
+#### Original Design (ADR-010)
 
-**Revised Design**: the version lives in `redmoon/src/build/version.json`, which release-please updates by JSON path; the build package embeds it with a `dev_build` rule and reads it once at start-up.
+release-please bumps the version in `redmoon/moon.mod` and in a MoonBit constant marked `x-release-please-version`.
+
+#### Revised Design
+
+The version lives in `redmoon/src/build/version.json`, which release-please updates by JSON path; the build package embeds it with a `dev_build` rule and reads it once at start-up.
 
 ```json
 { "type": "json", "path": "redmoon/src/build/version.json", "jsonpath": "$.version" }
@@ -31,7 +35,9 @@ dev_build(rule: "embed", input: "version.json", output: "version_json.mbt")
 The generated `version_json.mbt` is not committed; `moon check`, `moon test`, and `moon build` regenerate it.
 The `version` in `redmoon/moon.mod` is bumped by hand.
 
-**Rationale**: release-please updates a JSON value by path without any marker, so `moonfmt` cannot break it, and `:embed` is built into `moon`, so the rule behaves the same on every runner including Windows.
+#### Rationale
+
+release-please updates a JSON value by path without any marker, so `moonfmt` cannot break it, and `:embed` is built into `moon`, so the rule behaves the same on every runner including Windows.
 MoonBit's documentation asks for generated files to be committed because `dev_build` does not run for a package used as a dependency; the application has no dependents, so regenerating the file on every build removes any chance of it lagging the JSON in a release pull request.
 
 ## Consequences

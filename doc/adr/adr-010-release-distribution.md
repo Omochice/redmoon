@@ -22,7 +22,9 @@ release-please opens the release pull request from Conventional Commits and bump
 Merging it creates the tag and the GitHub release.
 Only `omochice/redmoon` is released this way at first.
 
-**Rationale**: the commit history is already in Conventional Commits, and one tool both versions and tags; the SDK modules are published to mooncakes on their own schedule once they settle.
+#### Rationale
+
+The commit history is already in Conventional Commits, and one tool both versions and tags; the SDK modules are published to mooncakes on their own schedule once they settle.
 
 ### 2. One job per asset
 
@@ -36,13 +38,17 @@ Only `omochice/redmoon` is released this way at first.
 Each job runs `moon build --target native --release` and uploads the renamed executable to the release.
 The same matrix runs on pull requests without uploading.
 
-**Rationale**: the asset names are denomine-mcp's, and building on pull requests surfaces a broken platform before a tag exists.
+#### Rationale
+
+The asset names are denomine-mcp's, and building on pull requests surfaces a broken platform before a tag exists.
 
 ### 3. Build info is generated before the build
 
 The workflow writes a MoonBit source file holding the commit and the dirty flag before building; the checked-in version of that file holds `None`, so a build from source reports `build: null`.
 
-**Rationale**: MoonBit has no file embedding, so the information has to be compiled in, and a generated source file needs no runtime lookup.
+#### Rationale
+
+MoonBit has no file embedding, so the information has to be compiled in, and a generated source file needs no runtime lookup.
 
 ## Consequences
 

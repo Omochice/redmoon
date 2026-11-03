@@ -28,21 +28,21 @@ A `Result` function allocates an `Ok` box on every success and two objects on fa
 
 ### Option 1: SDKs return `Result[T, E]`
 
-**Pros:**
+#### Pros
 
 - Mirrors denomine-mcp's port types.
 
-**Cons:**
+#### Cons
 
 - Allocates on every success, and is not how MoonBit libraries report errors.
 
 ### Option 2: SDKs `raise` a typed error (chosen)
 
-**Pros:**
+#### Pros
 
 - The compiler enforces handling, success allocates nothing, and the signature names the error type.
 
-**Cons:**
+#### Cons
 
 - A caller that wants a value to store has to convert it itself.
 
@@ -63,7 +63,9 @@ pub suberror RedmineError {
 `Transport` is everything without an HTTP status: connection, TLS, or decoding.
 `omochice/keyring` and `omochice/schema` likewise raise `KeyringError` and `SchemaError`.
 
-**Rationale**: a caller matches on the cases it cares about, and the type in the signature tells it what can fail without reading the implementation.
+#### Rationale
+
+A caller matches on the cases it cares about, and the type in the signature tells it what can fail without reading the implementation.
 
 ### 2. redmoon maps every error to `{status, errors}` once
 
@@ -74,13 +76,17 @@ pub suberror RedmineError {
 | `SchemaError`              | `0`      | `["<action>.<path>: <message>"]` |
 | a local file error         | `0`      | `[message]`                      |
 
-**Rationale**: this is denomine-mcp's payload, kept in one function so the shape cannot differ between tools.
+#### Rationale
+
+This is denomine-mcp's payload, kept in one function so the shape cannot differ between tools.
 
 ### 3. Nothing from the request leaks into an error
 
 No error case holds headers, the request URL with its query, or the API key.
 
-**Rationale**: the error text reaches the model, and the API key is in a header of every request.
+#### Rationale
+
+The error text reaches the model, and the API key is in a header of every request.
 
 ## Consequences
 

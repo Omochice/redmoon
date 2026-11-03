@@ -28,14 +28,18 @@ A type that consumers pattern-match therefore cannot live in an internal package
 
 ### 1. One package per resource, with functions that take the client first
 
-**Original Design (ADR-006)**: every operation is a method of `Redmine` in one package.
+#### Original Design (ADR-006)
+
+Every operation is a method of `Redmine` in one package.
 
 ```moonbit
 redmine.list_issues(query, limit=10)
 redmine.show_wiki_page(project, title)
 ```
 
-**Revised Design**: each resource is its own package, and each operation is a function whose first parameter is the client, so calls read as a pipeline and the package names the resource.
+#### Revised Design
+
+Each resource is its own package, and each operation is a function whose first parameter is the client, so calls read as a pipeline and the package names the resource.
 
 ```moonbit
 redmine |> @issues.list(query, limit=10)
@@ -52,14 +56,20 @@ redmine |> @wiki.show(project, title)
 | `omochice/redmine/internal/wire`                                                                  | URL parsing and resolution, query encoding, `null` removal, error-body reading                                                      |
 | `omochice/redmine/internal/paging`                                                                | the paged-list walk                                                                                                                 |
 
-**Rationale**: the package becomes the namespace, so `@issues.Attachment` and `@wiki.Attachment` need no prefixes, and helpers move out of the public surface into `internal`, which the compiler enforces.
+#### Rationale
+
+The package becomes the namespace, so `@issues.Attachment` and `@wiki.Attachment` need no prefixes, and helpers move out of the public surface into `internal`, which the compiler enforces.
 The pipe gives the method-call reading order without one type owning every operation.
 
 ### 2. Only `send` is public; the streaming transport is internal
 
-**Original Design (ADR-006)**: the request functions are private to the single package.
+#### Original Design (ADR-006)
 
-**Revised Design**: `@redmine.send` (a JSON request) is public, documented as the way to call an endpoint the SDK does not cover yet.
+The request functions are private to the single package.
+
+#### Revised Design
+
+`@redmine.send` (a JSON request) is public, documented as the way to call an endpoint the SDK does not cover yet.
 The connection, which holds the endpoint and the API key and opens HTTP clients for the streamed attachment transfers, lives in `internal/core`.
 `Redmine` stays a struct of the root package that holds the connection privately, and `@redmine.connection` hands it to the SDK's own resource packages; outside the module its result is unusable, because calling anything on it fails with `package ... internal/core is not imported`.
 
@@ -70,7 +80,9 @@ pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError
 pub async fn send(Redmine, @http.RequestMethod, Array[String], query? : Array[(String, String)], body? : Json) -> Json raise RedmineError
 ```
 
-**Rationale**: resource packages are separate packages and must reach the connection, while consumers should see only the operations they need.
+#### Rationale
+
+Resource packages are separate packages and must reach the connection, while consumers should see only the operations they need.
 `RedmineError` stays in the root because consumers pattern-match it, and constructors cannot be matched through an alias of an internal type, so `internal/core` reports failures without naming it and each caller converts them.
 Making `Redmine` an alias of the internal connection was rejected because the internal path would then appear in every type error and in the generated interface; with a root struct it appears only in the return type of `connection`.
 Keeping `send` public turns the one unavoidable exposure into a supported escape hatch.
