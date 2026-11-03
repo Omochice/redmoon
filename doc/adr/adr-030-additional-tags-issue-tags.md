@@ -254,7 +254,7 @@ The behaviours that most need a live test, the dropped write and the `403` of `l
 - `show` takes one request per issue and is cheap to call for the issues a listing returns.
 - The pins are commit hashes of tags, so moving to the next release is one reviewable change.
 - The copy is small and covered by the live test of `list_issues`, which ADR-017 already accepted for `internal/decode`.
-- Wiki tags follow in a pull request of their own, once their API has been measured, and can join `redmine_tags` as further actions.
+- Wiki tags follow in a pull request of their own, once their API has been measured; [ADR-031](./adr-031-additional-tags-wiki-page-search.md) records what that measurement allowed.
 
 ## Implementation Notes
 
