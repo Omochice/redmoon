@@ -1,14 +1,33 @@
 ///|
-/// A client for the Redmine named by `REDMOON_TEST_ENDPOINT` and `REDMOON_TEST_API_KEY`.
-/// It fails rather than skips when either is unset, because a test that returns early counts as passed and would hide that nothing reached Redmine.
-pub fn redmine() -> @redmine.Redmine raise {
+/// It fails rather than skips when a variable is unset, because a test that returns early counts as passed and would hide that nothing reached Redmine.
+fn client(key_variable : String) -> @redmine.Redmine raise {
   guard @env.get_env_var("REDMOON_TEST_ENDPOINT") is Some(endpoint) else {
     fail("REDMOON_TEST_ENDPOINT is unset; run `task test:integration`")
   }
-  guard @env.get_env_var("REDMOON_TEST_API_KEY") is Some(api_key) else {
-    fail("REDMOON_TEST_API_KEY is unset; run `task test:integration`")
+  guard @env.get_env_var(key_variable) is Some(api_key) else {
+    fail("\{key_variable} is unset; run `task test:integration`")
   }
   @redmine.new(endpoint~, api_key~)
+}
+
+///|
+/// A client for the Redmine named by `REDMOON_TEST_ENDPOINT`, acting as the administrator whose key is `REDMOON_TEST_API_KEY`.
+pub fn redmine() -> @redmine.Redmine raise {
+  client("REDMOON_TEST_API_KEY")
+}
+
+///|
+/// A client for the same Redmine acting as the seeded non-administrator `redmoon-member`, whose key is `REDMOON_TEST_MEMBER_API_KEY`.
+/// Some behaviour, such as a plugin dropping a write the user may not make, never happens to an administrator.
+pub fn as_member() -> @redmine.Redmine raise {
+  client("REDMOON_TEST_MEMBER_API_KEY")
+}
+
+///|
+/// A client for the same Redmine acting as the seeded non-administrator `redmoon-tagger`, whose key is `REDMOON_TEST_TAGGER_API_KEY`.
+/// Unlike `redmoon-member`, it may create tags, so a saved new tag can be told from one an administrator would create anyway.
+pub fn as_tagger() -> @redmine.Redmine raise {
+  client("REDMOON_TEST_TAGGER_API_KEY")
 }
 
 ///|

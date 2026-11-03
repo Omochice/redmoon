@@ -4,6 +4,7 @@
 pub(all) enum Plugin {
   IssueTemplates
   Agile
+  AdditionalTags
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -16,6 +17,7 @@ pub extend Plugin with @debug.Debug::{to_repr}
 let known_plugins : Array[(String, Plugin)] = [
   ("issue_templates", IssueTemplates),
   ("agile", Agile),
+  ("additional_tags", AdditionalTags),
 ]
 
 ///|

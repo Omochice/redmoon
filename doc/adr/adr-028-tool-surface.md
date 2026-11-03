@@ -25,7 +25,7 @@ redmoon runs over stdio beside the MCP client, and the model there has its own t
 
 Two neighbouring decisions are recorded elsewhere and only summarised here.
 How an SDK error becomes the failure payload is decided by [ADR-007](./adr-007-error-handling.md) and [ADR-023](./adr-023-design-evolution-from-adr-007.md).
-Why the tools of Redmine plugins exist and why they are opt-in is decided by [ADR-017](./adr-017-redmine-plugin-sdk-module.md) and [ADR-025](./adr-025-redmineup-agile-data.md).
+Why the tools of Redmine plugins exist and why they are opt-in is decided by [ADR-017](./adr-017-redmine-plugin-sdk-module.md), [ADR-025](./adr-025-redmineup-agile-data.md), and [ADR-030](./adr-030-additional-tags-issue-tags.md).
 
 ## Decision
 
@@ -50,6 +50,7 @@ A tool whose Enabled by column names a `--plugin` value is registered only when 
 | `redmoon_info`            | none                                                       | always                     |
 | `redmine_issue_templates` | none                                                       | `--plugin issue_templates` |
 | `redmine_agile`           | `update`                                                   | `--plugin agile`           |
+| `redmine_tags`            | `add`, `remove`                                            | `--plugin additional_tags` |
 
 Each tool keeps the arguments, constraints, defaults, and description text of its denomine-mcp counterpart, with names converted to snake_case, except where a later section of this decision adds to them.
 In `--readonly` mode the write actions are left out of both the schema and the description, so a call naming one fails as `unknown action` like any other unknown key.
@@ -213,7 +214,7 @@ A relative `_path` resolves against the working directory of the server process,
 - [ADR-003](./adr-003-typed-schema-dsl.md) and [ADR-011](./adr-011-design-evolution-from-adr-003.md) — the schema DSL `keyed` and `integer64` belong to and the record builder each action uses.
 - [ADR-026](./adr-026-typed-redmine-sdk.md) — the typed values the tools return.
 - [ADR-007](./adr-007-error-handling.md) and [ADR-023](./adr-023-design-evolution-from-adr-007.md) — how failures reach the payload.
-- [ADR-017](./adr-017-redmine-plugin-sdk-module.md) and [ADR-025](./adr-025-redmineup-agile-data.md) — the plugin tools and the `--plugin` option that enables them.
+- [ADR-017](./adr-017-redmine-plugin-sdk-module.md), [ADR-025](./adr-025-redmineup-agile-data.md), and [ADR-030](./adr-030-additional-tags-issue-tags.md) — the plugin tools and the `--plugin` option that enables them.
 - [Redmine REST API: Memberships](https://www.redmine.org/projects/redmine/wiki/Rest_Memberships) — the endpoint `redmine_memberships` wraps.
 - [Redmine REST API: Issues](https://www.redmine.org/projects/redmine/wiki/Rest_Issues) and [Wiki Pages](https://www.redmine.org/projects/redmine/wiki/Rest_WikiPages) — text fields are sent whole on `PUT`.
 - [redmine/redmine `lib/redmine/preparation.rb`](https://github.com/redmine/redmine/blob/master/lib/redmine/preparation.rb) — the `view_members` permission.
