@@ -1,18 +1,23 @@
 ///|
-test "version body leaves unset fields out" {
+test "a create body carries the name and leaves unset fields out" {
   assert_eq(
-    version_body(Some("v1"), None, None, None, None, None).stringify(),
+    Create::new(name="v1").to_body().stringify(),
     "{\"version\":{\"name\":\"v1\"}}",
   )
+}
+
+///|
+test "an update body leaves unset fields out" {
   assert_eq(
-    version_body(
-      None,
-      Some("d"),
-      Some(Locked),
-      Some("2026-12-31"),
-      Some(Tree),
-      Some("Home"),
-    ).stringify(),
+    Update::new(
+      description="d",
+      status=Locked,
+      due_date="2026-12-31",
+      sharing=Tree,
+      wiki_page_title="Home",
+    )
+    .to_body()
+    .stringify(),
     "{\"version\":{\"description\":\"d\",\"status\":\"locked\",\"due_date\":\"2026-12-31\",\"sharing\":\"tree\",\"wiki_page_title\":\"Home\"}}",
   )
 }

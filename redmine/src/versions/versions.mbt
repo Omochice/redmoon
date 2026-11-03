@@ -282,14 +282,7 @@ pub async fn create(
     |> @redmine.send(
       Post,
       ["projects", project.segment(), "versions.json"],
-      body=version_body(
-        Some(attributes.name),
-        attributes.description,
-        attributes.status,
-        attributes.due_date,
-        attributes.sharing,
-        attributes.wiki_page_title,
-      ),
+      body=attributes.to_body(),
     )
   @decode.decode_field(json, "version")
 }
@@ -318,14 +311,7 @@ pub async fn update(
     |> @redmine.send(
       Put,
       ["versions", id.to_string() + ".json"],
-      body=version_body(
-        attributes.name,
-        attributes.description,
-        attributes.status,
-        attributes.due_date,
-        attributes.sharing,
-        attributes.wiki_page_title,
-      ),
+      body=attributes.to_body(),
     ),
   )
 }
@@ -354,21 +340,27 @@ pub async fn delete(
 }
 
 ///|
-fn version_body(
-  name : String?,
-  description : String?,
-  status : Status?,
-  due_date : String?,
-  sharing : Sharing?,
-  wiki_page_title : String?,
-) -> Json {
+fn Create::to_body(self : Create) -> Json {
   let version = @wire.present_members([
-    ("name", name.map(ToJson::to_json)),
-    ("description", description.map(ToJson::to_json)),
-    ("status", status.map(ToJson::to_json)),
-    ("due_date", due_date.map(ToJson::to_json)),
-    ("sharing", sharing.map(ToJson::to_json)),
-    ("wiki_page_title", wiki_page_title.map(ToJson::to_json)),
+    ("name", Some(Json(self.name))),
+    ("description", self.description.map(ToJson::to_json)),
+    ("status", self.status.map(ToJson::to_json)),
+    ("due_date", self.due_date.map(ToJson::to_json)),
+    ("sharing", self.sharing.map(ToJson::to_json)),
+    ("wiki_page_title", self.wiki_page_title.map(ToJson::to_json)),
+  ])
+  Json::object({ "version": version })
+}
+
+///|
+fn Update::to_body(self : Update) -> Json {
+  let version = @wire.present_members([
+    ("name", self.name.map(ToJson::to_json)),
+    ("description", self.description.map(ToJson::to_json)),
+    ("status", self.status.map(ToJson::to_json)),
+    ("due_date", self.due_date.map(ToJson::to_json)),
+    ("sharing", self.sharing.map(ToJson::to_json)),
+    ("wiki_page_title", self.wiki_page_title.map(ToJson::to_json)),
   ])
   Json::object({ "version": version })
 }
