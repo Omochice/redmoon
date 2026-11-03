@@ -226,7 +226,7 @@ let create_input : @schema.Schema[IssueAction] = {
   let tracker_id = @schema.required("tracker_id", record_id())
   let status_id = @schema.required("status_id", record_id())
   let priority_id = @schema.required("priority_id", record_id())
-  let subject = @schema.required("subject", @schema.string())
+  let subject = @schema.required("subject", @schema.not_blank(max_length=255))
   let description = @schema.optional("description", @schema.string())
   let description_path = text_path("description")
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
@@ -294,7 +294,7 @@ let create_input : @schema.Schema[IssueAction] = {
 
 ///|
 let update_input : @schema.Schema[IssueAction] = {
-  let subject = @schema.optional("subject", @schema.string())
+  let subject = @schema.optional("subject", @schema.not_blank(max_length=255))
   let description = @schema.optional("description", @schema.string())
   let description_path = text_path("description")
   let status_id = @schema.optional(
