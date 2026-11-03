@@ -11,6 +11,8 @@ import {
 
 import {
   "moonbitlang/core/json",
+  "omochice/redmine/internal/decode",
+  "omochice/redmine/internal/wire",
 } for "wbtest"
 
 supported_targets = "+native"
