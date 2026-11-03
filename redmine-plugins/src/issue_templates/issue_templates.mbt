@@ -57,7 +57,9 @@ pub extend ProjectTemplate with @debug.Debug::{to_repr}
 
 ///|
 /// The templates a project can use: the global ones enabled for it, those its ancestors share, and its own.
-#derive(FromJson(fields(global(rename="global_issue_templates"), inherited(rename="inherit_templates"), project(rename="issue_templates"))), ToJson(fields(global(rename="global_issue_templates"), inherited(rename="inherit_templates"), project(rename="issue_templates"))), Eq, Debug)
+#derive(FromJson(fields(global(rename="global_issue_templates"), inherited(rename="inherit_templates"), project(rename="issue_templates"))))
+#derive(ToJson(fields(global(rename="global_issue_templates"), inherited(rename="inherit_templates"), project(rename="issue_templates"))))
+#derive(Eq, Debug)
 pub(all) struct Templates {
   global : Array[GlobalTemplate]
   inherited : Array[ProjectTemplate]
