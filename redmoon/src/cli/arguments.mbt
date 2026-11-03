@@ -74,6 +74,9 @@ pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise CliError {
   let matches = command().parse(argv?, env=Map([])) catch {
     error => raise Message("\{error}")
   }
+  // The parser already rejects a missing subcommand, a name outside the four
+  // above, and a missing --endpoint, so the fallbacks below only complete the
+  // Option and the match; no argv reaches them.
   guard matches.subcommand is Some((name, sub)) else {
     raise Message("no subcommand")
   }
