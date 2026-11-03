@@ -123,12 +123,13 @@ pub extend Child with @debug.Debug::{to_repr}
 
 ///|
 /// A relation between issues, as listed by `include=relations`.
+/// The relation type is the closed set `@relations.Type` spells, so a relation type added by a plugin fails to decode as it does in `@relations`.
 #derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Relation {
   id : Int32?
   issue_id : Int32?
   issue_to_id : Int32?
-  relation_type : String?
+  relation_type : @relations.Type?
   delay : Int32?
 }
 

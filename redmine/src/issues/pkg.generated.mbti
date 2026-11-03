@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "omochice/redmine",
   "omochice/redmine/attachments",
+  "omochice/redmine/relations",
 }
 
 // Values
@@ -272,7 +273,7 @@ pub(all) struct Relation {
   id : Int32?
   issue_id : Int32?
   issue_to_id : Int32?
-  relation_type : String?
+  relation_type : @relations.Type?
   delay : Int32?
 }
 pub fn Relation::equal(Self, Self) -> Bool
