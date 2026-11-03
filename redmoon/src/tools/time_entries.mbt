@@ -70,7 +70,7 @@ let time_entry_activity_id : @schema.Field[Int32?] = @schema.optional(
 ///|
 let time_entry_comments : @schema.Field[String?] = @schema.optional(
   "comments",
-  @schema.string(),
+  @schema.string(max_length=1024),
 )
 
 ///|
