@@ -113,14 +113,14 @@ async test "create maps every argument and answers the created version" {
   assert_eq(fake.created, [
     (
       "1",
-      {
-        name: "Sprint",
-        description: Some("d"),
-        status: Some(Locked),
-        due_date: Some("2026-12-31"),
-        sharing: Some(Tree),
-        wiki_page_title: Some("Sprint plan"),
-      },
+      @versions.Create::new(
+        name="Sprint",
+        description="d",
+        status=Locked,
+        due_date="2026-12-31",
+        sharing=Tree,
+        wiki_page_title="Sprint plan",
+      ),
     ),
   ])
 }
@@ -133,19 +133,7 @@ async test "create with only a name leaves the rest unset" {
       "create": { "project_id": "demo", "name": "Sprint" },
     }),
   )
-  assert_eq(fake.created, [
-    (
-      "demo",
-      {
-        name: "Sprint",
-        description: None,
-        status: None,
-        due_date: None,
-        sharing: None,
-        wiki_page_title: None,
-      },
-    ),
-  ])
+  assert_eq(fake.created, [("demo", @versions.Create::new(name="Sprint"))])
 }
 
 ///|
@@ -163,17 +151,7 @@ async test "update maps the supplied arguments and answers ok" {
   assert_eq(called.is_error, false)
   assert_eq(called.text, "{\"ok\":true}")
   assert_eq(fake.updated, [
-    (
-      7,
-      {
-        name: Some("Renamed"),
-        description: None,
-        status: Some(Closed),
-        due_date: None,
-        sharing: Some(System),
-        wiki_page_title: None,
-      },
-    ),
+    (7, @versions.Update::new(name="Renamed", status=Closed, sharing=System)),
   ])
 }
 

@@ -48,20 +48,22 @@ fn search_input() -> @schema.Schema[@search.Query] {
       projects.as_member(),
       attachments.as_member(),
     ],
-    v => @search.Query::{
-      q: v.get(q),
-      scope: v.get(scope),
-      all_words: v.get(all_words),
-      titles_only: v.get(titles_only),
-      open_issues: v.get(open_issues),
-      issues: v.get(issues),
-      news: v.get(news),
-      documents: v.get(documents),
-      changesets: v.get(changesets),
-      wiki_pages: v.get(wiki_pages),
-      messages: v.get(messages),
-      projects: v.get(projects),
-      attachments: v.get(attachments),
+    v => {
+      @search.Query::new(
+        q=v.get(q),
+        scope?=v.get(scope),
+        all_words?=v.get(all_words),
+        titles_only?=v.get(titles_only),
+        open_issues?=v.get(open_issues),
+        issues?=v.get(issues),
+        news?=v.get(news),
+        documents?=v.get(documents),
+        changesets?=v.get(changesets),
+        wiki_pages?=v.get(wiki_pages),
+        messages?=v.get(messages),
+        projects?=v.get(projects),
+        attachments?=v.get(attachments),
+      )
     },
   )
 }

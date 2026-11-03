@@ -70,21 +70,8 @@ pub extend CustomField with @debug.Debug::{to_repr}
 ///|
 /// Filters for listing time entries; `None` leaves a filter out.
 /// `spent_on`, `from`, and `to` are ISO dates (`YYYY-MM-DD`).
-///
-/// ```mbt check
-/// test {
-///   let query : @time_entries.ListQuery = {
-///     project_id: Some(1),
-///     user_id: None,
-///     spent_on: None,
-///     from: Some("2026-10-01"),
-///     to: Some("2026-10-31"),
-///   }
-///   assert_eq(query.from, Some("2026-10-01"))
-/// }
-/// ```
 #derive(Eq, Debug)
-pub(all) struct ListQuery {
+pub struct ListQuery {
   project_id : Int32?
   user_id : Int32?
   spent_on : String?
@@ -99,6 +86,30 @@ pub extend ListQuery with Eq::{equal, not_equal}
 pub extend ListQuery with @debug.Debug::{to_repr}
 
 ///|
+/// Conditions for `list`; an unset condition does not filter.
+///
+/// ```mbt check
+/// test {
+///   let query = @time_entries.ListQuery::new(
+///     project_id=1,
+///     from="2026-10-01",
+///     to="2026-10-31",
+///   )
+///   assert_eq(query.from, Some("2026-10-01"))
+///   assert_true(query.user_id is None)
+/// }
+/// ```
+pub fn ListQuery::new(
+  project_id? : Int32,
+  user_id? : Int32,
+  spent_on? : String,
+  from? : String,
+  to? : String,
+) -> ListQuery {
+  { project_id, user_id, spent_on, from, to, }
+}
+
+///|
 /// Lists the time entries matching `query`, following every page unless `limit` caps the count.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
@@ -109,13 +120,11 @@ pub extend ListQuery with @debug.Debug::{to_repr}
 ///     endpoint="https://redmine.example.com",
 ///     api_key="...",
 ///   )
-///   let query : @time_entries.ListQuery = {
-///     project_id: Some(1),
-///     user_id: None,
-///     spent_on: None,
-///     from: Some("2026-10-01"),
-///     to: Some("2026-10-31"),
-///   }
+///   let query = @time_entries.ListQuery::new(
+///     project_id=1,
+///     from="2026-10-01",
+///     to="2026-10-31",
+///   )
 ///   let entries = redmine |> @time_entries.list(query, limit=50)
 ///   ignore(entries)
 /// }
@@ -158,22 +167,8 @@ fn ListQuery::to_pairs(self : ListQuery) -> Array[(String, String)] {
 
 ///|
 /// The attributes of a time entry to log. `hours` is required by Redmine; `None` fields are left out of the request.
-///
-/// ```mbt check
-/// test {
-///   let create : @time_entries.Create = {
-///     hours: 1.5,
-///     issue_id: Some(42),
-///     project_id: None,
-///     spent_on: Some("2026-10-17"),
-///     activity_id: None,
-///     comments: Some("Investigated the timeout"),
-///   }
-///   assert_eq(create.hours, 1.5)
-/// }
-/// ```
 #derive(ToJson, Eq, Debug)
-pub(all) struct Create {
+pub struct Create {
   hours : Double
   issue_id : Int32?
   project_id : Int32?
@@ -192,23 +187,35 @@ pub extend Create with Eq::{equal, not_equal}
 pub extend Create with @debug.Debug::{to_repr}
 
 ///|
-/// The attributes of a time entry to change; `None` fields are left out of the request.
+/// The attributes of a time entry to log; only `hours` must be given, and Redmine needs `issue_id` or `project_id` besides.
 ///
 /// ```mbt check
 /// test {
-///   let update : @time_entries.Update = {
-///     hours: Some(2.0),
-///     issue_id: None,
-///     project_id: None,
-///     spent_on: None,
-///     activity_id: None,
-///     comments: None,
-///   }
-///   assert_eq(update.hours, Some(2.0))
+///   let create = @time_entries.Create::new(
+///     hours=1.5,
+///     issue_id=42,
+///     spent_on="2026-10-17",
+///     comments="Investigated the timeout",
+///   )
+///   assert_eq(create.hours, 1.5)
+///   assert_true(create.project_id is None)
 /// }
 /// ```
+pub fn Create::new(
+  hours~ : Double,
+  issue_id? : Int32,
+  project_id? : Int32,
+  spent_on? : String,
+  activity_id? : Int32,
+  comments? : String,
+) -> Create {
+  { hours, issue_id, project_id, spent_on, activity_id, comments, }
+}
+
+///|
+/// The attributes of a time entry to change; `None` fields are left out of the request.
 #derive(ToJson, Eq, Debug)
-pub(all) struct Update {
+pub struct Update {
   hours : Double?
   issue_id : Int32?
   project_id : Int32?
@@ -225,6 +232,27 @@ pub extend Update with Eq::{equal, not_equal}
 
 ///|
 pub extend Update with @debug.Debug::{to_repr}
+
+///|
+/// The attributes of a time entry to change; only the fields given are touched.
+///
+/// ```mbt check
+/// test {
+///   let update = @time_entries.Update::new(hours=2.0)
+///   assert_eq(update.hours, Some(2.0))
+///   assert_true(update.comments is None)
+/// }
+/// ```
+pub fn Update::new(
+  hours? : Double,
+  issue_id? : Int32,
+  project_id? : Int32,
+  spent_on? : String,
+  activity_id? : Int32,
+  comments? : String,
+) -> Update {
+  { hours, issue_id, project_id, spent_on, activity_id, comments, }
+}
 
 ///|
 /// Shows the time entry with `id`.
@@ -264,14 +292,13 @@ pub async fn show(
 ///     api_key="...",
 ///   )
 ///   let entry = redmine
-///     |> @time_entries.create({
-///       hours: 1.5,
-///       issue_id: Some(42),
-///       project_id: None,
-///       spent_on: None,
-///       activity_id: None,
-///       comments: Some("Investigated the timeout"),
-///     })
+///     |> @time_entries.create(
+///       @time_entries.Create::new(
+///         hours=1.5,
+///         issue_id=42,
+///         comments="Investigated the timeout",
+///       ),
+///     )
 ///   ignore(entry)
 /// }
 /// ```
@@ -295,15 +322,7 @@ pub async fn create(
 ///     endpoint="https://redmine.example.com",
 ///     api_key="...",
 ///   )
-///   redmine
-///   |> @time_entries.update(9, {
-///     hours: Some(2.0),
-///     issue_id: None,
-///     project_id: None,
-///     spent_on: None,
-///     activity_id: None,
-///     comments: None,
-///   })
+///   redmine |> @time_entries.update(9, @time_entries.Update::new(hours=2.0))
 /// }
 /// ```
 pub async fn update(

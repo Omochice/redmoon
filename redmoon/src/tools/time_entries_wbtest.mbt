@@ -111,13 +111,16 @@ async test "list maps every filter onto the query" {
     },
   })
   assert_eq(called.is_error, false)
-  assert_eq(fake.lists[0], {
-    project_id: Some(1),
-    user_id: Some(5),
-    spent_on: Some("2026-08-01"),
-    from: Some("2026-07-01"),
-    to: Some("2026-07-31"),
-  })
+  assert_eq(
+    fake.lists[0],
+    @time_entries.ListQuery::new(
+      project_id=1,
+      user_id=5,
+      spent_on="2026-08-01",
+      from="2026-07-01",
+      to="2026-07-31",
+    ),
+  )
   assert_true(called.text.contains("\"hours\":1.5"))
 }
 
@@ -127,13 +130,7 @@ async test "list with no filters leaves every query field unset" {
   let _ = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "list": {},
   })
-  assert_eq(fake.lists[0], {
-    project_id: None,
-    user_id: None,
-    spent_on: None,
-    from: None,
-    to: None,
-  })
+  assert_eq(fake.lists[0], @time_entries.ListQuery::new())
 }
 
 ///|
@@ -161,14 +158,17 @@ async test "create maps every argument onto the attributes" {
     },
   })
   assert_eq(called.is_error, false)
-  assert_eq(fake.creates[0], {
-    hours: 2.25,
-    issue_id: Some(3),
-    project_id: Some(1),
-    spent_on: Some("2026-08-01"),
-    activity_id: Some(9),
-    comments: Some("wrote the port"),
-  })
+  assert_eq(
+    fake.creates[0],
+    @time_entries.Create::new(
+      hours=2.25,
+      issue_id=3,
+      project_id=1,
+      spent_on="2026-08-01",
+      activity_id=9,
+      comments="wrote the port",
+    ),
+  )
   assert_true(called.text.contains("\"hours\":1.5"))
 }
 
@@ -179,14 +179,7 @@ async test "create with only an issue leaves the project and the other attribute
     "create": { "hours": 1, "issue_id": 3 },
   })
   assert_eq(called.is_error, false)
-  assert_eq(fake.creates[0], {
-    hours: 1.0,
-    issue_id: Some(3),
-    project_id: None,
-    spent_on: None,
-    activity_id: None,
-    comments: None,
-  })
+  assert_eq(fake.creates[0], @time_entries.Create::new(hours=1.0, issue_id=3))
 }
 
 ///|
@@ -234,17 +227,7 @@ async test "update passes the id and only the changes given" {
   assert_eq(called.text, "{\"ok\":true}")
   assert_eq(
     fake.updates[0],
-    (
-      7,
-      {
-        hours: Some(2.0),
-        issue_id: None,
-        project_id: None,
-        spent_on: None,
-        activity_id: None,
-        comments: Some("revised"),
-      },
-    ),
+    (7, @time_entries.Update::new(hours=2.0, comments="revised")),
   )
 }
 

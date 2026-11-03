@@ -24,29 +24,8 @@ fn AttachmentScope::to_wire(self : AttachmentScope) -> String {
 
 ///|
 /// The parameters of a search. A `None` flag is left out of the request, which keeps Redmine's default for it.
-///
-/// ```mbt check
-/// test {
-///   let query : @search.Query = {
-///     q: "timeout",
-///     scope: None,
-///     all_words: None,
-///     titles_only: Some(true),
-///     open_issues: None,
-///     issues: Some(true),
-///     news: None,
-///     documents: None,
-///     changesets: None,
-///     wiki_pages: None,
-///     messages: None,
-///     projects: None,
-///     attachments: Some(Included),
-///   }
-///   assert_eq(query.attachments, Some(@search.AttachmentScope::Included))
-/// }
-/// ```
 #derive(Eq, Debug)
-pub(all) struct Query {
+pub struct Query {
   q : String
   scope : String?
   all_words : Bool?
@@ -67,6 +46,53 @@ pub extend Query with Eq::{equal, not_equal}
 
 ///|
 pub extend Query with @debug.Debug::{to_repr}
+
+///|
+/// The parameters of a search; only `q` must be given.
+///
+/// ```mbt check
+/// test {
+///   let query = @search.Query::new(
+///     q="timeout",
+///     titles_only=true,
+///     issues=true,
+///     attachments=Included,
+///   )
+///   assert_eq(query.attachments, Some(@search.AttachmentScope::Included))
+///   assert_true(query.scope is None)
+/// }
+/// ```
+pub fn Query::new(
+  q~ : String,
+  scope? : String,
+  all_words? : Bool,
+  titles_only? : Bool,
+  open_issues? : Bool,
+  issues? : Bool,
+  news? : Bool,
+  documents? : Bool,
+  changesets? : Bool,
+  wiki_pages? : Bool,
+  messages? : Bool,
+  projects? : Bool,
+  attachments? : AttachmentScope,
+) -> Query {
+  {
+    q,
+    scope,
+    all_words,
+    titles_only,
+    open_issues,
+    issues,
+    news,
+    documents,
+    changesets,
+    wiki_pages,
+    messages,
+    projects,
+    attachments,
+  }
+}
 
 ///|
 /// One match of a search. `kind` holds Redmine's `type` field, which MoonBit cannot name.
@@ -103,21 +129,7 @@ pub extend Match with ToJson::{to_json}
 ///     endpoint="https://redmine.example.com",
 ///     api_key="...",
 ///   )
-///   let query : @search.Query = {
-///     q: "timeout",
-///     scope: None,
-///     all_words: None,
-///     titles_only: None,
-///     open_issues: Some(true),
-///     issues: Some(true),
-///     news: None,
-///     documents: None,
-///     changesets: None,
-///     wiki_pages: None,
-///     messages: None,
-///     projects: None,
-///     attachments: None,
-///   }
+///   let query = @search.Query::new(q="timeout", open_issues=true, issues=true)
 ///   let matches = redmine |> @search.search(query, limit=20)
 ///   ignore(matches)
 /// }

@@ -126,22 +126,8 @@ pub extend Version with @debug.Debug::{to_repr}
 
 ///|
 /// Attributes of a version to create; `due_date` is `YYYY-MM-DD`.
-///
-/// ```mbt check
-/// test {
-///   let create : @versions.Create = {
-///     name: "1.0",
-///     description: None,
-///     status: Some(Open),
-///     due_date: Some("2026-12-31"),
-///     sharing: None,
-///     wiki_page_title: None,
-///   }
-///   assert_eq(create.status, Some(@versions.Status::Open))
-/// }
-/// ```
 #derive(Eq, Debug)
-pub(all) struct Create {
+pub struct Create {
   name : String
   description : String?
   status : Status?
@@ -157,9 +143,34 @@ pub extend Create with Eq::{equal, not_equal}
 pub extend Create with @debug.Debug::{to_repr}
 
 ///|
+/// The attributes of a version to create; only `name` must be given.
+///
+/// ```mbt check
+/// test {
+///   let create = @versions.Create::new(
+///     name="1.0",
+///     status=Open,
+///     due_date="2026-12-31",
+///   )
+///   assert_eq(create.status, Some(@versions.Status::Open))
+///   assert_true(create.description is None)
+/// }
+/// ```
+pub fn Create::new(
+  name~ : String,
+  description? : String,
+  status? : Status,
+  due_date? : String,
+  sharing? : Sharing,
+  wiki_page_title? : String,
+) -> Create {
+  { name, description, status, due_date, sharing, wiki_page_title, }
+}
+
+///|
 /// Attributes of a version to change; fields left `None` are not sent.
 #derive(Eq, Debug)
-pub(all) struct Update {
+pub struct Update {
   name : String?
   description : String?
   status : Status?
@@ -173,6 +184,27 @@ pub extend Update with Eq::{equal, not_equal}
 
 ///|
 pub extend Update with @debug.Debug::{to_repr}
+
+///|
+/// The attributes of a version to change; only the fields given are touched.
+///
+/// ```mbt check
+/// test {
+///   let update = @versions.Update::new(status=Closed)
+///   assert_eq(update.status, Some(@versions.Status::Closed))
+///   assert_true(update.name is None)
+/// }
+/// ```
+pub fn Update::new(
+  name? : String,
+  description? : String,
+  status? : Status,
+  due_date? : String,
+  sharing? : Sharing,
+  wiki_page_title? : String,
+) -> Update {
+  { name, description, status, due_date, sharing, wiki_page_title, }
+}
 
 ///|
 /// Lists the versions of `project`; Redmine answers them all in one response.
@@ -234,14 +266,10 @@ pub async fn show(
 ///     api_key="...",
 ///   )
 ///   let version = redmine
-///     |> @versions.create(Identifier("demo"), {
-///       name: "1.0",
-///       description: None,
-///       status: None,
-///       due_date: Some("2026-12-31"),
-///       sharing: None,
-///       wiki_page_title: None,
-///     })
+///     |> @versions.create(
+///       Identifier("demo"),
+///       @versions.Create::new(name="1.0", due_date="2026-12-31"),
+///     )
 ///   ignore(version)
 /// }
 /// ```
@@ -277,15 +305,7 @@ pub async fn create(
 ///     endpoint="https://redmine.example.com",
 ///     api_key="...",
 ///   )
-///   redmine
-///   |> @versions.update(3, {
-///     name: None,
-///     description: None,
-///     status: Some(Closed),
-///     due_date: None,
-///     sharing: None,
-///     wiki_page_title: None,
-///   })
+///   redmine |> @versions.update(3, @versions.Update::new(status=Closed))
 /// }
 /// ```
 pub async fn update(

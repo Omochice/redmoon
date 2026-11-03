@@ -43,37 +43,27 @@ async test "a time entry is created, listed, shown, updated, and deleted" {
   let activity_id = activities[0].id
   let spent_on = "2031-06-15"
   let created = redmine
-    |> @time_entries.create({
-      hours: 1.5,
-      issue_id: None,
-      project_id: Some(1),
-      spent_on: Some(spent_on),
-      activity_id: Some(activity_id),
-      comments: Some("time entries integration test"),
-    })
+    |> @time_entries.create(
+      @time_entries.Create::new(
+        hours=1.5,
+        project_id=1,
+        spent_on~,
+        activity_id~,
+        comments="time entries integration test",
+      ),
+    )
   assert_eq(created.hours, 1.5)
   assert_eq(created.project.id, 1)
   assert_eq(created.activity.id, activity_id)
   assert_eq(created.spent_on, spent_on)
   let listed = redmine
-    |> @time_entries.list({
-      project_id: Some(1),
-      user_id: None,
-      spent_on: None,
-      from: Some(spent_on),
-      to: Some(spent_on),
-    })
+    |> @time_entries.list(
+      @time_entries.ListQuery::new(project_id=1, from=spent_on, to=spent_on),
+    )
   assert_true(listed.any(fn(entry) { entry.id == created.id }))
   assert_eq(redmine |> @time_entries.show(created.id), created)
   redmine
-  |> @time_entries.update(created.id, {
-    hours: Some(2.0),
-    issue_id: None,
-    project_id: None,
-    spent_on: None,
-    activity_id: None,
-    comments: None,
-  })
+  |> @time_entries.update(created.id, @time_entries.Update::new(hours=2.0))
   let updated = redmine |> @time_entries.show(created.id)
   assert_eq(updated.hours, 2.0)
   assert_eq(updated.comments, Some("time entries integration test"))

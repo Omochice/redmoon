@@ -48,13 +48,15 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
         to.as_member(),
       ],
       v => {
-        TimeEntryAction::List({
-          project_id: v.get(project_id),
-          user_id: v.get(user_id),
-          spent_on: v.get(spent_on),
-          from: v.get(from),
-          to: v.get(to),
-        })
+        TimeEntryAction::List(
+          @time_entries.ListQuery::new(
+            project_id?=v.get(project_id),
+            user_id?=v.get(user_id),
+            spent_on?=v.get(spent_on),
+            from?=v.get(from),
+            to?=v.get(to),
+          ),
+        )
       },
     )
   }
@@ -108,14 +110,16 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
         comments.as_member(),
       ],
       v => {
-        TimeEntryAction::Create({
-          hours: v.get(hours),
-          issue_id: v.get(issue_id),
-          project_id: v.get(project_id),
-          spent_on: v.get(spent_on),
-          activity_id: v.get(activity_id),
-          comments: v.get(comments),
-        })
+        TimeEntryAction::Create(
+          @time_entries.Create::new(
+            hours=v.get(hours),
+            issue_id?=v.get(issue_id),
+            project_id?=v.get(project_id),
+            spent_on?=v.get(spent_on),
+            activity_id?=v.get(activity_id),
+            comments?=v.get(comments),
+          ),
+        )
       },
     ).require_any([issue_id.as_member(), project_id.as_member()])
   }
@@ -132,14 +136,17 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
         comments.as_member(),
       ],
       v => {
-        TimeEntryAction::Update(v.get(id), {
-          hours: v.get(hours),
-          issue_id: v.get(issue_id),
-          project_id: v.get(project_id),
-          spent_on: v.get(spent_on),
-          activity_id: v.get(activity_id),
-          comments: v.get(comments),
-        })
+        TimeEntryAction::Update(
+          v.get(id),
+          @time_entries.Update::new(
+            hours?=v.get(hours),
+            issue_id?=v.get(issue_id),
+            project_id?=v.get(project_id),
+            spent_on?=v.get(spent_on),
+            activity_id?=v.get(activity_id),
+            comments?=v.get(comments),
+          ),
+        )
       },
     )
   }
