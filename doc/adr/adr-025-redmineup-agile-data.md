@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (refined by [ADR-023](./adr-023-design-evolution-from-adr-007.md), after which a shape mismatch is a `Decode` failure rather than the `Transport` failure Mitigations name)
 
 ## Context
 
