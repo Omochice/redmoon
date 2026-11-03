@@ -3,7 +3,6 @@ package "omochice/redmoon/tools"
 
 import {
   "moonbitlang/async/io",
-  "moonbitlang/core/json",
   "omochice/mcp",
   "omochice/redmine",
   "omochice/redmine-plugins/additional_tags",
@@ -24,53 +23,25 @@ import {
 }
 
 // Values
-pub fn[T] actions(Mode, read~ : Array[(String, @schema.Schema[T])], write~ : Array[(String, @schema.Schema[T])]) -> @schema.Schema[T]
-
 pub fn agile_tool(&AgilePort, Mode) -> @mcp.Tool
 
 pub fn attachments_tool(&AttachmentPort, &FilePort, Mode) -> @mcp.Tool
 
-pub fn date_filter() -> @schema.Schema[@issues.DateFilter]
-
-pub fn describe_crud_tool(String, Mode, full_verbs? : String, lines? : Array[String]) -> String
-
 pub fn enumerations_tool(&EnumerationPort) -> @mcp.Tool
-
-pub fn failure(Int32, Array[String]) -> @mcp.ToolResult
-
-pub fn failure_of(@redmine.RedmineError) -> @mcp.ToolResult
 
 pub fn issue_templates_tool(&IssueTemplatePort) -> @mcp.Tool
 
 pub fn issues_tool(&IssuePort, &FilePort, Mode) -> @mcp.Tool
 
-pub fn local_failure(Array[String]) -> @mcp.ToolResult
-
 pub fn memberships_tool(&MembershipPort) -> @mcp.Tool
 
 pub fn on_invalid(@schema.SchemaError) -> @mcp.ToolResult
 
-pub let operation_key_hint : String
-
-pub fn past_date_filter() -> @schema.Schema[@issues.PastDateFilter]
-
-pub fn project_ref() -> @schema.Schema[@redmine.ProjectRef]
-
-pub fn record_id() -> @schema.Schema[Int32]
-
 pub fn relations_tool(&RelationPort, Mode) -> @mcp.Tool
-
-pub async fn[T : @json.ToJson] respond(async () -> T raise @redmine.RedmineError) -> @mcp.ToolResult
-
-pub async fn respond_ok(async () -> Unit raise @redmine.RedmineError) -> @mcp.ToolResult
 
 pub fn search_tool(&SearchPort) -> @mcp.Tool
 
 pub fn server_info_tool(build? : @build.BuildInfo?) -> @mcp.Tool
-
-pub fn[T : @json.ToJson] success(T) -> @mcp.ToolResult
-
-pub fn success_ok() -> @mcp.ToolResult
 
 pub fn tags_tool(&TagPort, Mode) -> @mcp.Tool
 

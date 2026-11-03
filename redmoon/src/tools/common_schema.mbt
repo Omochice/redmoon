@@ -1,12 +1,12 @@
 ///|
 /// Redmine ids start at 1.
-pub fn record_id() -> @schema.Schema[Int32] {
+fn record_id() -> @schema.Schema[Int32] {
   @schema.integer(min=1)
 }
 
 ///|
 /// A project named as in a Redmine URL path: the numeric id or the identifier.
-pub fn project_ref() -> @schema.Schema[@redmine.ProjectRef] {
+fn project_ref() -> @schema.Schema[@redmine.ProjectRef] {
   @schema.union([
     record_id().map(id => @redmine.ProjectRef::Id(id)),
     @schema.string()

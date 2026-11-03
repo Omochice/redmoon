@@ -9,7 +9,7 @@ pub(all) enum Mode {
 ///|
 /// The operations a tool advertises in `mode`: `write` ones are left out of
 /// `Readonly`, so they are rejected as unknown keys rather than by a handler.
-pub fn[T] actions(
+fn[T] actions(
   mode : Mode,
   read~ : Array[(String, @schema.Schema[T])],
   write~ : Array[(String, @schema.Schema[T])],
