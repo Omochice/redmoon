@@ -147,7 +147,7 @@ pub async fn update(
     redmine
     |> @redmine.send(
       Put,
-      ["issues", issue_id.to_string() + ".json"],
+      ["issues", "\{issue_id}.json"],
       body=attributes.to_body(current),
     ),
   )

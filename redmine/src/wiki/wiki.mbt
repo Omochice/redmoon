@@ -250,14 +250,8 @@ fn page_segments(
   let page = wiki_title_segment(title)
   match version {
     Some(version) =>
-      [
-        "projects",
-        project.segment(),
-        "wiki",
-        page,
-        version.to_string() + ".json",
-      ]
-    None => ["projects", project.segment(), "wiki", page + ".json"]
+      ["projects", project.segment(), "wiki", page, "\{version}.json"]
+    None => ["projects", project.segment(), "wiki", "\{page}.json"]
   }
 }
 

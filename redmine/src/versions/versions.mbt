@@ -251,8 +251,7 @@ pub async fn show(
   redmine : @redmine.Redmine,
   id : Int32,
 ) -> Version raise @redmine.RedmineError {
-  let json = redmine
-    |> @redmine.send(Get, ["versions", id.to_string() + ".json"])
+  let json = redmine |> @redmine.send(Get, ["versions", "\{id}.json"])
   @decode.decode_field(json, "version")
 }
 
@@ -310,11 +309,7 @@ pub async fn update(
 ) -> Unit raise @redmine.RedmineError {
   ignore(
     redmine
-    |> @redmine.send(
-      Put,
-      ["versions", id.to_string() + ".json"],
-      body=attributes.to_body(),
-    ),
+    |> @redmine.send(Put, ["versions", "\{id}.json"], body=attributes.to_body()),
   )
 }
 
@@ -336,9 +331,7 @@ pub async fn delete(
   redmine : @redmine.Redmine,
   id : Int32,
 ) -> Unit raise @redmine.RedmineError {
-  ignore(
-    redmine |> @redmine.send(Delete, ["versions", id.to_string() + ".json"]),
-  )
+  ignore(redmine |> @redmine.send(Delete, ["versions", "\{id}.json"]))
 }
 
 ///|
