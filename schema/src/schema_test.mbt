@@ -145,13 +145,37 @@ test "map converts the parsed value only" {
 }
 
 ///|
-test "refine rejects and merges keywords" {
+test "refine rejects and adds keywords" {
   let s = string().refine(v => v.has_prefix("#"), "must start with #", keywords=[
     ("pattern", "^#"),
   ])
   assert_eq(schema_json(s), "{\"type\":\"string\",\"pattern\":\"^#\"}")
   assert_eq(outcome(s, "\"#a\""), "ok: \"#a\"")
   assert_eq(outcome(s, "\"a\""), "error: must start with #")
+}
+
+///|
+test "a refine stacked on another keeps both keywords under allOf" {
+  let s = not_blank().refine(
+    v => !v.contains_char(','),
+    "must not contain a comma",
+    keywords=[("pattern", "^[^,]*$")],
+  )
+  assert_eq(
+    schema_json(s),
+    "{\"type\":\"string\",\"allOf\":[{\"pattern\":\"\\\\S\"},{\"pattern\":\"^[^,]*$\"}]}",
+  )
+  assert_eq(outcome(s, "\"a\""), "ok: \"a\"")
+  assert_eq(outcome(s, "\" \""), "error: must not be blank")
+  assert_eq(outcome(s, "\"a,b\""), "error: must not contain a comma")
+}
+
+///|
+test "describe twice keeps the last description" {
+  assert_eq(
+    schema_json(string().describe("A name").describe("The name")),
+    "{\"type\":\"string\",\"description\":\"The name\"}",
+  )
 }
 
 ///|

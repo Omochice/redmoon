@@ -13,18 +13,17 @@ let alternative_keywords : Array[String] = ["anyOf", "oneOf"]
 /// An annotation replaces an earlier one, while a constraint already present with another value, or one added next to a list of alternatives, is conjoined under `allOf` rather than overwritten, so a schema given several constraints keeps them all.
 fn compose(base : Json, keyword : String, value : Json) -> Json {
   guard base is Object(fields) else { base }
-  guard !annotation_keywords.contains(keyword) else {
-    with_keywords(base, [(keyword, value)])
-  }
   guard fields.get(keyword) != Some(value) else { base }
+  let fields = fields.copy()
   let moved = alternative_keywords.filter(key => fields.contains(key))
   if fields.contains(keyword) && !moved.contains(keyword) {
     moved.push(keyword)
   }
-  guard fields.contains("allOf") || !moved.is_empty() else {
-    with_keywords(base, [(keyword, value)])
+  guard !annotation_keywords.contains(keyword) &&
+    (fields.contains("allOf") || !moved.is_empty()) else {
+    fields[keyword] = value
+    Json::object(fields)
   }
-  let fields = fields.copy()
   let all_of = match fields.get("allOf") {
     Some(Array(all_of)) => all_of.copy()
     _ => []
@@ -36,17 +35,4 @@ fn compose(base : Json, keyword : String, value : Json) -> Json {
   all_of.push(Json::object(Map([(keyword, value)])))
   fields["allOf"] = Json::array(all_of)
   Json::object(fields)
-}
-
-///|
-fn with_keywords(base : Json, extra : Array[(String, Json)]) -> Json {
-  guard base is Object(fields) else { base }
-  let merged : Map[String, Json] = Map([])
-  for key, value in fields {
-    merged[key] = value
-  }
-  for entry in extra {
-    merged[entry.0] = entry.1
-  }
-  Json::object(merged)
 }

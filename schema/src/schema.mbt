@@ -46,8 +46,11 @@ pub fn[A, B] Schema::map(self : Schema[A], f : (A) -> B) -> Schema[B] {
 
 ///|
 /// Rejects values for which `check` is false with `message`. `keywords` are
-/// merged into the emitted schema so the advertised schema states the same
+/// added to the emitted schema so the advertised schema states the same
 /// constraint, e.g. a `pattern` that MoonBit cannot evaluate itself.
+/// A keyword the schema already carries with another value is kept beside the
+/// new one under `allOf`, since `check` is enforced on top of the earlier
+/// constraint rather than instead of it.
 pub fn[T] Schema::refine(
   self : Schema[T],
   check : (T) -> Bool,
@@ -55,7 +58,11 @@ pub fn[T] Schema::refine(
   keywords~ : Array[(String, Json)] = [],
 ) -> Schema[T] {
   {
-    json: () => with_keywords((self.json)(), keywords),
+    json: () => {
+      keywords.fold(init=(self.json)(), (json, entry) => {
+        compose(json, entry.0, entry.1)
+      })
+    },
     decode: (input, path) => {
       let value = (self.decode)(input, path)
       if !check(value) {
