@@ -23,6 +23,7 @@ pub(all) suberror RedmineError {
   Response(status~ : Int32, errors~ : Array[String])
   Decode(message~ : String)
   Transport(message~ : String)
+  InvalidArgument(message~ : String)
 }
 pub fn RedmineError::to_json(Self) -> @json.Json
 pub fn RedmineError::to_repr(Self) -> @debug.Repr

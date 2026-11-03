@@ -21,7 +21,7 @@ async fn search_wiki_pages(
 
 ///|
 /// The wiki pages of `project` carrying the tag `name`, matched in any case.
-/// Raises `Transport` before any request when `name` is blank or contains a comma.
+/// Raises `InvalidArgument` before any request when `name` is blank or contains a comma.
 /// Raises `Decode` when Redmine ignored the tag because the Additional Tags plugin is not installed or its wiki tags are switched off.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///

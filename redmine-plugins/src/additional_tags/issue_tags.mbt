@@ -66,7 +66,7 @@ async fn change_issue_tags(
 ///|
 /// Adds `names` to the tags of the issue `issue_id`, skipping those it carries in any case, and returns its tag names after the write.
 /// Nothing is written when the issue already carries every name.
-/// Raises `Transport` before any request when `names` is empty or a name is blank or contains a comma.
+/// Raises `InvalidArgument` before any request when `names` is empty or a name is blank or contains a comma.
 /// Raises `Decode` when Redmine accepted the update without saving the tags, which happens without `edit_issue_tags`, without `create_issue_tags` for a name no issue carries yet, or while the plugin's issue tags are switched off, and in the cases `tags` raises it.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 ///
@@ -92,7 +92,7 @@ pub async fn add(
 ///|
 /// Removes the tags of the issue `issue_id` that match any of `names` in any case, and returns its tag names after the write.
 /// Nothing is written when the issue carries none of the names.
-/// Raises `Transport` before any request when `names` is empty or a name is blank or contains a comma.
+/// Raises `InvalidArgument` before any request when `names` is empty or a name is blank or contains a comma.
 /// Raises `Decode` when Redmine accepted the update without saving the tags, which happens without `edit_issue_tags` or while the plugin's issue tags are switched off, and in the cases `tags` raises it.
 /// Raises `RedmineError` on a non-2xx answer or a transport failure.
 ///
@@ -169,7 +169,7 @@ fn issues_query(
 /// The issues carrying any of `names`, matched in any case, narrowed by project and status as `@issues.list` narrows them.
 /// Only open issues are listed unless `status_id` says otherwise, and at most `limit` issues are returned when it is given.
 /// The issues carry no tags; `tags` reads them.
-/// Raises `Transport` before any request when `names` is empty or a name is blank or contains a comma.
+/// Raises `InvalidArgument` before any request when `names` is empty or a name is blank or contains a comma.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check

@@ -66,7 +66,7 @@ async test "a blank name or a name with a comma is refused before any listing" {
   for entry in cases {
     let index = FakeWikiIndex::new()
     try index.search(entry.0) catch {
-      Transport(message~) => assert_eq(message, entry.1)
+      InvalidArgument(message~) => assert_eq(message, entry.1)
       error => fail(message_of(error))
     } noraise {
       _ => fail("expected \{entry.1}")
