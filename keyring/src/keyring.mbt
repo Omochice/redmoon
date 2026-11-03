@@ -149,6 +149,8 @@ pub fn set(
 /// ```
 pub fn delete(service : String, account : String) -> Unit raise KeyringError {
   let status = ffi_delete(@utf8.encode(service), @utf8.encode(account))
+  // Every C file reports an absent entry as not found so the fold into success
+  // exists once, here, instead of once per platform.
   if status == not_found {
     return
   }

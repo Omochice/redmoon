@@ -118,8 +118,8 @@ int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account
   int32_t rc = KEYRING_INTERNAL;
   if (svc && acct) {
     GError *err = NULL;
-    secret_password_clear_sync(&schema, NULL, &err, "service", svc, "account", acct, NULL);
-    rc = err ? status_of_error(err) : KEYRING_OK;
+    int cleared = secret_password_clear_sync(&schema, NULL, &err, "service", svc, "account", acct, NULL);
+    rc = err ? status_of_error(err) : (cleared ? KEYRING_OK : KEYRING_NOT_FOUND);
   }
   keyring_cstr_free(svc);
   keyring_cstr_free(acct);

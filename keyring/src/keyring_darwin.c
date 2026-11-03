@@ -185,7 +185,6 @@ int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account
   CFTypeRef q = (svc && acct) ? make_query(svc, acct) : NULL;
   if (q) {
     rc = status_of(SecItemDelete(q));
-    if (rc == KEYRING_NOT_FOUND) rc = KEYRING_OK;
     CFRelease(q);
   }
   keyring_cstr_free(svc);
