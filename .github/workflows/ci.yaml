@@ -39,7 +39,7 @@ jobs:
           if [ -n "$changes" ]; then
             echo "$changes"
             git diff -- '*.mbti'
-            echo "::error::run moon info and commit the pkg.generated.mbti files"
+            echo "::error::run task check and commit the pkg.generated.mbti files"
             exit 1
           fi
 
