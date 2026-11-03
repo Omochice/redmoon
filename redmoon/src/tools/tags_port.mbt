@@ -1,7 +1,7 @@
 ///|
 /// The Redmine operations behind `redmine_tags`.
 pub(open) trait TagPort {
-  async fn issue_tags(Self, issue_id : Int32) -> Array[String] raise @redmine.RedmineError
+  async fn show_issue_tags(Self, issue_id : Int32) -> Array[String] raise @redmine.RedmineError
   async fn add_issue_tags(Self, issue_id : Int32, names : Array[String]) -> Array[
     String,
   ] raise @redmine.RedmineError
@@ -24,7 +24,7 @@ pub(open) trait TagPort {
 }
 
 ///|
-pub impl TagPort for @redmine.Redmine with fn issue_tags(self, issue_id) {
+pub impl TagPort for @redmine.Redmine with fn show_issue_tags(self, issue_id) {
   self |> @additional_tags.tags(issue_id)
 }
 

@@ -117,7 +117,7 @@ pub fn tags_tool(port : &TagPort, mode : Mode) -> @mcp.Tool {
     input=tags_input(mode),
     handler=async fn(action) {
       match action {
-        Show(issue_id) => respond(() => port.issue_tags(issue_id))
+        Show(issue_id) => respond(() => port.show_issue_tags(issue_id))
         Add(issue_id, names) =>
           respond(() => port.add_issue_tags(issue_id, names))
         Remove(issue_id, names) =>

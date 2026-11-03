@@ -23,7 +23,7 @@ fn FakeTags::record(
 }
 
 ///|
-impl TagPort for FakeTags with fn issue_tags(self, issue_id) {
+impl TagPort for FakeTags with fn show_issue_tags(self, issue_id) {
   self.record("show \{issue_id}")
   ["alpha", "beta"]
 }
