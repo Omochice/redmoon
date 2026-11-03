@@ -140,11 +140,15 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
           v.get(id),
           @time_entries.Update::new(
             hours?=v.get(hours),
-            issue_id?=v.get(issue_id),
+            issue_id?=v
+              .get(issue_id)
+              .map(value => @redmine.Clearable::Set(value)),
             project_id?=v.get(project_id),
             spent_on?=v.get(spent_on),
             activity_id?=v.get(activity_id),
-            comments?=v.get(comments),
+            comments?=v
+              .get(comments)
+              .map(value => @redmine.Clearable::Set(value)),
           ),
         )
       },

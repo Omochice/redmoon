@@ -169,14 +169,15 @@ pub fn Create::new(
 
 ///|
 /// Attributes of a version to change; fields left `None` are not sent.
+/// `Clear` empties the description, the due date, or the wiki page title; `due_date` is `YYYY-MM-DD`.
 #derive(Eq, Debug)
 pub struct Update {
   name : String?
-  description : String?
+  description : @redmine.Clearable[String]?
   status : Status?
-  due_date : String?
+  due_date : @redmine.Clearable[String]?
   sharing : Sharing?
-  wiki_page_title : String?
+  wiki_page_title : @redmine.Clearable[String]?
 }
 
 ///|
@@ -190,18 +191,19 @@ pub extend Update with @debug.Debug::{to_repr}
 ///
 /// ```mbt check
 /// test {
-///   let update = @versions.Update::new(status=Closed)
+///   let update = @versions.Update::new(status=Closed, due_date=Clear)
 ///   assert_eq(update.status, Some(@versions.Status::Closed))
+///   assert_eq(update.due_date, Some(@redmine.Clearable::Clear))
 ///   assert_true(update.name is None)
 /// }
 /// ```
 pub fn Update::new(
   name? : String,
-  description? : String,
+  description? : @redmine.Clearable[String],
   status? : Status,
-  due_date? : String,
+  due_date? : @redmine.Clearable[String],
   sharing? : Sharing,
-  wiki_page_title? : String,
+  wiki_page_title? : @redmine.Clearable[String],
 ) -> Update {
   { name, description, status, due_date, sharing, wiki_page_title, }
 }
@@ -356,11 +358,20 @@ fn Create::to_body(self : Create) -> Json {
 fn Update::to_body(self : Update) -> Json {
   let version = @wire.present_members([
     ("name", self.name.map(ToJson::to_json)),
-    ("description", self.description.map(ToJson::to_json)),
+    (
+      "description",
+      @redmine.Clearable::to_member(self.description, set=ToJson::to_json),
+    ),
     ("status", self.status.map(ToJson::to_json)),
-    ("due_date", self.due_date.map(ToJson::to_json)),
+    (
+      "due_date",
+      @redmine.Clearable::to_member(self.due_date, set=ToJson::to_json),
+    ),
     ("sharing", self.sharing.map(ToJson::to_json)),
-    ("wiki_page_title", self.wiki_page_title.map(ToJson::to_json)),
+    (
+      "wiki_page_title",
+      @redmine.Clearable::to_member(self.wiki_page_title, set=ToJson::to_json),
+    ),
   ])
   Json::object({ "version": version })
 }

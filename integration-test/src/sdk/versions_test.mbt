@@ -28,7 +28,7 @@ async test "versions go through create, list, show, update and delete" {
     redmine
     |> @versions.update(
       created.id,
-      @versions.Update::new(description="changed", status=Locked),
+      @versions.Update::new(description=Set("changed"), status=Locked),
     )
     let shown = redmine |> @versions.show(created.id)
     assert_eq(shown.description, Some("changed"))

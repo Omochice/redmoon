@@ -91,19 +91,18 @@ pub fn ListQuery::new(project_id? : Int32, user_id? : Int32, spent_on? : String,
 pub fn ListQuery::not_equal(Self, Self) -> Bool
 pub fn ListQuery::to_repr(Self) -> @debug.Repr
 
-#derive(Eq, @debug.Debug, @json.ToJson)
+#derive(Eq, @debug.Debug)
 pub struct Update {
   hours : Double?
-  issue_id : Int32?
+  issue_id : @redmine.Clearable[Int32]?
   project_id : Int32?
   spent_on : String?
   activity_id : Int32?
-  comments : String?
+  comments : @redmine.Clearable[String]?
 }
 pub fn Update::equal(Self, Self) -> Bool
-pub fn Update::new(hours? : Double, issue_id? : Int32, project_id? : Int32, spent_on? : String, activity_id? : Int32, comments? : String) -> Self
+pub fn Update::new(hours? : Double, issue_id? : @redmine.Clearable[Int32], project_id? : Int32, spent_on? : String, activity_id? : Int32, comments? : @redmine.Clearable[String]) -> Self
 pub fn Update::not_equal(Self, Self) -> Bool
-pub fn Update::to_json(Self) -> @json.Json
 pub fn Update::to_repr(Self) -> @debug.Repr
 
 // Type aliases

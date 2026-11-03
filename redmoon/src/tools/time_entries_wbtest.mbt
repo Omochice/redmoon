@@ -227,7 +227,7 @@ async test "update passes the id and only the changes given" {
   assert_eq(called.text, "{\"ok\":true}")
   assert_eq(
     fake.updates[0],
-    (7, @time_entries.Update::new(hours=2.0, comments="revised")),
+    (7, @time_entries.Update::new(hours=2.0, comments=Set("revised"))),
   )
 }
 
@@ -330,7 +330,7 @@ async test "comments of exactly 1024 characters are accepted on create and updat
     "update": { "id": 7, "comments": comments },
   })
   assert_eq(updated.is_error, false, msg=updated.text)
-  assert_eq(fake.updates[0].1.comments, Some(comments))
+  assert_eq(fake.updates[0].1.comments, Some(Set(comments)))
 }
 
 ///|

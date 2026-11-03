@@ -10,11 +10,11 @@ test "a create body carries the name and leaves unset fields out" {
 test "an update body leaves unset fields out" {
   assert_eq(
     Update::new(
-      description="d",
+      description=Set("d"),
       status=Locked,
-      due_date="2026-12-31",
+      due_date=Set("2026-12-31"),
       sharing=Tree,
-      wiki_page_title="Home",
+      wiki_page_title=Set("Home"),
     )
     .to_body()
     .stringify(),
@@ -59,4 +59,14 @@ test "an unknown version sharing fails to decode naming the wire value" {
   } noraise {
     (_ : Sharing) => fail("expected a decode error")
   }
+}
+
+///|
+test "an update body sends null for a cleared field" {
+  assert_eq(
+    Update::new(due_date=Clear, wiki_page_title=Clear, description=Clear)
+    .to_body()
+    .stringify(),
+    "{\"version\":{\"description\":null,\"due_date\":null,\"wiki_page_title\":null}}",
+  )
 }

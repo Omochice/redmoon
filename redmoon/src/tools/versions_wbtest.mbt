@@ -321,7 +321,7 @@ async test "a description of exactly 255 characters is accepted on create and up
     "update": { "id": 7, "description": description },
   })
   assert_eq(updated.is_error, false, msg=updated.text)
-  assert_eq(fake.updated[0].1.description, Some(description))
+  assert_eq(fake.updated[0].1.description, Some(Set(description)))
 }
 
 ///|
@@ -353,7 +353,7 @@ async test "a wiki_page_title of exactly 255 characters is accepted on create an
     "update": { "id": 7, "wiki_page_title": title },
   })
   assert_eq(updated.is_error, false, msg=updated.text)
-  assert_eq(fake.updated[0].1.wiki_page_title, Some(title))
+  assert_eq(fake.updated[0].1.wiki_page_title, Some(Set(title)))
 }
 
 ///|

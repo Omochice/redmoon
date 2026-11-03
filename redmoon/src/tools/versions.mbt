@@ -123,11 +123,17 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
             v.get(id),
             @versions.Update::new(
               name?=v.get(name),
-              description?=v.get(description),
+              description?=v
+                .get(description)
+                .map(value => @redmine.Clearable::Set(value)),
               status?=v.get(status),
-              due_date?=v.get(due_date),
+              due_date?=v
+                .get(due_date)
+                .map(value => @redmine.Clearable::Set(value)),
               sharing?=v.get(sharing),
-              wiki_page_title?=v.get(wiki_page_title),
+              wiki_page_title?=v
+                .get(wiki_page_title)
+                .map(value => @redmine.Clearable::Set(value)),
             ),
           )
         },

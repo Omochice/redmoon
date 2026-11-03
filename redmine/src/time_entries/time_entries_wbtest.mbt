@@ -93,3 +93,13 @@ test "a time entry's custom field values decode as one string or several" {
     ]),
   )
 }
+
+///|
+test "an update body sends null for a cleared issue or comments" {
+  inspect(
+    Update::new(issue_id=Clear, comments=Clear).to_body().stringify(),
+    content=(
+      #|{"time_entry":{"issue_id":null,"comments":null}}
+    ),
+  )
+}

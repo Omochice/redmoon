@@ -214,18 +214,16 @@ pub fn Create::new(
 
 ///|
 /// The attributes of a time entry to change; `None` fields are left out of the request.
-#derive(ToJson, Eq, Debug)
+/// `Clear` detaches the entry from its issue, which leaves it on the project, or empties the comments.
+#derive(Eq, Debug)
 pub struct Update {
   hours : Double?
-  issue_id : Int32?
+  issue_id : @redmine.Clearable[Int32]?
   project_id : Int32?
   spent_on : String?
   activity_id : Int32?
-  comments : String?
+  comments : @redmine.Clearable[String]?
 }
-
-///|
-pub extend Update with ToJson::{to_json}
 
 ///|
 pub extend Update with Eq::{equal, not_equal}
@@ -238,18 +236,19 @@ pub extend Update with @debug.Debug::{to_repr}
 ///
 /// ```mbt check
 /// test {
-///   let update = @time_entries.Update::new(hours=2.0)
+///   let update = @time_entries.Update::new(hours=2.0, comments=Clear)
 ///   assert_eq(update.hours, Some(2.0))
-///   assert_true(update.comments is None)
+///   assert_eq(update.comments, Some(@redmine.Clearable::Clear))
+///   assert_true(update.issue_id is None)
 /// }
 /// ```
 pub fn Update::new(
   hours? : Double,
-  issue_id? : Int32,
+  issue_id? : @redmine.Clearable[Int32],
   project_id? : Int32,
   spent_on? : String,
   activity_id? : Int32,
-  comments? : String,
+  comments? : @redmine.Clearable[String],
 ) -> Update {
   { hours, issue_id, project_id, spent_on, activity_id, comments, }
 }
@@ -378,11 +377,17 @@ fn Create::to_body(self : Create) -> Json {
 fn Update::to_body(self : Update) -> Json {
   let time_entry = @wire.present_members([
     ("hours", self.hours.map(ToJson::to_json)),
-    ("issue_id", self.issue_id.map(ToJson::to_json)),
+    (
+      "issue_id",
+      @redmine.Clearable::to_member(self.issue_id, set=ToJson::to_json),
+    ),
     ("project_id", self.project_id.map(ToJson::to_json)),
     ("spent_on", self.spent_on.map(ToJson::to_json)),
     ("activity_id", self.activity_id.map(ToJson::to_json)),
-    ("comments", self.comments.map(ToJson::to_json)),
+    (
+      "comments",
+      @redmine.Clearable::to_member(self.comments, set=ToJson::to_json),
+    ),
   ])
   Json::object({ "time_entry": time_entry })
 }
