@@ -67,14 +67,11 @@ pub fn[T] Schema::refine(
 pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
   {
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "integer")]
-      if min is Some(m) {
-        entries.push(("minimum", Json(m)))
-      }
-      if max is Some(m) {
-        entries.push(("maximum", Json(m)))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "integer",
+        ("minimum", min.map(m => Json(m))),
+        ("maximum", max.map(m => Json(m))),
+      )
     },
     decode: (input, path) => {
       guard input is Number(d, ..) &&
@@ -100,16 +97,13 @@ pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
 /// bounded (inclusive).
 pub fn integer64(min? : Int64, max? : Int64) -> Schema[Int64] {
   {
+    // `Json(m)` would emit the bound as a string, since core encodes `Int64` that way.
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "integer")]
-      // `Json(m)` would emit the bound as a string, since core encodes `Int64` that way.
-      if min is Some(m) {
-        entries.push(("minimum", Json::number(m.to_double())))
-      }
-      if max is Some(m) {
-        entries.push(("maximum", Json::number(m.to_double())))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "integer",
+        ("minimum", min.map(m => Json::number(m.to_double()))),
+        ("maximum", max.map(m => Json::number(m.to_double()))),
+      )
     },
     decode: (input, path) => {
       // 2^63 itself is excluded, since it is one past the largest `Int64`.
@@ -136,14 +130,11 @@ pub fn integer64(min? : Int64, max? : Int64) -> Schema[Int64] {
 pub fn number(min? : Double, max? : Double) -> Schema[Double] {
   {
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "number")]
-      if min is Some(m) {
-        entries.push(("minimum", Json(m)))
-      }
-      if max is Some(m) {
-        entries.push(("maximum", Json(m)))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "number",
+        ("minimum", min.map(m => Json(m))),
+        ("maximum", max.map(m => Json(m))),
+      )
     },
     decode: (input, path) => {
       guard input is Number(d, ..) else { fail(path, "expected a number") }
@@ -163,14 +154,11 @@ pub fn number(min? : Double, max? : Double) -> Schema[Double] {
 pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String] {
   {
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "string")]
-      if min_length is Some(m) {
-        entries.push(("minLength", Json(m)))
-      }
-      if max_length is Some(m) {
-        entries.push(("maxLength", Json(m)))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "string",
+        ("minLength", min_length.map(m => Json(m))),
+        ("maxLength", max_length.map(m => Json(m))),
+      )
     },
     decode: (input, path) => {
       guard input is String(s) else { fail(path, "expected a string") }

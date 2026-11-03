@@ -9,6 +9,21 @@ let annotation_keywords : Array[String] = ["description", "default"]
 let alternative_keywords : Array[String] = ["anyOf", "oneOf"]
 
 ///|
+fn bounded(
+  type_ : String,
+  lower : (String, Json?),
+  upper : (String, Json?),
+) -> Json {
+  let entries : Array[(String, Json)] = [("type", Json(type_))]
+  for bound in [lower, upper] {
+    if bound.1 is Some(value) {
+      entries.push((bound.0, value))
+    }
+  }
+  Json::object(Map::from_array(entries))
+}
+
+///|
 /// Adds `keyword` to `base`.
 /// An annotation replaces an earlier one, while a constraint already present with another value, or one added next to a list of alternatives, is conjoined under `allOf` rather than overwritten, so a schema given several constraints keeps them all.
 fn compose(base : Json, keyword : String, value : Json) -> Json {
