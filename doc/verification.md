@@ -35,7 +35,8 @@ The fields belong to that project alone because a required field in `demo` would
 It also saves the public issue query `Demo open issues` on `demo`, filtering open issues, through `docker/redmine/seed-queries.rb`, because Redmine offers no API to save a query.
 The default data provides only global queries, and the integration tests need a project query to show that it answers only under its own `project_id`.
 It switches on the issue tags of Additional Tags and lets the Developer role attach existing tags but not create new ones, through `docker/redmine/seed-additional-tags.rb`, because the plugin keeps tags off until its setting is changed and drops a write the user may not make.
-That script also writes the API key of the seeded member `redmoon-member` to `_build/redmine-member-api-key`, because those drops and the administrator-only tag list never happen to the admin.
+It also adds `redmoon-tagger` to `demo` with a role that may create tags as well.
+That script writes the API keys of `redmoon-member` and `redmoon-tagger` to `_build/redmine-member-api-key` and `_build/redmine-tagger-api-key`, because a dropped write, the administrator-only tag list, and the permission to create tags show only for a user who is not the admin.
 The key goes to a file instead of the terminal so that no log carries it, and `_build/` is already gitignored.
 `task redmine:up` and `task redmine:seed` are safe to re-run against an instance that is already prepared.
 
@@ -45,14 +46,14 @@ The task runs `rails runner` through `docker compose exec`, which runs outside t
 
 The tests that need a real Redmine ([ADR-029](./adr/adr-029-testing-strategy.md)) live in `integration-test/`, a module with its own `moon.work` that the root workspace does not list as a member.
 A plain `moon test` at the root therefore never compiles or runs them.
-They read the instance from `REDMOON_TEST_ENDPOINT`, `REDMOON_TEST_API_KEY`, and `REDMOON_TEST_MEMBER_API_KEY`, and fail naming the missing variable when one is unset, because a skipped test would count as passed.
+They read the instance from `REDMOON_TEST_ENDPOINT`, `REDMOON_TEST_API_KEY`, `REDMOON_TEST_MEMBER_API_KEY`, and `REDMOON_TEST_TAGGER_API_KEY`, and fail naming the missing variable when one is unset, because a skipped test would count as passed.
 The module uses only the public API of the SDK, the plugin SDK, and the server, since another module cannot reach their `internal/` packages.
 
 ```sh
 task test:integration
 ```
 
-The task sets `REDMOON_TEST_ENDPOINT` to `http://localhost:3000`, `REDMOON_TEST_API_KEY` to the contents of `_build/redmine-api-key`, and `REDMOON_TEST_MEMBER_API_KEY` to the contents of `_build/redmine-member-api-key`, then runs `moon test` in `integration-test/`.
+The task sets `REDMOON_TEST_ENDPOINT` to `http://localhost:3000`, `REDMOON_TEST_API_KEY` to the contents of `_build/redmine-api-key`, `REDMOON_TEST_MEMBER_API_KEY` to the contents of `_build/redmine-member-api-key`, and `REDMOON_TEST_TAGGER_API_KEY` to the contents of `_build/redmine-tagger-api-key`, then runs `moon test` in `integration-test/`.
 That workspace lists every root member as well, so the run covers the unit tests together with the integration tests.
 Arguments after `--` are passed on to `moon test`.
 `task test:integration:coverage` runs the same tests with coverage and writes the report from the repository root, so that the file names in it stay relative to the repository.

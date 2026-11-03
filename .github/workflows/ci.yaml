@@ -83,6 +83,7 @@ jobs:
         run: |
           echo "::add-mask::$(cat _build/redmine-api-key)"
           echo "::add-mask::$(cat _build/redmine-member-api-key)"
+          echo "::add-mask::$(cat _build/redmine-tagger-api-key)"
 
       - name: Run the integration tests with coverage
         run: nix develop --command task test:integration:coverage

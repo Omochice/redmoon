@@ -83,3 +83,15 @@ async test "a member is told that the tag list needs an administrator" {
     _ => fail("expected a 403")
   }
 }
+
+///|
+async test "a member who may create tags adds a name no issue carries yet" {
+  let redmine = @livetest.redmine()
+  let tagger = @livetest.as_tagger()
+  let id = @livetest.create_probe_issue(redmine, "additional tags create")
+  defer @livetest.delete_probe_issue(redmine, id)
+  assert_eq(tagger |> @additional_tags.add(id, ["redmoon-probe-created"]), [
+    "redmoon-probe-created",
+  ])
+  assert_eq(redmine |> @additional_tags.tags(id), ["redmoon-probe-created"])
+}

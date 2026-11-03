@@ -24,6 +24,13 @@ pub fn as_member() -> @redmine.Redmine raise {
 }
 
 ///|
+/// A client for the same Redmine acting as the seeded non-administrator `redmoon-tagger`, whose key is `REDMOON_TEST_TAGGER_API_KEY`.
+/// Unlike `redmoon-member`, it may create tags, so a saved new tag can be told from one an administrator would create anyway.
+pub fn as_tagger() -> @redmine.Redmine raise {
+  client("REDMOON_TEST_TAGGER_API_KEY")
+}
+
+///|
 /// Creates a probe issue in the demo project and returns its id.
 /// The request is built by hand so that the tests of one resource do not depend on the issues package.
 pub async fn create_probe_issue(

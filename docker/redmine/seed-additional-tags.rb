@@ -10,5 +10,25 @@ role = Role.find_by!(name: "Developer")
 end
 role.remove_permission!(:create_issue_tags) if role.permissions.include?(:create_issue_tags)
 
-# The live tests act as this member, and printing the key here spares the seed a second Rails boot to read it.
-puts User.find_by_login!("redmoon-member").api_key
+# A second member may also create tags, so the live tests can see a new tag saved for someone who is not an administrator.
+tagger_role = Role.find_or_initialize_by(name: "Redmoon tagger")
+tagger_role.permissions = role.permissions | [:create_issue_tags]
+tagger_role.save!
+
+tagger = User.find_or_initialize_by(login: "redmoon-tagger")
+if tagger.new_record?
+  tagger.firstname = "Redmoon"
+  tagger.lastname = "Tagger"
+  tagger.mail = "redmoon-tagger@example.com"
+  # The user never logs in, so a random password spares the seed from holding a credential.
+  tagger.generate_password = true
+  tagger.save!
+end
+
+membership = Member.find_or_initialize_by(project: Project.find_by!(identifier: "demo"), user_id: tagger.id)
+membership.role_ids = [tagger_role.id]
+membership.save!
+
+# The live tests act as these members, and printing the keys here spares the seed a Rails boot per key.
+puts "member #{User.find_by_login!('redmoon-member').api_key}"
+puts "tagger #{tagger.api_key}"
