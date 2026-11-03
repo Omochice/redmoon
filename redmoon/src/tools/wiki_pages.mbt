@@ -20,7 +20,7 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
   let title = @schema.required("title", wiki_title())
   let text = @schema.optional(
     "text",
-    @schema.string().describe(
+    @schema.not_blank().describe(
       "Content of the page. Exactly one of `text` and `text_path` is required.",
     ),
   )

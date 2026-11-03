@@ -278,6 +278,27 @@ async test "wiki create and update need exactly one of text and text_path" {
 }
 
 ///|
+async test "a blank wiki text_path file is refused after reading, since Redmine refuses an empty page" {
+  for action in ["create", "update"] {
+    for content in [b"", b"\n", b" \t\r\n"] {
+      let fake = FakeWikiPages::new()
+      let files = FakeFiles::new(content~)
+      let called = call_tool(
+        wiki_tools(fake, files~),
+        "redmine_wiki_pages",
+        single(action, { "project_id": 1, "title": "T", "text_path": "/tmp/p" }),
+      )
+      assert_eq(
+        called.text,
+        failure_text("invalid arguments: \{action}.text: must not be blank"),
+      )
+      assert_eq(fake.calls, [])
+      assert_eq(files.closed, 1)
+    }
+  }
+}
+
+///|
 async test "a wiki text_path that cannot be read is refused" {
   let fake = FakeWikiPages::new()
   let tools = wiki_tools(fake, files=FakeFiles::new(content=b"\xc3"))
