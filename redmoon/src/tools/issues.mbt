@@ -41,36 +41,11 @@ fn show_includes() -> @schema.Schema[Array[@issues.Include]] {
 }
 
 ///|
-fn status_filter() -> @schema.Schema[@issues.StatusFilter] {
-  @schema.union([
-    record_id().map(id => @issues.StatusFilter::Id(id)),
-    @schema.choice([("open", Open), ("closed", Closed), ("*", All)]),
-  ])
-}
-
-///|
 fn assignee_filter() -> @schema.Schema[@issues.AssigneeFilter] {
   @schema.union([
     record_id().map(id => @issues.AssigneeFilter::User(id)),
     @schema.choice([("me", Me)]),
   ])
-}
-
-///|
-/// Maps `null` to `Clear` so that a field Redmine can empty keeps "leave alone",
-/// "empty" and "set" apart.
-fn[T] clearable(
-  schema : @schema.Schema[T],
-  description : String,
-) -> @schema.Schema[@redmine.Clearable[T]] {
-  @schema.nullable(schema)
-  .map(value => {
-    match value {
-      Some(value) => @redmine.Clearable::Set(value)
-      None => Clear
-    }
-  })
-  .describe(description)
 }
 
 ///|
@@ -114,12 +89,6 @@ let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 let list_include : @schema.Field[Array[@issues.ListInclude]?] = @schema.optional(
   "include",
   list_includes(),
-)
-
-///|
-let list_limit : @schema.Field[Int32?] = @schema.optional(
-  "limit",
-  @schema.integer(min=1),
 )
 
 ///|

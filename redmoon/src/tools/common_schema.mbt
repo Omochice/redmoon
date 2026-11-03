@@ -20,3 +20,34 @@ pub fn project_ref() -> @schema.Schema[@redmine.ProjectRef] {
     "Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).",
   )
 }
+
+///|
+fn status_filter() -> @schema.Schema[@issues.StatusFilter] {
+  @schema.union([
+    record_id().map(id => @issues.StatusFilter::Id(id)),
+    @schema.choice([("open", Open), ("closed", Closed), ("*", All)]),
+  ])
+}
+
+///|
+/// Maps `null` to `Clear` so that a field Redmine can empty keeps "leave alone",
+/// "empty" and "set" apart.
+fn[T] clearable(
+  schema : @schema.Schema[T],
+  description : String,
+) -> @schema.Schema[@redmine.Clearable[T]] {
+  @schema.nullable(schema)
+  .map(value => {
+    match value {
+      Some(value) => @redmine.Clearable::Set(value)
+      None => Clear
+    }
+  })
+  .describe(description)
+}
+
+///|
+let list_limit : @schema.Field[Int32?] = @schema.optional(
+  "limit",
+  @schema.integer(min=1),
+)
