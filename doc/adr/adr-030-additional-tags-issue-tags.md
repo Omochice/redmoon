@@ -13,7 +13,7 @@ Instances that tag issues get the tags from a plugin, and the AlphaNodes Additio
 [ADR-017](./adr-017-redmine-plugin-sdk-module.md) put the API of the redmine_issue_templates plugin into `omochice/redmine-plugins`, and [ADR-025](./adr-025-redmineup-agile-data.md) added RedmineUP Agile there as a second package with a tool of its own.
 
 The plugin's README does not describe its REST API, so the shapes below were read from its source and its API tests and then observed on the verification Redmine.
-The verification Redmine runs Redmine 7.0.2 with additionals and additional_tags at their 4.6.0 tags; additional_tags refuses to load without additionals.
+The verification Redmine ran Redmine 7.0.2 with additionals and additional_tags at their 4.6.0 tags; additional_tags refuses to load without additionals.
 The observations were made on 2026-11-03 as the administrator and as the seeded member `redmoon-member`, whose Developer role was given and denied each tag permission in turn.
 
 | Request                                                      | What was observed                                                                                                                                                                  |
@@ -222,7 +222,7 @@ A second member, `redmoon-tagger`, holds a role that may also create tags, and i
 #### Rationale
 
 Unlike RedmineUP Agile, the plugin can be installed from its repository, so its shapes are measured and covered by live tests rather than taken from a third party.
-The main branch of additionals requires Redmine 7.0.3, which has no image yet, while 4.6.0 accepts any 7.0.
+The 4.6.0 tags are the latest release of both plugins, and an installation normally takes a release rather than the main branch, so the tests follow what users run.
 The behaviours that most need a live test, the dropped write and the `403` of `list`, happen only to a user who is not an administrator, so the tests need a member key, and a new tag saved for a member needs a second member who may create tags.
 
 ## Consequences
@@ -241,7 +241,7 @@ The behaviours that most need a live test, the dropped write and the `403` of `l
 3. **A differently cased existing name is dropped for a member without `create_issue_tags`**: the plugin rejects it, so `add` fails although the tag exists.
 4. **Case is folded for ASCII letters only**: MoonBit's `String::to_lower` leaves other letters as they are, so `Ärger` and `ärger` are merged as two names while the plugin may store one, and the read-back then fails.
 5. **`list_issues` returns no tags**: the issue listing does not carry them, so each issue's tags need a `show`.
-6. **The verification Redmine lags the plugin's main branch** until a Redmine 7.0.3 image is published.
+6. **The verification Redmine lags the plugins' main branches**: a change to the API on main is not seen until it is released.
 7. **A second paging helper**: a fix to the paging of `omochice/redmine` has to be repeated in `omochice/redmine-plugins`.
 8. **Wiki tags stay unreachable**: the plugin also tags wiki pages, and this decision covers issues only.
 
@@ -252,7 +252,7 @@ The behaviours that most need a live test, the dropped write and the `403` of `l
 - The read-back failure names `create_issue_tags` as one cause, which tells a model to retry with the existing name's case or ask for the permission.
 - The read-back reports a name lost to a non-ASCII case mismatch rather than letting it pass, and names in scripts without case, such as Japanese, are not affected, so a Unicode case table is left for when one is needed.
 - `show` takes one request per issue and is cheap to call for the issues a listing returns.
-- The pins are commit hashes of tags, so a later bump is one reviewable change once the image exists.
+- The pins are commit hashes of tags, so moving to the next release is one reviewable change.
 - The copy is small and covered by the live test of `list_issues`, which ADR-017 already accepted for `internal/decode`.
 - Wiki tags follow in a pull request of their own, once their API has been measured, and can join `redmine_tags` as further actions.
 
