@@ -32,7 +32,10 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
   let project_id = @schema.required("project_id", project_ref())
   let id = @schema.required("id", record_id())
   let name = @schema.optional("name", @schema.not_blank(max_length=60))
-  let description = @schema.optional("description", @schema.string())
+  let description = @schema.optional(
+    "description",
+    @schema.string(max_length=255),
+  )
   let status = @schema.optional("status", version_status())
   let due_date = @schema.optional("due_date", @schema.iso_date())
   let sharing = @schema.optional("sharing", version_sharing())
