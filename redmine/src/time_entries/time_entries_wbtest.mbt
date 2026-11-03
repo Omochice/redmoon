@@ -8,7 +8,7 @@ test "time entry list query names only the filters that are set" {
     to: Some("2026-10-31"),
   }
   inspect(
-    @wire.encode_query(query.to_pairs()),
+    @wire.encode_query(query.to_query()),
     content="project_id=1&from=2026-10-01&to=2026-10-31",
   )
 }
@@ -22,7 +22,7 @@ test "time entry list query with no filters sends no parameters" {
     from: None,
     to: None,
   }
-  inspect(@wire.encode_query(query.to_pairs()), content="")
+  inspect(@wire.encode_query(query.to_query()), content="")
 }
 
 ///|

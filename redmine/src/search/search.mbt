@@ -143,30 +143,30 @@ pub async fn search(
     redmine,
     ["search.json"],
     key="results",
-    query=query_pairs(query),
+    query=query.to_query(),
     limit?,
   )
 }
 
 ///|
-fn query_pairs(query : Query) -> Array[(String, String)] {
-  let pairs : Array[(String, String)] = [("q", query.q)]
-  if query.scope is Some(scope) {
+fn Query::to_query(self : Query) -> Array[(String, String)] {
+  let pairs : Array[(String, String)] = [("q", self.q)]
+  if self.scope is Some(scope) {
     pairs.push(("scope", scope))
   }
-  if query.all_words is Some(all_words) {
+  if self.all_words is Some(all_words) {
     pairs.push(("all_words", if all_words { "1" } else { "" }))
   }
-  push_flag(pairs, "titles_only", query.titles_only)
-  push_flag(pairs, "open_issues", query.open_issues)
-  push_flag(pairs, "issues", query.issues)
-  push_flag(pairs, "news", query.news)
-  push_flag(pairs, "documents", query.documents)
-  push_flag(pairs, "changesets", query.changesets)
-  push_flag(pairs, "wiki_pages", query.wiki_pages)
-  push_flag(pairs, "messages", query.messages)
-  push_flag(pairs, "projects", query.projects)
-  if query.attachments is Some(scope) {
+  push_flag(pairs, "titles_only", self.titles_only)
+  push_flag(pairs, "open_issues", self.open_issues)
+  push_flag(pairs, "issues", self.issues)
+  push_flag(pairs, "news", self.news)
+  push_flag(pairs, "documents", self.documents)
+  push_flag(pairs, "changesets", self.changesets)
+  push_flag(pairs, "wiki_pages", self.wiki_pages)
+  push_flag(pairs, "messages", self.messages)
+  push_flag(pairs, "projects", self.projects)
+  if self.attachments is Some(scope) {
     pairs.push(("attachments", scope.to_wire()))
   }
   pairs

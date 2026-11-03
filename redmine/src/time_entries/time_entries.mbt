@@ -138,14 +138,14 @@ pub async fn list(
     redmine,
     ["time_entries.json"],
     key="time_entries",
-    query=query.to_pairs(),
+    query=query.to_query(),
     limit?,
   )
 }
 
 ///|
 /// Maps the set filters to Redmine's query parameter names.
-fn ListQuery::to_pairs(self : ListQuery) -> Array[(String, String)] {
+fn ListQuery::to_query(self : ListQuery) -> Array[(String, String)] {
   let pairs : Array[(String, String)] = []
   if self.project_id is Some(id) {
     pairs.push(("project_id", id.to_string()))

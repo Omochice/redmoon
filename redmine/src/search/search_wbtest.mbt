@@ -19,7 +19,7 @@ fn query(q : String) -> Query {
 
 ///|
 test "a bare search sends only the query" {
-  assert_eq(query_pairs(query("login")), [("q", "login")])
+  assert_eq(query("login").to_query(), [("q", "login")])
 }
 
 ///|
@@ -30,7 +30,7 @@ test "a true flag is sent as 1 and a false flag is left out" {
     titles_only: Some(false),
     issues: Some(true),
   }
-  assert_eq(query_pairs(query), [
+  assert_eq(query.to_query(), [
     ("q", "login"),
     ("all_words", "1"),
     ("issues", "1"),
@@ -50,7 +50,7 @@ test "the scope and every type flag are sent under Redmine's names" {
     messages: Some(true),
     projects: Some(true),
   }
-  assert_eq(query_pairs(query), [
+  assert_eq(query.to_query(), [
     ("q", "login"),
     ("scope", "my_projects"),
     ("open_issues", "1"),
@@ -65,15 +65,15 @@ test "the scope and every type flag are sent under Redmine's names" {
 
 ///|
 test "each attachment scope maps to its Redmine value" {
-  assert_eq(query_pairs({ ..query("x"), attachments: Some(Excluded), }), [
-    ("q", "x"),
-    ("attachments", "0"),
-  ])
-  assert_eq(query_pairs({ ..query("x"), attachments: Some(Included), }), [
-    ("q", "x"),
-    ("attachments", "1"),
-  ])
-  assert_eq(query_pairs({ ..query("x"), attachments: Some(Only), }), [
+  assert_eq(
+    ({ ..query("x"), attachments: Some(Excluded), } : Query).to_query(),
+    [("q", "x"), ("attachments", "0")],
+  )
+  assert_eq(
+    ({ ..query("x"), attachments: Some(Included), } : Query).to_query(),
+    [("q", "x"), ("attachments", "1")],
+  )
+  assert_eq(({ ..query("x"), attachments: Some(Only), } : Query).to_query(), [
     ("q", "x"),
     ("attachments", "only"),
   ])
@@ -114,7 +114,7 @@ test "a result decodes from Redmine's response with a text description" {
 ///|
 test "all_words false is sent as an empty value because Redmine defaults it to true" {
   let query = { ..query("login"), all_words: Some(false), }
-  assert_eq(query_pairs(query), [("q", "login"), ("all_words", "")])
+  assert_eq(query.to_query(), [("q", "login"), ("all_words", "")])
 }
 
 ///|
