@@ -33,6 +33,15 @@ jobs:
         run: nix develop --command task build-info:verify
 
       - run: nix develop --command task check
+      - name: Verify the generated package interfaces are committed
+        run: |
+          changes="$(git status --porcelain -- '*.mbti')"
+          if [ -n "$changes" ]; then
+            echo "$changes"
+            git diff -- '*.mbti'
+            echo "::error::run moon info and commit the pkg.generated.mbti files"
+            exit 1
+          fi
 
       - run: nix develop --command task test
 
