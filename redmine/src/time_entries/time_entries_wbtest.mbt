@@ -36,7 +36,7 @@ test "create body omits unset fields and wraps them in time_entry" {
     comments: None,
   }
   inspect(
-    entry_body(create).stringify(),
+    create.to_body().stringify(),
     content=(
       #|{"time_entry":{"hours":1.5,"project_id":1,"spent_on":"2026-10-10","activity_id":8}}
     ),
@@ -54,7 +54,7 @@ test "update body with only hours sends just that field" {
     comments: None,
   }
   inspect(
-    entry_body(update).stringify(),
+    update.to_body().stringify(),
     content=(
       #|{"time_entry":{"hours":2}}
     ),

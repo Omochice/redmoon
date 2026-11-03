@@ -307,7 +307,7 @@ pub async fn create(
   time_entry : Create,
 ) -> Entry raise @redmine.RedmineError {
   let json = redmine
-    |> @redmine.send(Post, ["time_entries.json"], body=entry_body(time_entry))
+    |> @redmine.send(Post, ["time_entries.json"], body=time_entry.to_body())
   @decode.decode_field(json, "time_entry")
 }
 
@@ -335,7 +335,7 @@ pub async fn update(
     |> @redmine.send(
       Put,
       ["time_entries", "\{id}.json"],
-      body=entry_body(time_entry),
+      body=time_entry.to_body(),
     ),
   )
 }
@@ -362,7 +362,27 @@ pub async fn delete(
 }
 
 ///|
-/// Wraps a time entry's attributes in the `{"time_entry": ...}` envelope Redmine expects.
-fn[T : ToJson] entry_body(attributes : T) -> Json {
-  Json::object({ "time_entry": ToJson::to_json(attributes) })
+fn Create::to_body(self : Create) -> Json {
+  let time_entry = @wire.present_members([
+    ("hours", Some(ToJson::to_json(self.hours))),
+    ("issue_id", self.issue_id.map(ToJson::to_json)),
+    ("project_id", self.project_id.map(ToJson::to_json)),
+    ("spent_on", self.spent_on.map(ToJson::to_json)),
+    ("activity_id", self.activity_id.map(ToJson::to_json)),
+    ("comments", self.comments.map(ToJson::to_json)),
+  ])
+  Json::object({ "time_entry": time_entry })
+}
+
+///|
+fn Update::to_body(self : Update) -> Json {
+  let time_entry = @wire.present_members([
+    ("hours", self.hours.map(ToJson::to_json)),
+    ("issue_id", self.issue_id.map(ToJson::to_json)),
+    ("project_id", self.project_id.map(ToJson::to_json)),
+    ("spent_on", self.spent_on.map(ToJson::to_json)),
+    ("activity_id", self.activity_id.map(ToJson::to_json)),
+    ("comments", self.comments.map(ToJson::to_json)),
+  ])
+  Json::object({ "time_entry": time_entry })
 }
