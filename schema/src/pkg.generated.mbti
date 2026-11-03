@@ -24,7 +24,7 @@ pub fn[T] keyed(Array[(String, Schema[T])]) -> Schema[T]
 
 pub fn literal(String) -> Schema[String]
 
-pub fn not_blank() -> Schema[String]
+pub fn not_blank(min_length? : Int32, max_length? : Int32) -> Schema[String]
 
 pub fn[T] nullable(Schema[T]) -> Schema[T?]
 

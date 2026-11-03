@@ -77,6 +77,18 @@ test "not_blank carries a real pattern" {
 }
 
 ///|
+test "not_blank bounds the length like string" {
+  let s = not_blank(max_length=3)
+  assert_eq(
+    schema_json(s),
+    "{\"type\":\"string\",\"maxLength\":3,\"pattern\":\"\\\\S\"}",
+  )
+  assert_eq(outcome(s, "\"abc\""), "ok: \"abc\"")
+  assert_eq(outcome(s, "\"abcd\""), "error: must be at most 3 characters")
+  assert_eq(outcome(s, "\"   \""), "error: must not be blank")
+}
+
+///|
 test "boolean" {
   assert_eq(schema_json(boolean()), "{\"type\":\"boolean\"}")
   assert_eq(outcome(boolean(), "true"), "ok: true")

@@ -198,9 +198,10 @@ pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String] {
 }
 
 ///|
-/// A string containing at least one non-whitespace character.
-pub fn not_blank() -> Schema[String] {
-  string().refine(
+/// A string containing at least one non-whitespace character, optionally
+/// bounded in length (in characters) like `string`.
+pub fn not_blank(min_length? : Int32, max_length? : Int32) -> Schema[String] {
+  string(min_length?, max_length?).refine(
     s => s.iter().any(c => !c.is_whitespace()),
     "must not be blank",
     keywords=[("pattern", "\\S")],
