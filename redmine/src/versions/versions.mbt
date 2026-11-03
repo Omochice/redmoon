@@ -30,11 +30,17 @@ pub impl ToJson for Status with fn to_json(self) -> Json {
 
 ///|
 pub impl @json.FromJson for Status with fn from_json(json, path) {
-  match json {
+  guard json is String(wire) else {
+    raise @json.JsonDecodeError((path, "Status::from_json: expected string"))
+  }
+  match wire {
     "open" => Open
     "locked" => Locked
     "closed" => Closed
-    _ => raise @json.JsonDecodeError((path, "unknown version status"))
+    _ =>
+      raise @json.JsonDecodeError(
+        (path, "Status::from_json: unknown version status `\{wire}`"),
+      )
   }
 }
 
@@ -74,13 +80,19 @@ pub impl ToJson for Sharing with fn to_json(self) -> Json {
 
 ///|
 pub impl @json.FromJson for Sharing with fn from_json(json, path) {
-  match json {
+  guard json is String(wire) else {
+    raise @json.JsonDecodeError((path, "Sharing::from_json: expected string"))
+  }
+  match wire {
     "none" => None
     "descendants" => Descendants
     "hierarchy" => Hierarchy
     "tree" => Tree
     "system" => System
-    _ => raise @json.JsonDecodeError((path, "unknown version sharing"))
+    _ =>
+      raise @json.JsonDecodeError(
+        (path, "Sharing::from_json: unknown version sharing `\{wire}`"),
+      )
   }
 }
 

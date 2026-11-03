@@ -37,10 +37,21 @@ test "a version decodes from a Redmine response" {
 }
 
 ///|
-test "an unknown version status fails to decode" {
+test "an unknown version status fails to decode naming the wire value" {
   try @json.from_json(Json("done")) catch {
-    _ => ()
+    @json.JsonDecodeError((_, reason)) =>
+      assert_eq(reason, "Status::from_json: unknown version status `done`")
   } noraise {
     (_ : Status) => fail("expected a decode error")
+  }
+}
+
+///|
+test "an unknown version sharing fails to decode naming the wire value" {
+  try @json.from_json(Json("galaxy")) catch {
+    @json.JsonDecodeError((_, reason)) =>
+      assert_eq(reason, "Sharing::from_json: unknown version sharing `galaxy`")
+  } noraise {
+    (_ : Sharing) => fail("expected a decode error")
   }
 }
