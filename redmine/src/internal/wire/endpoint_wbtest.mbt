@@ -1,5 +1,5 @@
 ///|
-test "parse splits origin and base path" {
+test "an endpoint splits into origin and base path" {
   let plain = Endpoint::parse("http://localhost:3000").unwrap()
   inspect(plain.origin, content="http://localhost:3000")
   inspect(plain.base_path, content="")
@@ -11,7 +11,7 @@ test "parse splits origin and base path" {
 }
 
 ///|
-test "parse rejects unusable endpoints" {
+test "unusable endpoints are rejected" {
   for
     endpoint in [
       "ftp://example.com", "example.com", "http://", "https:///redmine", "https://user:pass@example.com",
@@ -22,7 +22,7 @@ test "parse rejects unusable endpoints" {
 }
 
 ///|
-test "path appends encoded segments to the base path" {
+test "a request path appends encoded segments to the base path" {
   let plain = Endpoint::parse("https://example.com").unwrap()
   inspect(plain.path(["projects", "1.json"]), content="/projects/1.json")
   inspect(plain.path([]), content="/")
@@ -39,7 +39,7 @@ test "path appends encoded segments to the base path" {
 }
 
 ///|
-test "encode_query escapes reserved characters" {
+test "a query string escapes reserved characters" {
   inspect(encode_query([]), content="")
   inspect(
     encode_query([("limit", "100"), ("offset", "0")]),

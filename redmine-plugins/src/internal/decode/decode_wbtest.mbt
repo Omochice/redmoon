@@ -1,5 +1,5 @@
 ///|
-test "decode_field unwraps the envelope a plugin answers in" {
+test "the envelope a plugin answers in is unwrapped" {
   let value : Int32 = decode_field({ "row": 3 }, "row") catch {
     _ => fail("decode")
   }
@@ -33,7 +33,7 @@ test "a mismatch at the top level names the root path" {
 }
 
 ///|
-test "decode_field reports an answer without the envelope's key as Decode" {
+test "an answer without the envelope's key raises Decode" {
   try decode_field(Json::object({}), "row") catch {
     Decode(message~) =>
       assert_eq(
