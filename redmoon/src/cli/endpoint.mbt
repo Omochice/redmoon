@@ -18,10 +18,7 @@ pub fn canonicalize_endpoint(raw : String) -> String raise CliError {
   guard raw.find("://") is Some(scheme_end) else { raise invalid }
   let scheme = raw[:scheme_end].to_lower().to_owned()
   guard scheme != "" &&
-    scheme
-    .view()
-    .iter()
-    .all(c => c is ('a'..<='z' | '0'..<='9' | '+' | '-' | '.')) else {
+    scheme.iter().all(c => c is ('a'..<='z' | '0'..<='9' | '+' | '-' | '.')) else {
     raise invalid
   }
   let rest = raw[scheme_end + 3:]
