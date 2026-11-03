@@ -94,7 +94,7 @@ fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
 }
 
 ///|
-fn describe_attachments(mode : Mode) -> String {
+fn attachments_description(mode : Mode) -> String {
   let base = [
     "Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file. \{operation_key_hint}",
     "Call `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.",
@@ -192,7 +192,7 @@ pub fn attachments_tool(
 ) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_attachments",
-    description=describe_attachments(mode),
+    description=attachments_description(mode),
     input=attachments_input(mode),
     handler=async fn(action) {
       match action {
