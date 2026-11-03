@@ -105,7 +105,6 @@ async test "tools/list advertises the enumerations tool" {
     advertised,
     content=(
       #|{"tools":[{"name":"redmine_enumerations","description":"Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list_time_entry_activities":{"type":"object","properties":{},"additionalProperties":false},"list_issue_priorities":{"type":"object","properties":{},"additionalProperties":false},"list_document_categories":{"type":"object","properties":{},"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
-
     ),
   )
 }

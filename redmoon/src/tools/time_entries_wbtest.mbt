@@ -402,8 +402,6 @@ async test "tools/list advertises the full time entry tool" {
     advertised.stringify(),
     content=(
       #|{"tools":[{"name":"redmine_time_entries","description":"Create, read, update, and delete Redmine time entries.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"type":"integer","minimum":1},"user_id":{"type":"integer","minimum":1},"spent_on":{"type":"string","format":"date"},"from":{"type":"string","format":"date"},"to":{"type":"string","format":"date"}},"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"create":{"type":"object","properties":{"hours":{"type":"number","minimum":0},"issue_id":{"type":"integer","minimum":1},"project_id":{"type":"integer","minimum":1},"spent_on":{"type":"string","format":"date"},"activity_id":{"type":"integer","minimum":1},"comments":{"type":"string","maxLength":1024}},"required":["hours"],"additionalProperties":false,"anyOf":[{"required":["issue_id"]},{"required":["project_id"]}]},"update":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"hours":{"type":"number","minimum":0},"issue_id":{"type":"integer","minimum":1},"project_id":{"type":"integer","minimum":1},"spent_on":{"type":"string","format":"date"},"activity_id":{"type":"integer","minimum":1},"comments":{"type":"string","maxLength":1024}},"required":["id"],"additionalProperties":false},"delete":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
-
-
     ),
   )
 }
@@ -417,7 +415,6 @@ async test "tools/list advertises the readonly time entry tool" {
     advertised.stringify(),
     content=(
       #|{"tools":[{"name":"redmine_time_entries","description":"List and show Redmine time entries.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"type":"integer","minimum":1},"user_id":{"type":"integer","minimum":1},"spent_on":{"type":"string","format":"date"},"from":{"type":"string","format":"date"},"to":{"type":"string","format":"date"}},"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
-
     ),
   )
 }

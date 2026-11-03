@@ -80,14 +80,20 @@ test "on_invalid prefixes each message" {
 
 ///|
 test "describe_crud_tool drops the write verbs in readonly mode" {
-  inspect(describe_crud_tool("issues", Readonly), content=(
-    #|List and show Redmine issues.
-    #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
-  ))
-  inspect(describe_crud_tool("wiki pages", Full), content=(
-    #|Create, read, update, and delete Redmine wiki pages.
-    #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
-  ))
+  inspect(
+    describe_crud_tool("issues", Readonly),
+    content=(
+      #|List and show Redmine issues.
+      #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
+    ),
+  )
+  inspect(
+    describe_crud_tool("wiki pages", Full),
+    content=(
+      #|Create, read, update, and delete Redmine wiki pages.
+      #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
+    ),
+  )
 }
 
 ///|
