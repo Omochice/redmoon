@@ -91,7 +91,7 @@ impl TimeEntryPort for FakeTimeEntries with fn delete_time_entry(self, id) {
 }
 
 ///|
-fn time_entry_tools(
+fn time_entries_tools(
   fake : FakeTimeEntries,
   mode~ : Mode = Full,
 ) -> Array[@mcp.Tool] {
@@ -101,7 +101,7 @@ fn time_entry_tools(
 ///|
 async test "list maps every filter onto the query" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "list": {
       "project_id": 1,
       "user_id": 5,
@@ -124,7 +124,7 @@ async test "list maps every filter onto the query" {
 ///|
 async test "list with no filters leaves every query field unset" {
   let fake = FakeTimeEntries::new()
-  let _ = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let _ = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "list": {},
   })
   assert_eq(fake.lists[0], {
@@ -139,7 +139,7 @@ async test "list with no filters leaves every query field unset" {
 ///|
 async test "show passes the id and answers the entry itself" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "show": { "id": 7 },
   })
   assert_eq(fake.shows, [7])
@@ -150,7 +150,7 @@ async test "show passes the id and answers the entry itself" {
 ///|
 async test "create maps every argument onto the attributes" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "create": {
       "hours": 2.25,
       "issue_id": 3,
@@ -175,7 +175,7 @@ async test "create maps every argument onto the attributes" {
 ///|
 async test "create with only an issue leaves the project and the other attributes unset" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "create": { "hours": 1, "issue_id": 3 },
   })
   assert_eq(called.is_error, false)
@@ -192,7 +192,7 @@ async test "create with only an issue leaves the project and the other attribute
 ///|
 async test "create with only a project leaves the issue unset" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "create": { "hours": 1, "project_id": 1 },
   })
   assert_eq(called.is_error, false)
@@ -203,7 +203,7 @@ async test "create with only a project leaves the issue unset" {
 ///|
 async test "create with both an issue and a project passes both" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "create": { "hours": 1, "issue_id": 3, "project_id": 1 },
   })
   assert_eq(called.is_error, false)
@@ -214,7 +214,7 @@ async test "create with both an issue and a project passes both" {
 ///|
 async test "create with neither an issue nor a project is rejected before reaching the port" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "create": { "hours": 1 },
   })
   assert_eq(called.is_error, true)
@@ -228,7 +228,7 @@ async test "create with neither an issue nor a project is rejected before reachi
 ///|
 async test "update passes the id and only the changes given" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "update": { "id": 7, "hours": 2, "comments": "revised" },
   })
   assert_eq(called.text, "{\"ok\":true}")
@@ -251,7 +251,7 @@ async test "update passes the id and only the changes given" {
 ///|
 async test "delete passes the id and answers ok" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "delete": { "id": 7 },
   })
   assert_eq(fake.deletes, [7])
@@ -261,7 +261,7 @@ async test "delete passes the id and answers ok" {
 ///|
 async test "a missing required hours is reported with its action path" {
   let called = call_tool(
-    time_entry_tools(FakeTimeEntries::new()),
+    time_entries_tools(FakeTimeEntries::new()),
     "redmine_time_entries",
     { "create": { "project_id": 1 } },
   )
@@ -275,7 +275,7 @@ async test "a missing required hours is reported with its action path" {
 ///|
 async test "negative hours are rejected on create and update, as Redmine refuses them" {
   let fake = FakeTimeEntries::new()
-  let tools = time_entry_tools(fake)
+  let tools = time_entries_tools(fake)
   for hours in [-1.0, -0.25] {
     let created = call_tool(tools, "redmine_time_entries", {
       "create": { "hours": hours, "project_id": 1 },
@@ -298,7 +298,7 @@ async test "negative hours are rejected on create and update, as Redmine refuses
 ///|
 async test "zero hours are accepted on create and update" {
   let fake = FakeTimeEntries::new()
-  let tools = time_entry_tools(fake)
+  let tools = time_entries_tools(fake)
   let created = call_tool(tools, "redmine_time_entries", {
     "create": { "hours": 0, "project_id": 1 },
   })
@@ -314,7 +314,7 @@ async test "zero hours are accepted on create and update" {
 ///|
 async test "comments over 1024 characters are rejected on create and update" {
   let fake = FakeTimeEntries::new()
-  let tools = time_entry_tools(fake)
+  let tools = time_entries_tools(fake)
   let long = String::make(1025, 'a')
   let created = call_tool(tools, "redmine_time_entries", {
     "create": { "hours": 1, "project_id": 1, "comments": long },
@@ -336,7 +336,7 @@ async test "comments over 1024 characters are rejected on create and update" {
 ///|
 async test "comments of exactly 1024 characters are accepted on create and update" {
   let fake = FakeTimeEntries::new()
-  let tools = time_entry_tools(fake)
+  let tools = time_entries_tools(fake)
   let comments = String::make(1024, 'a')
   let created = call_tool(tools, "redmine_time_entries", {
     "create": { "hours": 1, "project_id": 1, "comments": comments },
@@ -353,7 +353,7 @@ async test "comments of exactly 1024 characters are accepted on create and updat
 ///|
 async test "a malformed date is rejected before reaching the port" {
   let fake = FakeTimeEntries::new()
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "list": { "spent_on": "2026-02-30" },
   })
   assert_eq(called.is_error, true)
@@ -367,7 +367,7 @@ async test "a malformed date is rejected before reaching the port" {
 ///|
 async test "an id below one is rejected with its bound" {
   let called = call_tool(
-    time_entry_tools(FakeTimeEntries::new()),
+    time_entries_tools(FakeTimeEntries::new()),
     "redmine_time_entries",
     { "show": { "id": 0 } },
   )
@@ -382,7 +382,7 @@ async test "a Redmine failure becomes a failure payload" {
   let fake = FakeTimeEntries::new(
     failure=Response(status=422, errors=["Hours cannot be blank"]),
   )
-  let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "create": { "hours": 1, "project_id": 1 },
   })
   assert_eq(called.is_error, true)
@@ -395,7 +395,7 @@ async test "a Redmine failure becomes a failure payload" {
 ///|
 async test "readonly refuses a write as an unknown action" {
   let called = call_tool(
-    time_entry_tools(FakeTimeEntries::new(), mode=Readonly),
+    time_entries_tools(FakeTimeEntries::new(), mode=Readonly),
     "redmine_time_entries",
     { "delete": { "id": 1 } },
   )

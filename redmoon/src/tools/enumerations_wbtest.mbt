@@ -46,13 +46,13 @@ impl EnumerationPort for FakeEnumerations with fn list_document_categories(self)
 }
 
 ///|
-fn fake_tools(failure? : @redmine.RedmineError) -> Array[@mcp.Tool] {
-  [enumerations_tool(FakeEnumerations::new(failure?))]
+fn enumerations_tools(fake : FakeEnumerations) -> Array[@mcp.Tool] {
+  [enumerations_tool(fake)]
 }
 
 ///|
 async test "each listing reaches its own port method" {
-  let tools = fake_tools()
+  let tools = enumerations_tools(FakeEnumerations::new())
   let activities = call_tool(tools, "redmine_enumerations", {
     "list_time_entry_activities": {},
   })
@@ -73,7 +73,9 @@ async test "each listing reaches its own port method" {
 
 ///|
 async test "a Redmine failure becomes a failure payload" {
-  let tools = fake_tools(failure=Response(status=403, errors=["Forbidden"]))
+  let tools = enumerations_tools(
+    FakeEnumerations::new(failure=Response(status=403, errors=["Forbidden"])),
+  )
   let called = call_tool(tools, "redmine_enumerations", {
     "list_issue_priorities": {},
   })
@@ -83,9 +85,11 @@ async test "a Redmine failure becomes a failure payload" {
 
 ///|
 async test "an unknown action is reported with the invalid arguments wording" {
-  let called = call_tool(fake_tools(), "redmine_enumerations", {
-    "list_nothing": {},
-  })
+  let called = call_tool(
+    enumerations_tools(FakeEnumerations::new()),
+    "redmine_enumerations",
+    { "list_nothing": {} },
+  )
   assert_eq(called.is_error, true)
   assert_eq(
     called.text,
@@ -95,9 +99,11 @@ async test "an unknown action is reported with the invalid arguments wording" {
 
 ///|
 async test "a stray argument is reported with its action path" {
-  let called = call_tool(fake_tools(), "redmine_enumerations", {
-    "list_issue_priorities": { "x": 1 },
-  })
+  let called = call_tool(
+    enumerations_tools(FakeEnumerations::new()),
+    "redmine_enumerations",
+    { "list_issue_priorities": { "x": 1 } },
+  )
   assert_eq(
     called.text,
     "{\"status\":0,\"errors\":[\"invalid arguments: list_issue_priorities.x: unknown field\"]}",
@@ -106,7 +112,7 @@ async test "a stray argument is reported with its action path" {
 
 ///|
 async test "tools/list advertises the enumerations tool" {
-  let advertised = list_tools([enumerations_tool(FakeEnumerations::new())]).stringify()
+  let advertised = list_tools(enumerations_tools(FakeEnumerations::new())).stringify()
   inspect(
     advertised,
     content=(

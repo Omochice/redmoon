@@ -81,14 +81,14 @@ impl VersionPort for FakeVersions with fn delete_version(self, id) {
 }
 
 ///|
-fn version_tools(fake : FakeVersions, mode~ : Mode = Full) -> Array[@mcp.Tool] {
+fn versions_tools(fake : FakeVersions, mode~ : Mode = Full) -> Array[@mcp.Tool] {
   [versions_tool(fake, mode)]
 }
 
 ///|
 async test "list and show reach their port methods" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let listed = call_tool(tools, "redmine_versions", {
     "list": { "project_id": "demo" },
   })
@@ -105,7 +105,7 @@ async test "list and show reach their port methods" {
 ///|
 async test "create maps every argument and answers the created version" {
   let fake = FakeVersions::new()
-  let called = call_tool(version_tools(fake), "redmine_versions", {
+  let called = call_tool(versions_tools(fake), "redmine_versions", {
     "create": {
       "project_id": 1,
       "name": "Sprint",
@@ -137,7 +137,7 @@ async test "create maps every argument and answers the created version" {
 async test "create with only a name leaves the rest unset" {
   let fake = FakeVersions::new()
   ignore(
-    call_tool(version_tools(fake), "redmine_versions", {
+    call_tool(versions_tools(fake), "redmine_versions", {
       "create": { "project_id": "demo", "name": "Sprint" },
     }),
   )
@@ -159,7 +159,7 @@ async test "create with only a name leaves the rest unset" {
 ///|
 async test "update maps the supplied arguments and answers ok" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let called = call_tool(tools, "redmine_versions", {
     "update": {
       "id": 7,
@@ -188,7 +188,7 @@ async test "update maps the supplied arguments and answers ok" {
 ///|
 async test "delete answers ok" {
   let fake = FakeVersions::new()
-  let called = call_tool(version_tools(fake), "redmine_versions", {
+  let called = call_tool(versions_tools(fake), "redmine_versions", {
     "delete": { "id": 7 },
   })
   assert_eq(called.text, "{\"ok\":true}")
@@ -197,7 +197,7 @@ async test "delete answers ok" {
 
 ///|
 async test "validation reports the exact message for each rule" {
-  let tools = version_tools(FakeVersions::new())
+  let tools = versions_tools(FakeVersions::new())
   let cases : Array[(Json, String)] = [
     (
       { "create": { "project_id": 1 } },
@@ -357,7 +357,7 @@ async test "a wiki_page_title of exactly 255 characters is accepted on create an
 async test "readonly mode makes the write actions unknown" {
   let fake = FakeVersions::new()
   let called = call_tool(
-    version_tools(fake, mode=Readonly),
+    versions_tools(fake, mode=Readonly),
     "redmine_versions",
     { "delete": { "id": 7 } },
   )
@@ -370,7 +370,7 @@ async test "readonly mode makes the write actions unknown" {
 
 ///|
 async test "a Redmine failure becomes a failure payload" {
-  let tools = version_tools(
+  let tools = versions_tools(
     FakeVersions::new(failure=Response(status=404, errors=["Not Found"])),
   )
   let requests : Array[Json] = [
@@ -386,7 +386,7 @@ async test "a Redmine failure becomes a failure payload" {
 
 ///|
 async test "tools/list advertises the versions tool in full mode" {
-  let listed = list_tools(version_tools(FakeVersions::new()))
+  let listed = list_tools(versions_tools(FakeVersions::new()))
   inspect(
     listed.stringify(),
     content=(
@@ -397,7 +397,7 @@ async test "tools/list advertises the versions tool in full mode" {
 
 ///|
 async test "tools/list advertises the versions tool in readonly mode" {
-  let listed = list_tools(version_tools(FakeVersions::new(), mode=Readonly))
+  let listed = list_tools(versions_tools(FakeVersions::new(), mode=Readonly))
   inspect(
     listed.stringify(),
     content=(
