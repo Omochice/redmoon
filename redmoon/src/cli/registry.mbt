@@ -17,14 +17,10 @@ pub fn registered_tools(
     @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
     @tools.server_info_tool(),
   ]
-  if plugins.contains(IssueTemplates) {
-    tools.push(@tools.issue_templates_tool(redmine))
-  }
-  if plugins.contains(Agile) {
-    tools.push(@tools.agile_tool(redmine, mode))
-  }
-  if plugins.contains(AdditionalTags) {
-    tools.push(@tools.tags_tool(redmine, mode))
+  for entry in known_plugins {
+    if plugins.contains(entry.plugin) {
+      tools.push((entry.tool)(redmine, mode))
+    }
   }
   tools
 }

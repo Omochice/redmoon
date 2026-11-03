@@ -15,15 +15,36 @@ pub extend Plugin with Eq::{equal, not_equal}
 pub extend Plugin with @debug.Debug::{to_repr}
 
 ///|
-let known_plugins : Array[(String, Plugin)] = [
-  ("issue_templates", IssueTemplates),
-  ("agile", Agile),
-  ("additional_tags", AdditionalTags),
+priv struct KnownPlugin {
+  name : String
+  plugin : Plugin
+  tool : (@redmine.Redmine, @tools.Mode) -> @mcp.Tool
+}
+
+///|
+/// One row per plugin, so that adding a plugin touches this table and the enum
+/// only; the order is the order the tools are registered in.
+let known_plugins : Array[KnownPlugin] = [
+  {
+    name: "issue_templates",
+    plugin: IssueTemplates,
+    tool: (redmine, _) => @tools.issue_templates_tool(redmine),
+  },
+  {
+    name: "agile",
+    plugin: Agile,
+    tool: (redmine, mode) => @tools.agile_tool(redmine, mode),
+  },
+  {
+    name: "additional_tags",
+    plugin: AdditionalTags,
+    tool: (redmine, mode) => @tools.tags_tool(redmine, mode),
+  },
 ]
 
 ///|
 fn known_plugin_names() -> String {
-  known_plugins.map(entry => entry.0).join(", ")
+  known_plugins.map(entry => entry.name).join(", ")
 }
 
 ///|
@@ -34,12 +55,12 @@ fn known_plugin_names() -> String {
 fn resolve_plugins(names : Array[String]) -> Array[Plugin] raise CliError {
   let plugins = []
   for name in names {
-    guard known_plugins.search_by(entry => entry.0 == name) is Some(index) else {
+    guard known_plugins.search_by(entry => entry.name == name) is Some(index) else {
       raise Message(
         "unknown plugin `\{name}`; known plugins: \{known_plugin_names()}",
       )
     }
-    let plugin = known_plugins[index].1
+    let plugin = known_plugins[index].plugin
     if !plugins.contains(plugin) {
       plugins.push(plugin)
     }
