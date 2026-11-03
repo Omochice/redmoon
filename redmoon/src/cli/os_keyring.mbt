@@ -21,6 +21,9 @@ const KEYCHAIN_INTERACTION_NOT_ALLOWED : Int32 = -25308
 
 ///|
 fn refusal(code : Int32, account : String?) -> String {
+  if code == @keyring.INTERNAL {
+    return "the credential store could not be used; the keyring module failed before the store answered"
+  }
   if code != KEYCHAIN_INTERACTION_NOT_ALLOWED {
     return "the credential store refused the operation (code \{code})"
   }
