@@ -34,11 +34,11 @@ Writing a tag takes the `add_wiki_tags` permission of the wiki module.
 
 ### Option 1: `add` and `remove` for wiki pages, as for issues
 
-**Pros:**
+#### Pros
 
 - A model would handle both kinds of tags the same way.
 
-**Cons:**
+#### Cons
 
 - Adding and removing need the page's current tags, and no request a member or an administrator can make answers them, so there is nothing to merge with.
 
@@ -48,11 +48,11 @@ Writing a tag takes the `add_wiki_tags` permission of the wiki module.
 {"set_wiki_tags": {"project_id": "demo", "title": "Guide", "tags": ["howto"]}}
 ```
 
-**Pros:**
+#### Pros
 
 - The write itself works, with the page's text and version sent back unchanged.
 
-**Cons:**
+#### Cons
 
 - The model cannot see which tags it would remove, so a call meant to add one tag erases the others.
 - The result cannot be read back except by searching for each name, which shows added names but not that a removed one is gone.
@@ -63,11 +63,11 @@ Writing a tag takes the `add_wiki_tags` permission of the wiki module.
 {"list_wiki_pages": {"project_id": "demo", "tag": "howto"}}
 ```
 
-**Pros:**
+#### Pros
 
 - It is the one wiki tag operation the plugin answers fully and to members.
 
-**Cons:**
+#### Cons
 
 - Wiki tags are read-only through redmoon.
 
@@ -84,7 +84,9 @@ We will add a `list_wiki_pages` action to `redmine_tags` that lists the wiki pag
 It takes `project_id`, an id or identifier as `redmine_wiki_pages` takes it, and `tag`, a name validated as in ADR-030, and answers the pages in the shape `list` of `redmine_wiki_pages` answers.
 `--readonly` keeps it.
 
-**Rationale**: the plugin filters the index by one name at a time, so a single name is what the request can express, and several names would need one request each and a merge the plugin does not define.
+#### Rationale
+
+The plugin filters the index by one name at a time, so a single name is what the request can express, and several names would need one request each and a merge the plugin does not define.
 The answer reuses `@wiki.PageSummary`, so a model can pass a title from it straight to `show` of `redmine_wiki_pages`.
 
 ### 2. A name no tag can have proves the filter ran
@@ -92,14 +94,18 @@ The answer reuses `@wiki.PageSummary`, so a model can pass a title from it strai
 Before the real search, the SDK lists the same index with `tag=redmoon,none`.
 If that answers any page, the call fails with status `0` and a message saying that the plugin is not installed or its wiki tags are switched off.
 
-**Rationale**: a filter that is ignored answers every page, which would tell the model that every page carries the tag.
+#### Rationale
+
+A filter that is ignored answers every page, which would tell the model that every page carries the tag.
 The plugin splits names at commas, so no page can carry a name containing one, and an answer with any page can only come from an index that ignored `tag`.
 A project without wiki pages answers nothing either way, and then the real search answers nothing as well, so the probe's blind spot never produces a wrong answer.
 The failure is raised as `Decode`, as ADR-030 raises a dropped write: Redmine answered 2xx, and it is the content that cannot be used.
 
 ### 3. Writing wiki tags is left out
 
-**Rationale**: Option 2 is the only write the API allows, and its cost, removing tags the model cannot see, is the loss ADR-030 was designed to avoid.
+#### Rationale
+
+Option 2 is the only write the API allows, and its cost, removing tags the model cannot see, is the loss ADR-030 was designed to avoid.
 If the plugin later answers a page's tags, `add` and `remove` for pages can be built on the generic merge and read-back of the `additional_tags` package.
 
 ## Consequences
