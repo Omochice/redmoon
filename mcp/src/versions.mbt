@@ -32,19 +32,6 @@ priv enum Era {
 }
 
 ///|
-fn invalid_params(message : String) -> RpcError {
-  RpcError::new(invalid_params_code, message)
-}
-
-///|
-fn unsupported_version(requested : String) -> RpcError {
-  RpcError::new(unsupported_version_code, "Unsupported protocol version", data={
-    "supported": Json::array(supported_versions().map(v => Json(v))),
-    "requested": Json(requested),
-  })
-}
-
-///|
 fn meta_of(params : Map[String, Json]) -> Map[String, Json] {
   match params.get("_meta") {
     Some(Object(meta)) => meta

@@ -36,8 +36,8 @@ pub async fn Server::serve(
             send(
               error_response(
                 id,
-                RpcError::new(
-                  invalid_request_code, "Invalid Request: request id is already in use by a request in flight",
+                invalid_request(
+                  "request id is already in use by a request in flight",
                 ),
               ),
             )
