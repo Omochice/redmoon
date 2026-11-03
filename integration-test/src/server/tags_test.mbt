@@ -74,12 +74,18 @@ async test "a tagged wiki page is found through the tool in any case" {
   )
   defer ignore(@redmine.send(redmine, Delete, page))
   let found = call(tags_server(redmine), "redmine_tags", {
-    "list_wiki_pages": { "project_id": "demo", "tag": "REDMOON-PROBE-TOOL-WIKI" },
+    "list_wiki_pages": {
+      "project_id": "demo",
+      "tag": "REDMOON-PROBE-TOOL-WIKI",
+    },
   })
   assert_eq(found.is_error, false, msg=found.text)
   assert_true(found.text.contains("\"title\":\"\{title}\""))
   let none = call(tags_server(redmine), "redmine_tags", {
-    "list_wiki_pages": { "project_id": "demo", "tag": "redmoon-probe-tool-nobody" },
+    "list_wiki_pages": {
+      "project_id": "demo",
+      "tag": "redmoon-probe-tool-nobody",
+    },
   })
   assert_eq(none.text, "[]")
 }
