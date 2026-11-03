@@ -126,7 +126,7 @@ static int32_t status_of(OSStatus s) {
 int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, moonbit_bytes_t secret) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   CFTypeRef q = (svc && acct) ? make_query(svc, acct) : NULL;
   CFTypeRef data = CFDataCreate(NULL, (const uint8_t *)secret, (CFIndex)Moonbit_array_length(secret));
   if (q && data) {
@@ -159,7 +159,7 @@ int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, m
 int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   CFTypeRef q = (svc && acct) ? make_query(svc, acct) : NULL;
   if (q) {
     CFDictionarySetValue(q, kSecReturnData, kCFBooleanTrue);
@@ -168,7 +168,7 @@ int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
     OSStatus s = SecItemCopyMatching(q, &out);
     rc = status_of(s);
     if (s == 0 && out) {
-      if (!keyring_result_set(CFDataGetBytePtr(out), (size_t)CFDataGetLength(out))) rc = -1;
+      if (!keyring_result_set(CFDataGetBytePtr(out), (size_t)CFDataGetLength(out))) rc = KEYRING_INTERNAL;
       CFRelease(out);
     }
     CFRelease(q);
@@ -181,7 +181,7 @@ int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
 int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   CFTypeRef q = (svc && acct) ? make_query(svc, acct) : NULL;
   if (q) {
     rc = status_of(SecItemDelete(q));
@@ -196,7 +196,7 @@ int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account
 int32_t omochice_keyring_list(moonbit_bytes_t service) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   CFTypeRef q = svc ? make_query(svc, NULL) : NULL;
   if (q) {
     CFDictionarySetValue(q, kSecReturnAttributes, kCFBooleanTrue);
@@ -204,25 +204,25 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
     CFTypeRef out = NULL;
     OSStatus s = SecItemCopyMatching(q, &out);
     if (s == errSecItemNotFound) {
-      rc = keyring_result_set("", 0) ? KEYRING_OK : -1;
+      rc = keyring_result_set("", 0) ? KEYRING_OK : KEYRING_INTERNAL;
     } else if (s != 0) {
       rc = s;
     } else if (out) {
       size_t cap = 256, len = 0;
       char *buf = malloc(cap);
-      rc = buf ? KEYRING_OK : -1;
+      rc = buf ? KEYRING_OK : KEYRING_INTERNAL;
       for (CFIndex i = 0; buf && i < CFArrayGetCount(out); i++) {
         CFTypeRef name = CFDictionaryGetValue(CFArrayGetValueAtIndex(out, i), kSecAttrAccount);
         if (!name) continue;
         CFIndex max = CFStringGetMaximumSizeForEncoding(CFStringGetLength(name), kCFStringEncodingUTF8) + 2;
         char *tmp = malloc((size_t)max);
-        if (!tmp) { rc = -1; break; }
+        if (!tmp) { rc = KEYRING_INTERNAL; break; }
         if (CFStringGetCString(name, tmp, max, kCFStringEncodingUTF8)) {
           size_t n = strlen(tmp);
           while (len + n + 1 > cap) {
             cap *= 2;
             char *grown = realloc(buf, cap);
-            if (!grown) { rc = -1; break; }
+            if (!grown) { rc = KEYRING_INTERNAL; break; }
             buf = grown;
           }
           if (rc == KEYRING_OK) {
@@ -234,7 +234,7 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
         free(tmp);
         if (rc != KEYRING_OK) break;
       }
-      if (rc == KEYRING_OK && !keyring_result_set(buf, len)) rc = -1;
+      if (rc == KEYRING_OK && !keyring_result_set(buf, len)) rc = KEYRING_INTERNAL;
       free(buf);
       CFRelease(out);
     }

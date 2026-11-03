@@ -13,7 +13,8 @@
 pub suberror KeyringError {
   /// No credential store can be opened; the payload tells the user what to install or start.
   NoStore(String)
-  /// The store rejected the operation; the payload is its native error code.
+  /// The store rejected the operation; the payload is its native error code,
+  /// or `INTERNAL` when this module failed before or after talking to it.
   Refused(Int32)
 }
 
@@ -54,6 +55,12 @@ let not_found : Int32 = 1000000001
 let no_store : Int32 = 1000000002
 
 ///|
+/// The `Refused` payload for a failure of this module itself, such as an
+/// allocation failure or a secret that cannot be decoded, which no store
+/// reported.
+pub const INTERNAL : Int32 = 1000000003
+
+///|
 fn check(status : Int32) -> Unit raise KeyringError {
   if status == ok {
     return
@@ -77,7 +84,7 @@ fn take_result() -> Bytes {
 /// A store holding bytes that are not UTF-8 is reported as refusing, since the secret cannot be returned as text.
 fn decode(bytes : Bytes) -> String raise KeyringError {
   @utf8.decode(bytes) catch {
-    _ => raise Refused(-1)
+    _ => raise Refused(INTERNAL)
   }
 }
 

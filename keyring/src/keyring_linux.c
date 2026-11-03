@@ -67,7 +67,7 @@ static int load_store(void) {
 /* Failing to reach the D-Bus service is the user's to fix by installing or
    starting a provider, unlike an error about the item itself. */
 static int32_t status_of_error(GError *err) {
-  int32_t rc = err->code ? err->code : -1;
+  int32_t rc = err->code ? err->code : KEYRING_INTERNAL;
   if (err->message && (strstr(err->message, "org.freedesktop.secrets") ||
                        strstr(err->message, "D-Bus") || strstr(err->message, "dbus")))
     rc = KEYRING_NO_STORE;
@@ -78,12 +78,12 @@ static int32_t status_of_error(GError *err) {
 int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, moonbit_bytes_t secret) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account), *pw = keyring_cstr(secret);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   if (svc && acct && pw) {
     GError *err = NULL;
     int ok = secret_password_store_sync(&schema, "default", acct, pw, NULL, &err,
                                         "service", svc, "account", acct, NULL);
-    rc = err ? status_of_error(err) : (ok ? KEYRING_OK : -1);
+    rc = err ? status_of_error(err) : (ok ? KEYRING_OK : KEYRING_INTERNAL);
   }
   keyring_cstr_free(svc);
   keyring_cstr_free(acct);
@@ -94,7 +94,7 @@ int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, m
 int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   if (svc && acct) {
     GError *err = NULL;
     char *pw = secret_password_lookup_sync(&schema, NULL, &err, "service", svc, "account", acct, NULL);
@@ -103,7 +103,7 @@ int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
     } else if (!pw) {
       rc = KEYRING_NOT_FOUND;
     } else {
-      rc = keyring_result_set(pw, strlen(pw)) ? KEYRING_OK : -1;
+      rc = keyring_result_set(pw, strlen(pw)) ? KEYRING_OK : KEYRING_INTERNAL;
       secret_password_free(pw);
     }
   }
@@ -115,7 +115,7 @@ int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
 int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   if (svc && acct) {
     GError *err = NULL;
     secret_password_clear_sync(&schema, NULL, &err, "service", svc, "account", acct, NULL);
@@ -129,7 +129,7 @@ int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account
 int32_t omochice_keyring_list(moonbit_bytes_t service) {
   if (!load_store()) return KEYRING_NO_STORE;
   char *svc = keyring_cstr(service);
-  if (!svc) return -1;
+  if (!svc) return KEYRING_INTERNAL;
   GError *err = NULL;
   GList *found = secret_password_search_sync(&schema, SECRET_SEARCH_ALL | SECRET_SEARCH_UNLOCK,
                                              NULL, &err, "service", svc, NULL);
@@ -138,7 +138,7 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
 
   size_t cap = 256, len = 0;
   char *buf = malloc(cap);
-  int32_t rc = buf ? KEYRING_OK : -1;
+  int32_t rc = buf ? KEYRING_OK : KEYRING_INTERNAL;
   for (GList *l = found; buf && l; l = l->next) {
     GHashTable *attrs = secret_retrievable_get_attributes(l->data);
     const char *name = attrs ? g_hash_table_lookup(attrs, "account") : NULL;
@@ -146,7 +146,7 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
       size_t n = strlen(name);
       while (len + n + 1 > cap) {
         char *grown = realloc(buf, cap *= 2);
-        if (!grown) { rc = -1; break; }
+        if (!grown) { rc = KEYRING_INTERNAL; break; }
         buf = grown;
       }
       if (rc != KEYRING_OK) { g_hash_table_unref(attrs); break; }
@@ -158,7 +158,7 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
   }
   for (GList *l = found; l; l = l->next) g_object_unref(l->data);
   if (found) g_list_free(found);
-  if (rc == KEYRING_OK && !keyring_result_set(buf, len)) rc = -1;
+  if (rc == KEYRING_OK && !keyring_result_set(buf, len)) rc = KEYRING_INTERNAL;
   free(buf);
   return rc;
 }

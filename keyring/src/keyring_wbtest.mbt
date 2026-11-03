@@ -26,7 +26,7 @@ test "any other status raises Refused with the native code" {
 ///|
 test "a secret that is not UTF-8 is refused" {
   try decode(b"\xff\xfe") catch {
-    Refused(-1) => ()
+    Refused(INTERNAL) => ()
     _ => fail("raised a different error")
   } noraise {
     _ => fail("expected an error")

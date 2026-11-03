@@ -11,6 +11,7 @@
 #define KEYRING_OK 0
 #define KEYRING_NOT_FOUND 1000000001
 #define KEYRING_NO_STORE 1000000002
+#define KEYRING_INTERNAL 1000000003
 
 /* Results go through one buffer instead of a returned MoonBit object so the
    plaintext has a single owner that is wiped as soon as it is taken. */
