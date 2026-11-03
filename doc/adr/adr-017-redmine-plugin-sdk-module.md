@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (its `internal/livetest` is replaced by [ADR-029](./adr-029-testing-strategy.md))
+Accepted (refined by [ADR-029](./adr-029-testing-strategy.md), which replaces its `internal/livetest` with the `integration-test/` module, and by [ADR-030](./adr-030-additional-tags-issue-tags.md), which adds `internal/paging` beside `internal/decode`)
 
 ## Context
 
