@@ -18,7 +18,7 @@ impl ToJson for ByteLimit with fn to_json(self) {
 }
 
 ///|
-fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
+fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let id = @schema.required("id", record_id())
   let download_path = @schema.required(
     "path",
@@ -193,7 +193,7 @@ pub fn attachments_tool(
   @mcp.tool(
     name="redmine_attachments",
     description=describe_attachments(mode),
-    input=attachment_input(mode),
+    input=attachments_input(mode),
     handler=async fn(action) {
       match action {
         Show(id) => respond(() => port.show_attachment(id))

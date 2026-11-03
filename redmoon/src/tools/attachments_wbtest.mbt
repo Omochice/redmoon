@@ -433,7 +433,7 @@ async test "readonly drops attach from the schema and the description" {
 
 ///|
 test "max_size advertises an integer schema with a numeric default" {
-  let schema = attachment_input(Readonly).to_json_schema()
+  let schema = attachments_input(Readonly).to_json_schema()
   guard schema
     is {
       "properties": {

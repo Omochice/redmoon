@@ -138,7 +138,7 @@ let time_entry_delete_input : @schema.Schema[TimeEntryAction] = @schema.record(
 ///|
 /// Readonly drops the write actions so a write is inexpressible in the schema
 /// rather than rejected after parsing.
-fn time_entry_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
+fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
   let read = [("list", time_entry_list_input), ("show", time_entry_show_input)]
   let write = [
     ("create", time_entry_create_input),
@@ -154,7 +154,7 @@ pub fn time_entries_tool(port : &TimeEntryPort, mode : Mode) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_time_entries",
     description=describe_crud_tool("time entries", mode),
-    input=time_entry_input(mode),
+    input=time_entries_input(mode),
     handler=async fn(action) {
       match action {
         List(query) => respond(() => port.list_time_entries(query))

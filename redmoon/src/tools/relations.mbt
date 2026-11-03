@@ -22,7 +22,7 @@ fn relation_type_schema() -> @schema.Schema[@relations.Type] {
 }
 
 ///|
-fn relation_input(mode : Mode) -> @schema.Schema[RelationAction] {
+fn relations_input(mode : Mode) -> @schema.Schema[RelationAction] {
   let issue_id = @schema.required("issue_id", record_id())
   let id = @schema.required("id", record_id())
   let read = [
@@ -78,7 +78,7 @@ pub fn relations_tool(port : &RelationPort, mode : Mode) -> @mcp.Tool {
       mode,
       full_verbs="Create, read, and delete",
     ),
-    input=relation_input(mode),
+    input=relations_input(mode),
     handler=async fn(action) {
       match action {
         List(issue_id) => respond(() => port.list_relations(issue_id))

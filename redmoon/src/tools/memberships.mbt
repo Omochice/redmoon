@@ -4,7 +4,7 @@ priv enum MembershipAction {
 }
 
 ///|
-let membership_input : @schema.Schema[MembershipAction] = {
+let memberships_input : @schema.Schema[MembershipAction] = {
   let project_id = @schema.required("project_id", project_ref())
   @schema.keyed([
     (
@@ -23,7 +23,7 @@ pub fn memberships_tool(port : &MembershipPort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_memberships",
     description="Lists the members of a Redmine project, each user or group with its roles, to find whom an issue can be assigned to.\nThe id to pass as `assigned_to_id` to `redmine_issues` is the principal's, `user.id` or `group.id`, never the membership's own top-level `id`.\nBeing listed does not make a principal assignable: one of its roles must have \"Issues can be assigned to this role\" enabled, a group also needs the Redmine setting \"Allow issue assignment to groups\", and the built-in groups `group_anonymous` and `group_non_member` cannot be assigned.\nPass the arguments under the single key `list`: `{\"list\": {\"project_id\": \"demo\"}}`.",
-    input=membership_input,
+    input=memberships_input,
     handler=async fn(action) {
       match action {
         List(project, limit~) =>
