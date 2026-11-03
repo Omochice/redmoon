@@ -1,12 +1,13 @@
 ///|
 /// The user or group a membership grants roles to.
 /// `AnonymousGroup` and `NonMemberGroup` are Redmine's built-in groups, which stand for every anonymous visitor and every logged-in non-member.
+#derive(Eq, Debug)
 pub(all) enum Principal {
   User(@redmine.IdName)
   Group(@redmine.IdName)
   AnonymousGroup(@redmine.IdName)
   NonMemberGroup(@redmine.IdName)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Principal with Eq::{equal, not_equal}
@@ -37,11 +38,12 @@ fn Principal::id_name(self : Principal) -> @redmine.IdName {
 
 ///|
 /// A role held through a membership; `inherited` is true for a role a user holds through one of its groups.
+#derive(Eq, Debug)
 pub(all) struct Role {
   id : Int32
   name : String
   inherited : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Role with Eq::{equal, not_equal}
@@ -78,12 +80,13 @@ pub impl ToJson for Role with fn to_json(self) {
 
 ///|
 /// A project membership: the roles one principal holds in one project.
+#derive(Eq, Debug)
 pub(all) struct Membership {
   id : Int32
   project : @redmine.IdName
   principal : Principal
   roles : Array[Role]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Membership with Eq::{equal, not_equal}

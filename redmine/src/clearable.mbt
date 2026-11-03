@@ -13,10 +13,11 @@
 ///   assert_true(untouched is None)
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) enum Clearable[T] {
   Set(T)
   Clear
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Clearable with Eq::{equal, not_equal}

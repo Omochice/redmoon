@@ -1,5 +1,6 @@
 ///|
 /// A named span of time understood by every Redmine date filter.
+#derive(Eq, Debug)
 pub(all) enum DatePeriod {
   Today
   Yesterday
@@ -13,7 +14,7 @@ pub(all) enum DatePeriod {
   Any
   /// Matches issues that have no value in the field.
   Blank
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DatePeriod with Eq::{equal, not_equal}
@@ -25,6 +26,7 @@ pub extend DatePeriod with @debug.Debug::{to_repr}
 /// A filter for the issue fields Redmine types as `:date_past` (`created_on`,
 /// `updated_on`, `closed_on`), which answer 422 to any forward-looking filter.
 /// Dates are `YYYY-MM-DD`; day counts are zero or more.
+#derive(Eq, Debug)
 pub(all) enum PastDateFilter {
   /// That day.
   On(String)
@@ -43,7 +45,7 @@ pub(all) enum PastDateFilter {
   LastDays(Int32)
   /// On or before the day that many days ago.
   UntilDaysAgo(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PastDateFilter with Eq::{equal, not_equal}
@@ -67,6 +69,7 @@ pub extend PastDateFilter with @debug.Debug::{to_repr}
 ///   assert_eq(upcoming.due_date, Some(@issues.DateFilter::NextDays(7)))
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) enum DateFilter {
   Past(PastDateFilter)
   Tomorrow
@@ -80,7 +83,7 @@ pub(all) enum DateFilter {
   UntilDaysFromNow(Int32)
   /// From today through the day that many days from now.
   NextDays(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DateFilter with Eq::{equal, not_equal}

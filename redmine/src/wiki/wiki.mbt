@@ -1,12 +1,13 @@
 ///|
 /// A wiki page as listed for a project.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct PageSummary {
   title : String
   version : Int32
   created_on : String
   updated_on : String
   parent : Parent?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend PageSummary with @json.FromJson::{from_json}
@@ -22,9 +23,10 @@ pub extend PageSummary with @debug.Debug::{to_repr}
 
 ///|
 /// The parent of a wiki page, by title.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Parent {
   title : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Parent with @json.FromJson::{from_json}
@@ -40,6 +42,7 @@ pub extend Parent with @debug.Debug::{to_repr}
 
 ///|
 /// A wiki page with its text, at one version.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Page {
   title : String
   version : Int32
@@ -49,7 +52,7 @@ pub(all) struct Page {
   created_on : String
   updated_on : String
   attachments : Array[@attachments.Attachment]?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Page with @json.FromJson::{from_json}

@@ -1,8 +1,9 @@
 ///|
+#derive(Debug)
 enum DayBound {
   Days(Int32)
   Period(String)
-} derive(Debug)
+}
 
 ///|
 let day_bound : Schema[DayBound] = union([

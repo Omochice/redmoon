@@ -1,5 +1,6 @@
 ///|
 /// A template every project with the plugin enabled can use, unless it is limited to some projects.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct GlobalTemplate {
   id : Int32
   tracker_id : Int32
@@ -10,7 +11,7 @@ pub(all) struct GlobalTemplate {
   enabled : Bool
   created_on : String
   updated_on : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend GlobalTemplate with @json.FromJson::{from_json}
@@ -26,6 +27,7 @@ pub extend GlobalTemplate with @debug.Debug::{to_repr}
 
 ///|
 /// A template that belongs to one project; `enabled_sharing` lets its subprojects inherit it.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct ProjectTemplate {
   id : Int32
   tracker_id : Int32
@@ -39,7 +41,7 @@ pub(all) struct ProjectTemplate {
   position : Int32
   created_on : String
   updated_on : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend ProjectTemplate with @json.FromJson::{from_json}
@@ -55,28 +57,12 @@ pub extend ProjectTemplate with @debug.Debug::{to_repr}
 
 ///|
 /// The templates a project can use: the global ones enabled for it, those its ancestors share, and its own.
+#derive(FromJson(fields(global(rename="global_issue_templates"), inherited(rename="inherit_templates"), project(rename="issue_templates"))), ToJson(fields(global(rename="global_issue_templates"), inherited(rename="inherit_templates"), project(rename="issue_templates"))), Eq, Debug)
 pub(all) struct Templates {
   global : Array[GlobalTemplate]
   inherited : Array[ProjectTemplate]
   project : Array[ProjectTemplate]
-} derive (
-  FromJson(
-    fields(
-      global(rename="global_issue_templates"),
-      inherited(rename="inherit_templates"),
-      project(rename="issue_templates"),
-    ),
-  ),
-  ToJson(
-    fields(
-      global(rename="global_issue_templates"),
-      inherited(rename="inherit_templates"),
-      project(rename="issue_templates"),
-    ),
-  ),
-  Eq,
-  Debug,
-)
+}
 
 ///|
 pub extend Templates with @json.FromJson::{from_json}

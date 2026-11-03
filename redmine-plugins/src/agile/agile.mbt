@@ -1,13 +1,14 @@
 ///|
 /// The RedmineUP Agile plugin's row for one issue: its story points, its sprint, and its place on the board.
 /// `id` names the row itself, not the issue.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct AgileData {
   id : Int32
   issue_id : Int32
   story_points : Int32?
   agile_sprint_id : Int32?
   position : Int32?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend AgileData with @json.FromJson::{from_json}
@@ -24,11 +25,12 @@ pub extend AgileData with @debug.Debug::{to_repr}
 ///|
 /// Changes to an issue's agile data; an unset field keeps the value it has.
 /// `Clear` empties a field, which for `agile_sprint_id` takes the issue out of its sprint.
+#derive(Eq, Debug)
 pub(all) struct Update {
   story_points : @redmine.Clearable[Int32]?
   agile_sprint_id : @redmine.Clearable[Int32]?
   position : @redmine.Clearable[Int32]?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Update with Eq::{equal, not_equal}

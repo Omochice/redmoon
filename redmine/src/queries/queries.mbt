@@ -1,11 +1,12 @@
 ///|
 /// A saved issue query; `project_id` is `None` for a query shared by every project.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Query {
   id : Int32
   name : String
   is_public : Bool
   project_id : Int32?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Query with @json.FromJson::{from_json}

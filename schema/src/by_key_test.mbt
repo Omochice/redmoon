@@ -1,9 +1,10 @@
 ///|
+#derive(Debug)
 enum Lookup {
   ById(Int32)
   ByName(String)
   Everything
-} derive(Debug)
+}
 
 ///|
 let lookup_id : @schema.Field[Int32] = @schema.required("id", integer(min=1))

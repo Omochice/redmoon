@@ -1,5 +1,6 @@
 ///|
 /// A time entry logged against a project, optionally an issue.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Entry {
   id : Int32
   project : @redmine.IdName
@@ -12,7 +13,7 @@ pub(all) struct Entry {
   created_on : String
   updated_on : String
   custom_fields : Array[CustomField]?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Entry with @json.FromJson::{from_json}
@@ -28,9 +29,10 @@ pub extend Entry with @debug.Debug::{to_repr}
 
 ///|
 /// The issue a time entry is logged against, as Redmine references it.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Issue {
   id : Int32
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Issue with @json.FromJson::{from_json}
@@ -46,11 +48,12 @@ pub extend Issue with @debug.Debug::{to_repr}
 
 ///|
 /// A custom field value attached to a time entry.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct CustomField {
   id : Int32
   name : String
   value : Json?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend CustomField with @json.FromJson::{from_json}
@@ -80,13 +83,14 @@ pub extend CustomField with @debug.Debug::{to_repr}
 ///   assert_eq(query.from, Some("2026-10-01"))
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) struct ListQuery {
   project_id : Int32?
   user_id : Int32?
   spent_on : String?
   from : String?
   to : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ListQuery with Eq::{equal, not_equal}
@@ -168,6 +172,7 @@ fn ListQuery::to_pairs(self : ListQuery) -> Array[(String, String)] {
 ///   assert_eq(create.hours, 1.5)
 /// }
 /// ```
+#derive(ToJson, Eq, Debug)
 pub(all) struct Create {
   hours : Double
   issue_id : Int32?
@@ -175,7 +180,7 @@ pub(all) struct Create {
   spent_on : String?
   activity_id : Int32?
   comments : String?
-} derive(ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Create with ToJson::{to_json}
@@ -202,6 +207,7 @@ pub extend Create with @debug.Debug::{to_repr}
 ///   assert_eq(update.hours, Some(2.0))
 /// }
 /// ```
+#derive(ToJson, Eq, Debug)
 pub(all) struct Update {
   hours : Double?
   issue_id : Int32?
@@ -209,7 +215,7 @@ pub(all) struct Update {
   spent_on : String?
   activity_id : Int32?
   comments : String?
-} derive(ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Update with ToJson::{to_json}

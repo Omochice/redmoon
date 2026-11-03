@@ -1,8 +1,9 @@
 ///|
 /// Only the modules are read, because they are the only part of the project this test changes.
+#derive(FromJson)
 priv struct TimeEntriesProject {
   enabled_modules : Array[@redmine.IdName]
-} derive(FromJson)
+}
 
 ///|
 /// Turns on the time tracking module of project 1 when it is off, since Redmine refuses time entries for a project without it.

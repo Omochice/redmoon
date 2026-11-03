@@ -1,11 +1,12 @@
 ///|
 /// The subcommand the user asked for, with its options.
+#derive(Eq, @debug.Debug)
 pub(all) enum Invocation {
   Serve(endpoint~ : String, read_only~ : Bool, plugins~ : Array[Plugin])
   Login(endpoint~ : String)
   Logout(endpoint~ : String)
   List
-} derive(Eq, @debug.Debug)
+}
 
 ///|
 pub extend Invocation with Eq::{equal, not_equal}

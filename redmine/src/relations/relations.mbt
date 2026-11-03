@@ -1,5 +1,6 @@
 ///|
 /// The kind of link between two issues, spelled as Redmine spells it on the wire.
+#derive(Eq, Debug)
 pub(all) enum Type {
   Relates
   Duplicates
@@ -10,7 +11,7 @@ pub(all) enum Type {
   Follows
   CopiedTo
   CopiedFrom
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Type with Eq::{equal, not_equal}
@@ -78,13 +79,14 @@ pub impl ToJson for Type with fn to_json(self) -> Json {
 
 ///|
 /// An issue-to-issue relation as Redmine returns it.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Relation {
   id : Int32
   issue_id : Int32
   issue_to_id : Int32
   relation_type : Type
   delay : Int32?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Relation with @json.FromJson::{from_json}
