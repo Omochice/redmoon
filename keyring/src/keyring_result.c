@@ -40,6 +40,18 @@ void keyring_cstr_free(char *s) {
 
 int32_t omochice_keyring_result_size(void) { return result_len; }
 
+/* Exposed so a test can check that the MoonBit copies of the sentinels have
+   not drifted from this header; the C side has no way to read the MoonBit ones. */
+int32_t omochice_keyring_sentinel(int32_t which) {
+  switch (which) {
+  case 0: return KEYRING_OK;
+  case 1: return KEYRING_NOT_FOUND;
+  case 2: return KEYRING_NO_STORE;
+  case 3: return KEYRING_INTERNAL;
+  default: return KEYRING_INTERNAL;
+  }
+}
+
 void omochice_keyring_result_take(moonbit_bytes_t dst) {
   memcpy(dst, result, (size_t)result_len);
   keyring_result_clear();

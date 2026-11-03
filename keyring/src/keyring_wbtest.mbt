@@ -1,4 +1,15 @@
 ///|
+extern "C" fn ffi_sentinel(which : Int32) -> Int32 = "omochice_keyring_sentinel"
+
+///|
+test "the MoonBit sentinels agree with keyring_common.h" {
+  assert_eq(ffi_sentinel(0), ok)
+  assert_eq(ffi_sentinel(1), not_found)
+  assert_eq(ffi_sentinel(2), no_store)
+  assert_eq(ffi_sentinel(3), INTERNAL)
+}
+
+///|
 test "the success status raises nothing" {
   check(ok)
 }
