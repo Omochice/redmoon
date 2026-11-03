@@ -5,16 +5,17 @@ pub fn registered_tools(
   mode : @tools.Mode,
   plugins : Array[Plugin],
 ) -> Array[@mcp.Tool] {
+  let files = @tools.LocalFile::new()
   let tools = [
-    @tools.issues_tool(redmine, @tools.LocalFile::new(), mode),
-    @tools.wiki_pages_tool(redmine, @tools.LocalFile::new(), mode),
+    @tools.issues_tool(redmine, files, mode),
+    @tools.wiki_pages_tool(redmine, files, mode),
     @tools.versions_tool(redmine, mode),
     @tools.relations_tool(redmine, mode),
     @tools.search_tool(redmine),
     @tools.time_entries_tool(redmine, mode),
     @tools.enumerations_tool(redmine),
     @tools.memberships_tool(redmine),
-    @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
+    @tools.attachments_tool(redmine, files, mode),
     @tools.server_info_tool(),
   ]
   for entry in known_plugins {
