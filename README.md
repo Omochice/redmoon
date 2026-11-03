@@ -41,6 +41,7 @@ The MCP client then runs `serve` over stdio.
 
 `--readonly` drops every create, update, and delete action.
 `--plugin issue_templates` adds the tools of the [redmine_issue_templates](https://github.com/agileware-jp/redmine_issue_templates) plugin.
+`--plugin agile` adds the tools of the [RedmineUP Agile](https://www.redmineup.com/pages/plugins/agile) plugin.
 `--plugin additional_tags` adds the tools of the [Additional Tags](https://github.com/AlphaNodes/additional_tags) plugin.
 `redmoon serve --help` lists every option.
 
