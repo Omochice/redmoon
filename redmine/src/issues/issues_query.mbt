@@ -72,7 +72,7 @@ pub extend AssigneeFilter with Eq::{equal, not_equal}
 pub extend AssigneeFilter with @debug.Debug::{to_repr}
 
 ///|
-/// Conditions for `Redmine::list_issues`; an unset condition does not filter.
+/// Conditions for `list`; an unset condition does not filter.
 pub struct ListQuery {
   includes : Array[ListInclude]
   project_id : Int32?
