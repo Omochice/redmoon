@@ -43,7 +43,7 @@ pub fn UploadToken::new(
 #derive(Eq, Debug)
 pub(all) struct CustomFieldInput {
   id : Int32
-  value : CustomFieldValue
+  value : @redmine.CustomFieldValue
 }
 
 ///|

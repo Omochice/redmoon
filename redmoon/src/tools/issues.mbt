@@ -54,10 +54,10 @@ fn written_date_text(field : String, event : String, clearing : Bool) -> String 
 }
 
 ///|
-let custom_field_value : @schema.Schema[@issues.CustomFieldValue] = @schema.union([
-    @schema.string().map(value => @issues.CustomFieldValue::Single(value)),
+let custom_field_value : @schema.Schema[@redmine.CustomFieldValue] = @schema.union([
+    @schema.string().map(value => @redmine.CustomFieldValue::Single(value)),
     @schema.array(@schema.string()).map(values => {
-      @issues.CustomFieldValue::Multiple(values)
+      @redmine.CustomFieldValue::Multiple(values)
     }),
   ],
 )
@@ -70,7 +70,7 @@ let assignee_text : String = "User or group to assign the issue to, by the `user
 
 ///|
 fn custom_field_inputs(
-  value : @schema.Schema[@issues.CustomFieldValue],
+  value : @schema.Schema[@redmine.CustomFieldValue],
 ) -> @schema.Schema[Array[@issues.CustomFieldInput]] {
   let id = @schema.required("id", record_id())
   let value = @schema.required("value", value)
@@ -329,7 +329,7 @@ let update_input : @schema.Schema[IssueAction] = {
     "custom_fields",
     custom_field_inputs(
       @schema.nullable(custom_field_value).map(value => {
-        value.unwrap_or(@issues.CustomFieldValue::Single(""))
+        value.unwrap_or(@redmine.CustomFieldValue::Single(""))
       }),
     ).describe(
       custom_fields_text +
