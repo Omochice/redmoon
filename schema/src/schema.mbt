@@ -238,12 +238,6 @@ pub fn literal(value : String) -> Schema[String] {
 }
 
 ///|
-/// One of the listed strings.
-pub fn picklist(values : Array[String]) -> Schema[String] {
-  choice(values.map(v => (v, v)))
-}
-
-///|
 /// One of the listed names, parsed to the value paired with it.
 pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
   let names = options.map(o => o.0)

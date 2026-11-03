@@ -30,13 +30,13 @@ let r_description : @schema.Field[String] = @schema.required(
 ///|
 let r_status : @schema.Field[String?] = @schema.optional(
   "status",
-  picklist(["open", "locked", "closed"]),
+  choice([("open", "open"), ("locked", "locked"), ("closed", "closed")]),
 )
 
 ///|
 let r_sharing : @schema.Field[String] = @schema.optional_or(
   "sharing",
-  picklist(["none", "system"]),
+  choice([("none", "none"), ("system", "system")]),
   "none",
 )
 

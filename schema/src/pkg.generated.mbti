@@ -34,8 +34,6 @@ pub fn[T] optional(String, Schema[T]) -> Field[T?]
 
 pub fn[T : @json.ToJson] optional_or(String, Schema[T], T) -> Field[T]
 
-pub fn picklist(Array[String]) -> Schema[String]
-
 pub fn[T] record(Array[Member], (Values) -> T raise SchemaError) -> Schema[T]
 
 pub fn[T] required(String, Schema[T]) -> Field[T]

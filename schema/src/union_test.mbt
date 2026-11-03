@@ -8,7 +8,7 @@ enum DayBound {
 ///|
 let day_bound : Schema[DayBound] = union([
   integer(min=0).map(n => Days(n)),
-  picklist(["today", "any"]).map(s => Period(s)),
+  choice([("today", "today"), ("any", "any")]).map(s => Period(s)),
 ])
 
 ///|
