@@ -70,7 +70,7 @@ pub extend Attachment with @debug.Debug::{to_repr}
 
 ///|
 /// Returns the metadata of the attachment `id`.
-/// Raises `Response` with status 404 when it does not exist.
+/// Raises `RedmineError` on a non-2xx answer (404 when it does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")

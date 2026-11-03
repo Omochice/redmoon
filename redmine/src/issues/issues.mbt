@@ -35,7 +35,7 @@ pub async fn[S : Selection] list(
 
 ///|
 /// Shows an issue with the given associations.
-/// Raises `RedmineError`, with status 404 when the issue does not exist.
+/// Raises `RedmineError` on a non-2xx answer (404 when the issue does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -67,7 +67,7 @@ pub async fn show(
 
 ///|
 /// Creates an issue and returns it as Redmine stored it.
-/// Raises `RedmineError`, with status 422 when Redmine rejects a field.
+/// Raises `RedmineError` on a non-2xx answer (422 when Redmine rejects a field), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -100,7 +100,7 @@ pub async fn create(
 
 ///|
 /// Applies `update` to an issue.
-/// Raises `RedmineError`, with status 404 when the issue does not exist.
+/// Raises `RedmineError` on a non-2xx answer (404 when the issue does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -129,7 +129,7 @@ pub async fn update(
 
 ///|
 /// Deletes an issue.
-/// Raises `RedmineError`, with status 404 when the issue does not exist.
+/// Raises `RedmineError` on a non-2xx answer (404 when the issue does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
@@ -151,7 +151,7 @@ pub async fn delete(
 ///|
 /// Edits a comment of an issue: its text, its visibility, or both.
 /// Redmine drops a comment whose notes become empty and that records no field change.
-/// Raises `RedmineError`, with status 404 when the comment does not exist.
+/// Raises `RedmineError` on a non-2xx answer (404 when the comment does not exist), an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
 /// #skip("needs a live Redmine")
