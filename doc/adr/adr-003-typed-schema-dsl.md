@@ -70,7 +70,7 @@ We will write `omochice/schema` as a module of its own, and `omochice/mcp` will 
 ```moonbit
 struct Schema[T] {
   json : () -> Json
-  parse : (Json, Array[String]) -> T raise SchemaError
+  decode : (Json, Array[String]) -> T raise SchemaError
 }
 ```
 
