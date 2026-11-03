@@ -136,8 +136,8 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
 }
 
 ///|
-/// `redmine_versions`: the versions (milestones) of a project. `Readonly` mode
-/// leaves out create, update, and delete.
+/// `redmine_versions`: the versions (milestones) of a project.
+/// `Readonly` mode leaves out create, update, and delete.
 pub fn versions_tool(port : &VersionPort, mode : Mode) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_versions",

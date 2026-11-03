@@ -3,6 +3,7 @@
 pub struct LocalFile {}
 
 ///|
+/// The filesystem of the server process, which the registry hands to every tool that reads or writes a file.
 pub fn LocalFile::new() -> LocalFile {
   LocalFile::{ }
 }

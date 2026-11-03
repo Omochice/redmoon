@@ -132,8 +132,8 @@ fn wiki_pages_description(mode : Mode) -> String {
 }
 
 ///|
-/// `redmine_wiki_pages`: the wiki pages of a project. `Readonly` mode leaves
-/// out create, update, and delete.
+/// `redmine_wiki_pages`: the wiki pages of a project.
+/// `Readonly` mode leaves out create, update, and delete.
 pub fn wiki_pages_tool(
   port : &WikiPagePort,
   files : &FilePort,

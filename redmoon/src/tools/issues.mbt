@@ -519,7 +519,8 @@ fn issues_description(mode : Mode) -> String {
 
 ///|
 /// `redmine_issues`: list, show, create, update and delete issues, list the
-/// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
+/// saved queries that select them, and edit their comments.
+/// `Readonly` keeps `list`, `list_queries` and `show`.
 pub fn issues_tool(
   port : &IssuePort,
   files : &FilePort,

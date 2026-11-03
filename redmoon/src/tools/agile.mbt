@@ -77,7 +77,8 @@ fn agile_description(mode : Mode) -> String {
 }
 
 ///|
-/// `redmine_agile`: the per-issue data of the RedmineUP Agile plugin. `Readonly` mode leaves out `update`.
+/// `redmine_agile`: the per-issue data of the RedmineUP Agile plugin.
+/// `Readonly` mode leaves out `update`.
 pub fn agile_tool(port : &AgilePort, mode : Mode) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_agile",

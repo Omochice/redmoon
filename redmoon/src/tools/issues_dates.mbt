@@ -94,8 +94,8 @@ fn past_date_filters() -> Array[@schema.Schema[@issues.PastDateFilter]] {
 }
 
 ///|
-/// The filter of `created_on`, `updated_on` and `closed_on`. Redmine types
-/// them as `:date_past` and answers 422 to a forward-looking form.
+/// The filter of `created_on`, `updated_on` and `closed_on`.
+/// Redmine types them as `:date_past` and answers 422 to a forward-looking form.
 pub fn past_date_filter() -> @schema.Schema[@issues.PastDateFilter] {
   @schema.union(past_date_filters())
 }
