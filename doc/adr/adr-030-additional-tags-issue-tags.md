@@ -194,12 +194,12 @@ A comma inside a name would be split into several tags, so the tag the model ask
 `list_issues` sends `set_filter=1&f[]=tags&op[tags]==` with one `v[tags][]` per name.
 The status goes in as a filter of its own, `f[]=status_id` with `op[status_id]` set to `o`, `c`, or `*`, or to `=` with `v[status_id][]` for one status, and open issues are asked for when no status is given; the project goes in as `project_id`.
 
-#### Rationale
+#### Rationale for the status filter
 
-For the status: once `f[]` is given, Redmine ignores the `status_id` shorthand that `redmine_issues` sends and lists issues of every status, which was observed with an open and a closed issue carrying the same tag.
+Once `f[]` is given, Redmine ignores the `status_id` shorthand that `redmine_issues` sends and lists issues of every status, which was observed with an open and a closed issue carrying the same tag.
 Defaulting to open issues keeps `list_issues` answering what `list` of `redmine_issues` answers for the same status argument.
 
-#### Rationale
+#### Rationale for tag names
 
 Names are what a model reads in `show` and writes in `add`, while a tag's id is not stable, because the plugin deletes a tag no issue carries and gives the same name a new id when it is used again.
 `tag_id` would also need the id from `list`, which members cannot call.
@@ -207,7 +207,7 @@ The explicit filter form was chosen over the `tags=` shorthand because it states
 
 The request goes through `@redmine.send`, paged by a copy of the paging helper of `omochice/redmine` kept in `redmine-plugins/src/internal/paging`, and each issue is decoded into `@issues.Issue`.
 
-#### Rationale
+#### Rationale for the request
 
 [ADR-017](./adr-017-redmine-plugin-sdk-module.md) has plugin packages reach Redmine only through `@redmine.send` and repeat the helpers they need, because widening `omochice/redmine`'s public surface to share them was rejected.
 Opening the `Selection` trait of `@issues.list` to other modules was rejected for the same reason: it would let code outside `omochice/redmine` put parameters into a core request, which the trait is sealed to prevent.
