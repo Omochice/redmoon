@@ -1,5 +1,5 @@
 ///|
-extern "c" fn exit(code : Int32) = "exit"
+extern "C" fn exit(code : Int32) = "exit"
 
 ///|
 async fn run() -> Unit {
