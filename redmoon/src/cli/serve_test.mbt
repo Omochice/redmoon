@@ -40,7 +40,7 @@ fn request(id : Int32, rpc_method : String, params : Json) -> Json {
 ///|
 async test "the server lists the registered tools" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
-  let responses = exchange(build_server(redmine, false, []), [
+  let responses = exchange(@cli.build_server(redmine, false, []), [
     request(2, "tools/list", {}),
   ])
   guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {
@@ -63,7 +63,7 @@ async test "the server lists the registered tools" {
 async test "the memberships tool is listed in both modes" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   for read_only in [false, true] {
-    let responses = exchange(build_server(redmine, read_only, []), [
+    let responses = exchange(@cli.build_server(redmine, read_only, []), [
       request(2, "tools/list", {}),
     ])
     assert_true(
@@ -77,7 +77,7 @@ async test "the issue templates plugin adds its tool in both modes" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   for read_only in [false, true] {
     let responses = exchange(
-      build_server(redmine, read_only, [IssueTemplates]),
+      @cli.build_server(redmine, read_only, [@cli.IssueTemplates]),
       [request(2, "tools/list", {})],
     )
     assert_true(
@@ -90,9 +90,10 @@ async test "the issue templates plugin adds its tool in both modes" {
 async test "the agile plugin adds its tool, without update in readonly mode" {
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   for read_only in [false, true] {
-    let responses = exchange(build_server(redmine, read_only, [Agile]), [
-      request(2, "tools/list", {}),
-    ])
+    let responses = exchange(
+      @cli.build_server(redmine, read_only, [@cli.Agile]),
+      [request(2, "tools/list", {})],
+    )
     guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {
       fail("no tools/list result")
     }
@@ -114,7 +115,7 @@ async test "the additional tags plugin adds its tool, without add and remove in 
   let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
   for read_only in [false, true] {
     let responses = exchange(
-      build_server(redmine, read_only, [AdditionalTags]),
+      @cli.build_server(redmine, read_only, [@cli.AdditionalTags]),
       [request(2, "tools/list", {})],
     )
     guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {

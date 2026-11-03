@@ -1,11 +1,11 @@
 ///|
 test "serve takes an endpoint and an optional readonly flag" {
   @debug.debug_inspect(
-    parse_arguments(argv=["serve", "--endpoint", "https://r.example.com"]),
+    @cli.parse_arguments(argv=["serve", "--endpoint", "https://r.example.com"]),
     content="Serve(endpoint=\"https://r.example.com\", read_only=false, plugins=[])",
   )
   @debug.debug_inspect(
-    parse_arguments(argv=[
+    @cli.parse_arguments(argv=[
       "serve", "--endpoint", "https://r.example.com", "--readonly",
     ]),
     content="Serve(endpoint=\"https://r.example.com\", read_only=true, plugins=[])",
@@ -15,20 +15,20 @@ test "serve takes an endpoint and an optional readonly flag" {
 ///|
 test "login, logout and list" {
   assert_eq(
-    parse_arguments(argv=["login", "--endpoint", "http://localhost:3000"]),
-    Login(endpoint="http://localhost:3000"),
+    @cli.parse_arguments(argv=["login", "--endpoint", "http://localhost:3000"]),
+    @cli.Login(endpoint="http://localhost:3000"),
   )
   assert_eq(
-    parse_arguments(argv=["logout", "--endpoint", "http://localhost:3000"]),
-    Logout(endpoint="http://localhost:3000"),
+    @cli.parse_arguments(argv=["logout", "--endpoint", "http://localhost:3000"]),
+    @cli.Logout(endpoint="http://localhost:3000"),
   )
-  assert_eq(parse_arguments(argv=["list"]), List)
+  assert_eq(@cli.parse_arguments(argv=["list"]), @cli.List)
 }
 
 ///|
 test "a missing endpoint or subcommand is rejected" {
   for argv in [["serve"], ["login"], ["logout"], ["frobnicate"]] {
-    try parse_arguments(argv~) catch {
+    try @cli.parse_arguments(argv~) catch {
       _ => ()
     } noraise {
       _ => fail("\{argv.join(" ")} was accepted")
@@ -40,19 +40,19 @@ test "a missing endpoint or subcommand is rejected" {
 test "serve enables each plugin named by a repeatable --plugin" {
   let serve = ["serve", "--endpoint", "https://r.example.com"]
   assert_eq(
-    parse_arguments(argv=[..serve, "--plugin", "issue_templates"]),
-    Serve(endpoint="https://r.example.com", read_only=false, plugins=[
-      IssueTemplates,
+    @cli.parse_arguments(argv=[..serve, "--plugin", "issue_templates"]),
+    @cli.Serve(endpoint="https://r.example.com", read_only=false, plugins=[
+      @cli.IssueTemplates,
     ]),
   )
   assert_eq(
-    parse_arguments(
+    @cli.parse_arguments(
       argv=[
         ..serve, "--plugin", "issue_templates", "--readonly", "--plugin", "issue_templates",
       ],
     ),
-    Serve(endpoint="https://r.example.com", read_only=true, plugins=[
-      IssueTemplates,
+    @cli.Serve(endpoint="https://r.example.com", read_only=true, plugins=[
+      @cli.IssueTemplates,
     ]),
   )
 }
@@ -60,7 +60,7 @@ test "serve enables each plugin named by a repeatable --plugin" {
 ///|
 test "an unknown plugin is rejected with the known names" {
   try
-    parse_arguments(argv=[
+    @cli.parse_arguments(argv=[
       "serve", "--endpoint", "https://r.example.com", "--plugin", "checklists",
     ])
   catch {
@@ -77,13 +77,13 @@ test "an unknown plugin is rejected with the known names" {
 ///|
 test "serve enables the agile plugin alongside issue templates" {
   assert_eq(
-    parse_arguments(argv=[
+    @cli.parse_arguments(argv=[
       "serve", "--endpoint", "https://r.example.com", "--plugin", "agile", "--plugin",
       "issue_templates",
     ]),
-    Serve(endpoint="https://r.example.com", read_only=false, plugins=[
-      Agile,
-      IssueTemplates,
+    @cli.Serve(endpoint="https://r.example.com", read_only=false, plugins=[
+      @cli.Agile,
+      @cli.IssueTemplates,
     ]),
   )
 }
@@ -91,11 +91,11 @@ test "serve enables the agile plugin alongside issue templates" {
 ///|
 test "serve enables the additional tags plugin" {
   assert_eq(
-    parse_arguments(argv=[
+    @cli.parse_arguments(argv=[
       "serve", "--endpoint", "https://r.example.com", "--plugin", "additional_tags",
     ]),
-    Serve(endpoint="https://r.example.com", read_only=false, plugins=[
-      AdditionalTags,
+    @cli.Serve(endpoint="https://r.example.com", read_only=false, plugins=[
+      @cli.AdditionalTags,
     ]),
   )
 }
