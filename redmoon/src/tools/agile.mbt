@@ -73,7 +73,7 @@ fn agile_description(mode : Mode) -> String {
         requirement,
       ]
   }
-  [..lines, operation_key_hint].join("\n")
+  describe_tool(lines)
 }
 
 ///|

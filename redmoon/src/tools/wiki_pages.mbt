@@ -120,14 +120,15 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
 
 ///|
 fn wiki_pages_description(mode : Mode) -> String {
-  let base = describe_crud_tool("wiki pages", mode) +
-    "\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text."
-  match mode {
-    Readonly => base
+  let saving = "`show` with `text_path` saves the text to a new local file and answers with that path instead of the text."
+  let lines = match mode {
+    Readonly => [saving]
     Full =>
-      base +
-      "\nFor a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended)."
+      [
+        saving, "For a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended).",
+      ]
   }
+  describe_crud_tool("wiki pages", mode, lines~)
 }
 
 ///|

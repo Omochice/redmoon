@@ -20,7 +20,9 @@ fn enumerations_input() -> @schema.Schema[EnumerationAction] {
 pub fn enumerations_tool(port : &EnumerationPort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_enumerations",
-    description="Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.\nName the listing as the only key, with an empty object as its value: `{\"list_issue_priorities\": {}}`.",
+    description=describe_tool([
+      "Lists the Redmine enumerations that supply ids other tools require: time entry activities for `activity_id`, issue priorities for `priority_id`, and document categories.",
+    ]),
     input=enumerations_input(),
     handler=async fn(action) {
       match action {

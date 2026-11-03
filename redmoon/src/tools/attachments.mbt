@@ -95,18 +95,20 @@ fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
 
 ///|
 fn attachments_description(mode : Mode) -> String {
-  let base = [
-    "Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file. \{operation_key_hint}",
+  let reads = [
+    "Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.",
     "Call `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.",
     "`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.",
     "`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.",
-  ].join("\n")
-  match mode {
-    Readonly => base
+  ]
+  let lines = match mode {
+    Readonly => reads
     Full =>
-      base +
-      "\n`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first."
+      [
+        ..reads, "`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first.",
+      ]
   }
+  describe_tool(lines)
 }
 
 ///|

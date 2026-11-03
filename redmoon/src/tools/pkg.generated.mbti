@@ -32,7 +32,7 @@ pub fn attachments_tool(&AttachmentPort, &FilePort, Mode) -> @mcp.Tool
 
 pub fn date_filter() -> @schema.Schema[@issues.DateFilter]
 
-pub fn describe_crud_tool(String, Mode, full_verbs? : String) -> String
+pub fn describe_crud_tool(String, Mode, full_verbs? : String, lines? : Array[String]) -> String
 
 pub fn enumerations_tool(&EnumerationPort) -> @mcp.Tool
 

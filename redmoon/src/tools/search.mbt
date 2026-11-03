@@ -66,7 +66,10 @@ fn search_input() -> @schema.Schema[@search.Query] {
 pub fn search_tool(port : &SearchPort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_search",
-    description="Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.\nRequires `q`; narrow with `scope` and the per-resource flags.\nPass the arguments under the single key `search`: `{\"search\": {\"q\": \"login\"}}`.",
+    description=describe_tool([
+      "Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.",
+      "Requires `q`; narrow with `scope` and the per-resource flags.",
+    ]),
     input=@schema.keyed([("search", search_input())]),
     handler=async fn(query) { respond(() => port.search(query)) },
   )

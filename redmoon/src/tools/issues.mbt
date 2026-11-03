@@ -500,22 +500,21 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
 
 ///|
 fn issues_description(mode : Mode) -> String {
-  let base = [
-    describe_crud_tool("issues", mode),
+  let reads = [
     "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowed_statuses` as needed.",
-    "`list` accepts only `attachments` and `relations`.",
-    "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
+    "`list` accepts only `attachments` and `relations`.", "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
     "A saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.",
     "`show` with `description_path` saves the description to a new local file and answers with that path instead of the text.",
   ]
-  match mode {
-    Readonly => base.join("\n")
+  let lines = match mode {
+    Readonly => reads
     Full =>
       [
-        ..base, "`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.",
+        ..reads, "`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.",
         "For a long text, pass the path of a local UTF-8 file instead of the text itself: `description_path` on `create` and `update`, and `notes_path` on `update` and `update_note` (absolute is recommended).",
-      ].join("\n")
+      ]
   }
+  describe_crud_tool("issues", mode, lines~)
 }
 
 ///|
