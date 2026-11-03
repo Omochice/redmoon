@@ -101,7 +101,10 @@ async test "list requires project_id and tracker_id" {
 ///|
 async test "tools/list advertises the issue templates tool" {
   let advertised = list_tools([issue_templates_tool(FakeIssueTemplates::new())]).stringify()
-  assert_eq(
-    advertised, "{\"tools\":[{\"name\":\"redmine_issue_templates\",\"description\":\"Lists the issue templates a Redmine project offers for new issues of one tracker: the global templates enabled for it, those inherited from its parent projects, and its own.\\n`tracker_id` is the tracker's id, as an issue from `redmine_issues` carries it under `tracker`.\\nNeeds the redmine_issue_templates plugin; an instance without it answers 404.\\nPass the arguments under the single key `list`: `{\\\"list\\\": {\\\"project_id\\\": \\\"demo\\\", \\\"tracker_id\\\": 1}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"tracker_id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"project_id\",\"tracker_id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+  inspect(
+    advertised,
+    content=(
+      #|{"tools":[{"name":"redmine_issue_templates","description":"Lists the issue templates a Redmine project offers for new issues of one tracker: the global templates enabled for it, those inherited from its parent projects, and its own.\n`tracker_id` is the tracker's id, as an issue from `redmine_issues` carries it under `tracker`.\nNeeds the redmine_issue_templates plugin; an instance without it answers 404.\nPass the arguments under the single key `list`: `{\"list\": {\"project_id\": \"demo\", \"tracker_id\": 1}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"tracker_id":{"type":"integer","minimum":1}},"required":["project_id","tracker_id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+    ),
   )
 }
