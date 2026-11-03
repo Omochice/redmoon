@@ -3,14 +3,17 @@
 /// account it was stored under.
 ///
 /// # Raises
-/// `Message` for an invalid endpoint, an empty key, or a failing store.
+/// `Message` for an invalid endpoint, a key that cannot be read or is empty,
+/// or a failing store.
 pub async fn run_login(
   endpoint : String,
   store : &CredentialStore,
   read_secret : async () -> String,
-) -> String {
+) -> String raise CliError {
   let account = canonicalize_endpoint(endpoint)
-  let secret = read_secret().trim().to_owned()
+  let secret = (read_secret() catch { error => raise Message("\{error}") })
+    .trim()
+    .to_owned()
   if secret == "" {
     raise Message("no API key was provided")
   }
@@ -68,18 +71,22 @@ pub fn resolve_api_key(
 /// Nothing else may write to stdout, because it is the protocol channel.
 ///
 /// # Raises
-/// `Message` when no API key is stored for `endpoint` or the endpoint is not an
-/// http(s) URL.
+/// `Message` when no API key is stored for `endpoint`, the endpoint is not an
+/// http(s) URL, or the server fails while serving.
 pub async fn run_serve(
   endpoint : String,
   read_only : Bool,
   plugins : Array[Plugin],
   store : &CredentialStore,
-) -> Unit {
+) -> Unit raise CliError {
   let credential = resolve_api_key(endpoint, store)
   let redmine = @redmine.new(
     endpoint=credential.endpoint,
     api_key=credential.api_key,
-  )
-  build_server(redmine, read_only, plugins).serve_stdio()
+  ) catch {
+    _ => raise Message("invalid endpoint URL: \{credential.endpoint}")
+  }
+  build_server(redmine, read_only, plugins).serve_stdio() catch {
+    error => raise Message("\{error}")
+  }
 }

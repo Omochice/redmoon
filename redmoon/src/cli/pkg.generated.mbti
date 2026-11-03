@@ -15,7 +15,7 @@ pub fn build_server(@redmine.Redmine, Bool, Array[Plugin]) -> @mcp.Server
 
 pub fn canonicalize_endpoint(String) -> String raise CliError
 
-pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise
+pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise CliError
 
 pub fn registered_tools(@redmine.Redmine, @tools.Mode, Array[Plugin]) -> Array[@mcp.Tool]
 
@@ -23,11 +23,11 @@ pub fn resolve_api_key(String, &CredentialStore) -> Credential raise CliError
 
 pub fn run_list(&CredentialStore) -> Array[String] raise CliError
 
-pub async fn run_login(String, &CredentialStore, async () -> String) -> String
+pub async fn run_login(String, &CredentialStore, async () -> String) -> String raise CliError
 
 pub fn run_logout(String, &CredentialStore) -> String raise CliError
 
-pub async fn run_serve(String, Bool, Array[Plugin], &CredentialStore) -> Unit
+pub async fn run_serve(String, Bool, Array[Plugin], &CredentialStore) -> Unit raise CliError
 
 // Errors
 pub suberror CliError {
