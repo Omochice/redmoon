@@ -1,11 +1,21 @@
 ///|
 struct FakeSearch {
-  failure : @redmine.RedmineError?
+  calls : Array[String]
   queries : Array[@search.Query]
+  failure : @redmine.RedmineError?
 }
 
 ///|
-fn FakeSearch::check(self : FakeSearch) -> Unit raise @redmine.RedmineError {
+fn FakeSearch::new(failure? : @redmine.RedmineError) -> FakeSearch {
+  { calls: [], queries: [], failure, }
+}
+
+///|
+fn FakeSearch::record(
+  self : FakeSearch,
+  call : String,
+) -> Unit raise @redmine.RedmineError {
+  self.calls.push(call)
   if self.failure is Some(error) {
     raise error
   }
@@ -14,7 +24,7 @@ fn FakeSearch::check(self : FakeSearch) -> Unit raise @redmine.RedmineError {
 ///|
 impl SearchPort for FakeSearch with fn search(self, query) {
   self.queries.push(query)
-  self.check()
+  self.record("search \{query.q}")
   [
     {
       id: 5,
@@ -33,11 +43,6 @@ impl SearchPort for FakeSearch with fn search(self, query) {
       datetime: "2026-01-03T03:04:05Z",
     },
   ]
-}
-
-///|
-fn fake_search(failure? : @redmine.RedmineError) -> FakeSearch {
-  FakeSearch::{ failure, queries: [], }
 }
 
 ///|
@@ -61,7 +66,7 @@ fn plain_query(q : String) -> @search.Query {
 
 ///|
 async test "search forwards the query and answers each match with Redmine's keys" {
-  let fake = fake_search()
+  let fake = FakeSearch::new()
   let called = call_tool([search_tool(fake)], "redmine_search", {
     "search": { "q": "login" },
   })
@@ -75,7 +80,7 @@ async test "search forwards the query and answers each match with Redmine's keys
 
 ///|
 async test "every flag and the scope reach the query" {
-  let fake = fake_search()
+  let fake = FakeSearch::new()
   let _ = call_tool([search_tool(fake)], "redmine_search", {
     "search": {
       "q": "login",
@@ -114,7 +119,7 @@ async test "every flag and the scope reach the query" {
 
 ///|
 async test "attachments true and false map to Included and Excluded" {
-  let fake = fake_search()
+  let fake = FakeSearch::new()
   let tools = [search_tool(fake)]
   let _ = call_tool(tools, "redmine_search", {
     "search": { "q": "a", "attachments": true },
@@ -128,7 +133,7 @@ async test "attachments true and false map to Included and Excluded" {
 
 ///|
 async test "an attachments string other than only is rejected naming the field" {
-  let called = call_tool([search_tool(fake_search())], "redmine_search", {
+  let called = call_tool([search_tool(FakeSearch::new())], "redmine_search", {
     "search": { "q": "a", "attachments": "yes" },
   })
   assert_eq(called.is_error, true)
@@ -140,7 +145,7 @@ async test "an attachments string other than only is rejected naming the field" 
 
 ///|
 async test "a missing q is reported with its action path" {
-  let called = call_tool([search_tool(fake_search())], "redmine_search", {
+  let called = call_tool([search_tool(FakeSearch::new())], "redmine_search", {
     "search": {},
   })
   assert_eq(
@@ -151,7 +156,7 @@ async test "a missing q is reported with its action path" {
 
 ///|
 async test "a camelCase flag is rejected as an unknown field" {
-  let called = call_tool([search_tool(fake_search())], "redmine_search", {
+  let called = call_tool([search_tool(FakeSearch::new())], "redmine_search", {
     "search": { "q": "a", "allWords": true },
   })
   assert_eq(
@@ -165,7 +170,7 @@ async test "a Redmine failure becomes a failure payload" {
   let called = call_tool(
     [
       search_tool(
-        fake_search(failure=Response(status=422, errors=["q is invalid"])),
+        FakeSearch::new(failure=Response(status=422, errors=["q is invalid"])),
       ),
     ],
     "redmine_search",
@@ -177,7 +182,7 @@ async test "a Redmine failure becomes a failure payload" {
 
 ///|
 async test "tools/list advertises the search schema" {
-  let advertised = list_tools([search_tool(fake_search())]).stringify()
+  let advertised = list_tools([search_tool(FakeSearch::new())]).stringify()
   inspect(
     advertised,
     content=(

@@ -1,6 +1,23 @@
 ///|
 struct FakeEnumerations {
+  calls : Array[String]
   failure : @redmine.RedmineError?
+}
+
+///|
+fn FakeEnumerations::new(failure? : @redmine.RedmineError) -> FakeEnumerations {
+  { calls: [], failure, }
+}
+
+///|
+fn FakeEnumerations::record(
+  self : FakeEnumerations,
+  call : String,
+) -> Unit raise @redmine.RedmineError {
+  self.calls.push(call)
+  if self.failure is Some(error) {
+    raise error
+  }
 }
 
 ///|
@@ -9,37 +26,28 @@ fn fake_enumeration(id : Int32, name : String) -> @enumerations.Enumeration {
 }
 
 ///|
-fn FakeEnumerations::check(
-  self : FakeEnumerations,
-) -> Unit raise @redmine.RedmineError {
-  if self.failure is Some(error) {
-    raise error
-  }
-}
-
-///|
 impl EnumerationPort for FakeEnumerations with fn list_time_entry_activities(
   self,
 ) {
-  self.check()
+  self.record("list_time_entry_activities")
   [fake_enumeration(9, "Design"), fake_enumeration(10, "Development")]
 }
 
 ///|
 impl EnumerationPort for FakeEnumerations with fn list_issue_priorities(self) {
-  self.check()
+  self.record("list_issue_priorities")
   [fake_enumeration(1, "Low"), fake_enumeration(2, "Normal")]
 }
 
 ///|
 impl EnumerationPort for FakeEnumerations with fn list_document_categories(self) {
-  self.check()
+  self.record("list_document_categories")
   [fake_enumeration(3, "User documentation")]
 }
 
 ///|
 fn fake_tools(failure? : @redmine.RedmineError) -> Array[@mcp.Tool] {
-  [enumerations_tool(FakeEnumerations::{ failure, })]
+  [enumerations_tool(FakeEnumerations::new(failure?))]
 }
 
 ///|
@@ -98,9 +106,7 @@ async test "a stray argument is reported with its action path" {
 
 ///|
 async test "tools/list advertises the enumerations tool" {
-  let advertised = list_tools([
-    enumerations_tool(FakeEnumerations::{ failure: None, }),
-  ]).stringify()
+  let advertised = list_tools([enumerations_tool(FakeEnumerations::new())]).stringify()
   inspect(
     advertised,
     content=(
