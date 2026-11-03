@@ -116,3 +116,21 @@ test "all_words false is sent as an empty value because Redmine defaults it to t
   let query = { ..query("login"), all_words: Some(false), }
   assert_eq(query_pairs(query), [("q", "login"), ("all_words", "")])
 }
+
+///|
+test "a match encodes under Redmine's keys and leaves an absent description out" {
+  let found : Match = {
+    id: 2,
+    title: "Bug #2",
+    kind: "issue",
+    url: "http://localhost:3000/issues/2",
+    description: None,
+    datetime: "2026-10-15T18:08:53Z",
+  }
+  inspect(
+    found.to_json().stringify(),
+    content=(
+      #|{"id":2,"title":"Bug #2","type":"issue","url":"http://localhost:3000/issues/2","datetime":"2026-10-15T18:08:53Z"}
+    ),
+  )
+}

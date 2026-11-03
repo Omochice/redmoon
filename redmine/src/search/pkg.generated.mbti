@@ -23,7 +23,7 @@ pub fn AttachmentScope::equal(Self, Self) -> Bool
 pub fn AttachmentScope::not_equal(Self, Self) -> Bool
 pub fn AttachmentScope::to_repr(Self) -> @debug.Repr
 
-#derive(Eq, @debug.Debug, @json.FromJson)
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Match {
   id : Int32
   title : String
@@ -37,7 +37,6 @@ pub fn Match::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDeco
 pub fn Match::not_equal(Self, Self) -> Bool
 pub fn Match::to_json(Self) -> @json.Json
 pub fn Match::to_repr(Self) -> @debug.Repr
-pub impl @json.ToJson for Match
 
 #derive(Eq, @debug.Debug)
 pub(all) struct Query {

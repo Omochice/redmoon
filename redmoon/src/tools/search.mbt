@@ -67,6 +67,20 @@ fn search_input() -> @schema.Schema[@search.Query] {
 }
 
 ///|
+/// The tool output has always written an absent description as `null`, while the SDK leaves an absent field out,
+/// so the match is spelled here rather than encoded by the SDK.
+fn match_json(found : @search.Match) -> Json {
+  {
+    "id": found.id,
+    "title": found.title,
+    "type": found.kind,
+    "url": found.url,
+    "description": found.description.map(Json::string).unwrap_or(Json::null()),
+    "datetime": found.datetime,
+  }
+}
+
+///|
 /// `redmine_search`: full-text search across the resources Redmine indexes.
 pub fn search_tool(port : &SearchPort) -> @mcp.Tool {
   @mcp.tool(
@@ -76,6 +90,8 @@ pub fn search_tool(port : &SearchPort) -> @mcp.Tool {
       "Requires `q`; narrow with `scope` and the per-resource flags.",
     ]),
     input=@schema.keyed([("search", search_input())]),
-    handler=async fn(query) { respond(() => port.search(query)) },
+    handler=async fn(query) {
+      respond(() => port.search(query).map(match_json))
+    },
   )
 }

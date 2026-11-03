@@ -70,7 +70,7 @@ pub extend Query with @debug.Debug::{to_repr}
 
 ///|
 /// One match of a search. `kind` holds Redmine's `type` field, which MoonBit cannot name.
-#derive(Eq, Debug, FromJson(fields(kind(rename="type"))))
+#derive(Eq, Debug, FromJson(fields(kind(rename="type"))), ToJson(fields(kind(rename="type"))))
 pub(all) struct Match {
   id : Int32
   title : String
@@ -91,21 +91,6 @@ pub extend Match with @json.FromJson::{from_json}
 
 ///|
 pub extend Match with ToJson::{to_json}
-
-///|
-/// `description` is written as `null` when absent, as the tool output has always carried it.
-pub impl ToJson for Match with fn to_json(self) {
-  {
-    "id": self.id,
-    "title": self.title,
-    "type": self.kind,
-    "url": self.url,
-    "description": self.description
-    .map(fn(text) { Json(text) })
-    .unwrap_or(Json::null()),
-    "datetime": self.datetime,
-  }
-}
 
 ///|
 /// Searches the resources Redmine indexes and returns the matches, up to `limit` when given.
