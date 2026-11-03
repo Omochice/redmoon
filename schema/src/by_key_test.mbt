@@ -75,13 +75,16 @@ test "by_key decodes an object without any of the keys with otherwise" {
 
 ///|
 test "by_key without otherwise names the keys when none is present" {
-  assert_eq(outcome(lookup, "{}"), "error: expected one of the keys id, name")
+  assert_eq(
+    outcome(lookup, "{}"),
+    "error: expected one of the keys `id` and `name`",
+  )
   let result = try lookup.parse_at(j("{}"), ["act"]) catch {
     e => e.message()
   } noraise {
     _ => "ok"
   }
-  assert_eq(result, "act: expected one of the keys id, name")
+  assert_eq(result, "act: expected one of the keys `id` and `name`")
 }
 
 ///|

@@ -253,15 +253,13 @@ pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
       "enum": Json::array(names.map(n => Json(n))),
     },
     decode: (input, path) => {
-      guard input is String(s) else {
-        fail(path, "must be one of \{names.join(", ")}")
-      }
+      guard input is String(s) else { fail(path, "expected a string") }
       for option in options {
         if option.0 == s {
           return option.1
         }
       }
-      fail(path, "must be one of \{names.join(", ")}")
+      fail(path, "must be one of \{listing(names)}")
     },
   }
 }

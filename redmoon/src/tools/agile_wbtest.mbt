@@ -138,7 +138,7 @@ async test "readonly mode makes update unknown" {
   })
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `update`, one of: get\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `update`, one of `get`\"]}",
   )
   assert_eq(fake.calls, [])
 }

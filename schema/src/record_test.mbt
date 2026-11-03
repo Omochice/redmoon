@@ -128,7 +128,7 @@ test "record errors name the member" {
   )
   assert_eq(
     outcome(version_record, "{\"project_id\":1," + ok + ",\"status\":\"x\"}"),
-    "error: status: must be one of open, locked, closed",
+    "error: status: must be one of `open`, `locked` and `closed`",
   )
   assert_eq(
     outcome(version_record, "{\"project_id\":1," + ok + ",\"notes\":[\"a\",2]}"),

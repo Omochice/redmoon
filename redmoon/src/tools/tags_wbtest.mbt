@@ -252,7 +252,7 @@ async test "readonly mode makes add and remove unknown" {
     )
     assert_eq(
       called.text,
-      "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `\{action}`, one of: show, list, list_issues, list_wiki_pages\"]}",
+      "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `\{action}`, one of `show`, `list`, `list_issues` and `list_wiki_pages`\"]}",
     )
   }
   assert_eq(fake.calls, [])

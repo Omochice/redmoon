@@ -56,11 +56,11 @@ test "union parses with the first matching alternative" {
 test "union lists alternatives when none matches" {
   assert_eq(
     outcome(day_bound, "true"),
-    "error: no alternative matched: expected an integer; must be one of today, any",
+    "error: no alternative matched: expected an integer; expected a string",
   )
   assert_eq(
     outcome(day_bound, "-1"),
-    "error: no alternative matched: must be at least 0; must be one of today, any",
+    "error: no alternative matched: must be at least 0; expected a string",
   )
 }
 

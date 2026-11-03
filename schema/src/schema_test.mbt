@@ -112,15 +112,18 @@ test "picklist" {
     "{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]}",
   )
   assert_eq(outcome(s, "\"locked\""), "ok: \"locked\"")
-  assert_eq(outcome(s, "\"x\""), "error: must be one of open, locked, closed")
-  assert_eq(outcome(s, "1"), "error: must be one of open, locked, closed")
+  assert_eq(
+    outcome(s, "\"x\""),
+    "error: must be one of `open`, `locked` and `closed`",
+  )
+  assert_eq(outcome(s, "1"), "error: expected a string")
 }
 
 ///|
 test "choice maps names to values" {
   let s = choice([("asc", 1), ("desc", -1)])
   assert_eq(outcome(s, "\"desc\""), "ok: -1")
-  assert_eq(outcome(s, "\"up\""), "error: must be one of asc, desc")
+  assert_eq(outcome(s, "\"up\""), "error: must be one of `asc` and `desc`")
   assert_eq(schema_json(s), "{\"type\":\"string\",\"enum\":[\"asc\",\"desc\"]}")
 }
 
@@ -137,7 +140,7 @@ test "array" {
   assert_eq(outcome(s, "{}"), "error: expected an array")
   assert_eq(
     outcome(array(picklist(["a"])), "[\"a\",\"b\"]"),
-    "error: 1: must be one of a",
+    "error: 1: must be one of `a`",
   )
 }
 

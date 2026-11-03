@@ -13,7 +13,7 @@ pub fn[T] keyed(entries : Array[(String, Schema[T])]) -> Schema[T] {
     }
     by_action[action] = schema
   }
-  let names = by_action.keys().collect().join(", ")
+  let names = listing(by_action.keys().collect())
   {
     json: () => {
       let properties = Json::object(
@@ -28,16 +28,16 @@ pub fn[T] keyed(entries : Array[(String, Schema[T])]) -> Schema[T] {
       }
     },
     decode: (input, path) => {
-      guard input is Object(fields) &&
-        fields.length() == 1 &&
+      guard input is Object(fields) else { fail(path, "expected an object") }
+      guard fields.length() == 1 &&
         fields.iter().next() is Some((action, value)) else {
         fail(
           path,
-          "expected an object with exactly one key naming the action, one of: \{names}",
+          "expected an object with exactly one key naming the action, one of \{names}",
         )
       }
       guard by_action.get(action) is Some(schema) else {
-        fail(path, "unknown action `\{action}`, one of: \{names}")
+        fail(path, "unknown action `\{action}`, one of \{names}")
       }
       (schema.decode)(value, [..path, action])
     },

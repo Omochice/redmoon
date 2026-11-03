@@ -535,7 +535,7 @@ async test "a camelCase argument is reported as an unknown field" {
 async test "list reports a date filter that matches no form" {
   assert_eq(
     rejected("list", { "created_on": "2026/07/01" }),
-    "{\"status\":0,\"errors\":[\"invalid arguments: list.created_on: no alternative matched: must be a date in the form YYYY-MM-DD; must be one of today, yesterday, thisWeek, lastWeek, lastTwoWeeks, thisMonth, lastMonth, thisYear, any, none; expected an object\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: list.created_on: no alternative matched: must be a date in the form YYYY-MM-DD; must be one of `today`, `yesterday`, `thisWeek`, `lastWeek`, `lastTwoWeeks`, `thisMonth`, `lastMonth`, `thisYear`, `any` and `none`; expected an object\"]}",
   )
 }
 
@@ -859,7 +859,7 @@ async test "update_note rejects empty notes, which would erase the comment" {
 async test "update_note rejects a call that changes neither notes nor private_notes" {
   assert_eq(
     rejected("update_note", { "journal_id": 1 }),
-    "{\"status\":0,\"errors\":[\"invalid arguments: update_note: expected one of the keys notes, notes_path, private_notes\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: update_note: expected one of the keys `notes`, `notes_path` and `private_notes`\"]}",
   )
 }
 

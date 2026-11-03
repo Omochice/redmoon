@@ -205,11 +205,11 @@ async test "validation reports the exact message for each rule" {
     ),
     (
       { "create": { "project_id": 1, "name": "n", "status": "done" } },
-      "invalid arguments: create.status: must be one of open, locked, closed",
+      "invalid arguments: create.status: must be one of `open`, `locked` and `closed`",
     ),
     (
       { "create": { "project_id": 1, "name": "n", "sharing": "all" } },
-      "invalid arguments: create.sharing: must be one of none, descendants, hierarchy, tree, system",
+      "invalid arguments: create.sharing: must be one of `none`, `descendants`, `hierarchy`, `tree` and `system`",
     ),
     (
       { "create": { "project_id": 1, "name": "n", "due_date": "2026-02-30" } },
@@ -248,7 +248,7 @@ async test "readonly mode makes the write actions unknown" {
   )
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of: list, show\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
   )
   assert_eq(fake.calls, [])
 }

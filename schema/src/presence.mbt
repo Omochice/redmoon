@@ -63,12 +63,3 @@ fn[T] Schema::presence(
     },
   }
 }
-
-///|
-fn listing(names : Array[String]) -> String {
-  let quoted = names.map(name => "`\{name}`")
-  match quoted.length() {
-    0 | 1 => quoted.join("")
-    n => quoted[:n - 1].join(", ") + " and " + quoted[n - 1]
-  }
-}

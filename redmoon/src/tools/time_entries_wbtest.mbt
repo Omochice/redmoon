@@ -313,7 +313,7 @@ async test "readonly refuses a write as an unknown action" {
   assert_eq(called.is_error, true)
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of: list, show\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
   )
 }
 
