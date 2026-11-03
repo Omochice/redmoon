@@ -13,11 +13,34 @@ priv enum TimeEntryAction {
 fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
   let id = @schema.required("id", record_id())
   let list_input = {
-    let project_id = @schema.optional("project_id", record_id())
-    let user_id = @schema.optional("user_id", record_id())
-    let spent_on = @schema.optional("spent_on", @schema.iso_date())
-    let from = @schema.optional("from", @schema.iso_date())
-    let to = @schema.optional("to", @schema.iso_date())
+    let project_id = @schema.optional(
+      "project_id",
+      record_id().describe(
+        "Project whose entries to list, its subprojects included.",
+      ),
+    )
+    let user_id = @schema.optional(
+      "user_id",
+      record_id().describe("User who logged the entries."),
+    )
+    let spent_on = @schema.optional(
+      "spent_on",
+      @schema.iso_date().describe(
+        "Single day the time was spent on, as an ISO date (`YYYY-MM-DD`).",
+      ),
+    )
+    let from = @schema.optional(
+      "from",
+      @schema.iso_date().describe(
+        "First day of the period, as an ISO date (`YYYY-MM-DD`).",
+      ),
+    )
+    let to = @schema.optional(
+      "to",
+      @schema.iso_date().describe(
+        "Last day of the period, as an ISO date (`YYYY-MM-DD`).",
+      ),
+    )
     @schema.record(
       [
         project_id.as_member(),
@@ -40,15 +63,43 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
   let show_input = @schema.record([id.as_member()], v => {
     TimeEntryAction::Show(v.get(id))
   })
-  let issue_id = @schema.optional("issue_id", record_id())
-  let project_id = @schema.optional("project_id", record_id())
-  let spent_on = @schema.optional("spent_on", @schema.iso_date())
-  let activity_id = @schema.optional("activity_id", record_id())
-  let comments = @schema.optional("comments", @schema.string(max_length=1024))
+  let hours_schema = @schema.number(min=0.0).describe(
+    "Hours spent, as a decimal number such as `1.5`.",
+  )
+  let issue_id = @schema.optional(
+    "issue_id",
+    record_id().describe(
+      "Issue the time was spent on; Redmine takes the project from it.",
+    ),
+  )
+  let project_id = @schema.optional(
+    "project_id",
+    record_id().describe(
+      "Project the time was spent on, for time not tied to an issue.",
+    ),
+  )
+  let spent_on = @schema.optional(
+    "spent_on",
+    @schema.iso_date().describe(
+      "Day the time was spent, as an ISO date (`YYYY-MM-DD`); today by default.",
+    ),
+  )
+  let activity_id = @schema.optional(
+    "activity_id",
+    record_id().describe(
+      "Activity to log the time under, by the id `redmine_enumerations` lists with `list_time_entry_activities`.",
+    ),
+  )
+  let comments = @schema.optional(
+    "comments",
+    @schema.string(max_length=1024).describe(
+      "Comment shown with the entry, at most 1024 characters.",
+    ),
+  )
   // Redmine derives the project from the issue, so a new entry is accepted with
   // either one or both but rejected with neither.
   let create_input = {
-    let hours = @schema.required("hours", @schema.number(min=0.0))
+    let hours = @schema.required("hours", hours_schema)
     @schema.record(
       [
         hours.as_member(),
@@ -71,7 +122,7 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
     ).require_any([issue_id.as_member(), project_id.as_member()])
   }
   let update_input = {
-    let hours = @schema.optional("hours", @schema.number(min=0.0))
+    let hours = @schema.optional("hours", hours_schema)
     @schema.record(
       [
         id.as_member(),

@@ -31,19 +31,41 @@ fn version_sharing() -> @schema.Schema[@versions.Sharing] {
 fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
   let project_id = @schema.required("project_id", project_ref())
   let id = @schema.required("id", record_id())
-  let name = @schema.optional("name", @schema.not_blank(max_length=60))
+  let name_schema = @schema.not_blank(max_length=60).describe(
+    "Name of the version, unique within its project.",
+  )
+  let name = @schema.optional("name", name_schema)
   let description = @schema.optional(
     "description",
-    @schema.string(max_length=255),
+    @schema.string(max_length=255).describe(
+      "Free text shown on the version's page.",
+    ),
   )
-  let status = @schema.optional("status", version_status())
-  let due_date = @schema.optional("due_date", @schema.iso_date())
-  let sharing = @schema.optional("sharing", version_sharing())
+  let status = @schema.optional(
+    "status",
+    version_status().describe(
+      "`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it.",
+    ),
+  )
+  let due_date = @schema.optional(
+    "due_date",
+    @schema.iso_date().describe(
+      "Day the version is due, as an ISO date (`YYYY-MM-DD`).",
+    ),
+  )
+  let sharing = @schema.optional(
+    "sharing",
+    version_sharing().describe(
+      "Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project.",
+    ),
+  )
   let wiki_page_title = @schema.optional(
     "wiki_page_title",
-    @schema.string(max_length=255),
+    @schema.string(max_length=255).describe(
+      "Title of the wiki page in the same project that the version links to.",
+    ),
   )
-  let create_name = @schema.required("name", @schema.not_blank(max_length=60))
+  let create_name = @schema.required("name", name_schema)
   let read = [
     (
       "list",

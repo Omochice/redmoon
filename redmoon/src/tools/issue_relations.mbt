@@ -23,8 +23,14 @@ fn relation_type_schema() -> @schema.Schema[@relations.Type] {
 
 ///|
 fn relations_input(mode : Mode) -> @schema.Schema[RelationAction] {
-  let issue_id = @schema.required("issue_id", record_id())
-  let id = @schema.required("id", record_id())
+  let issue_id = @schema.required(
+    "issue_id",
+    record_id().describe("Issue the relation starts from."),
+  )
+  let id = @schema.required(
+    "id",
+    record_id().describe("Id of the relation itself, not of an issue."),
+  )
   let read = [
     (
       "list",
@@ -37,9 +43,22 @@ fn relations_input(mode : Mode) -> @schema.Schema[RelationAction] {
       @schema.record([id.as_member()], v => RelationAction::Show(v.get(id))),
     ),
   ]
-  let issue_to_id = @schema.required("issue_to_id", record_id())
-  let relation_type = @schema.required("relation_type", relation_type_schema())
-  let delay = @schema.optional("delay", @schema.integer())
+  let issue_to_id = @schema.required(
+    "issue_to_id",
+    record_id().describe("Issue the relation points to."),
+  )
+  let relation_type = @schema.required(
+    "relation_type",
+    relation_type_schema().describe(
+      "How `issue_id` relates to `issue_to_id`: `blocks` means `issue_id` blocks `issue_to_id`, `precedes` means it must end before `issue_to_id` starts; `duplicated`, `blocked`, `follows`, and `copied_from` are the same links written from the other end.",
+    ),
+  )
+  let delay = @schema.optional(
+    "delay",
+    @schema.integer().describe(
+      "Days between the end of `issue_id` and the start of `issue_to_id`; only for `precedes` and `follows`.",
+    ),
+  )
   let write = [
     (
       "create",
