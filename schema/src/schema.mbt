@@ -33,7 +33,7 @@ pub fn[T] Schema::parse_at(
 /// Adds a `description` to the emitted schema.
 pub fn[T] Schema::describe(self : Schema[T], text : String) -> Schema[T] {
   {
-    json: () => with_keywords((self.json)(), [("description", Json(text))]),
+    json: () => compose((self.json)(), "description", Json(text)),
     decode: self.decode,
   }
 }

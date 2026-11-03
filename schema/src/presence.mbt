@@ -49,9 +49,7 @@ fn[T] Schema::presence(
     [..each, { "not": { "anyOf": Json::array(each) } }]
   }
   {
-    json: () => {
-      with_constraint((self.json)(), keyword, Json::array(alternatives))
-    },
+    json: () => compose((self.json)(), keyword, Json::array(alternatives)),
     decode: (input, path) => {
       guard input is Object(fields) else { return (self.decode)(input, path) }
       let given = names.filter(name => fields.contains(name))
@@ -73,27 +71,4 @@ fn listing(names : Array[String]) -> String {
     0 | 1 => quoted.join("")
     n => quoted[:n - 1].join(", ") + " and " + quoted[n - 1]
   }
-}
-
-///|
-/// Constraints already on the schema are moved with the new one into `allOf`
-/// rather than overwritten, so a schema given several keeps them all.
-fn with_constraint(base : Json, keyword : String, alternatives : Json) -> Json {
-  guard base is Object(fields) else { base }
-  let moved = ["anyOf", "oneOf"].filter(key => fields.contains(key))
-  guard fields.contains("allOf") || !moved.is_empty() else {
-    with_keywords(base, [(keyword, alternatives)])
-  }
-  let fields = fields.copy()
-  let all_of = match fields.get("allOf") {
-    Some(Array(all_of)) => all_of.copy()
-    _ => []
-  }
-  for key in moved {
-    all_of.push(Json::object(Map([(key, fields[key])])))
-    fields.remove(key)
-  }
-  all_of.push(Json::object(Map([(keyword, alternatives)])))
-  fields["allOf"] = Json::array(all_of)
-  Json::object(fields)
 }
