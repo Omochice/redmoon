@@ -61,11 +61,11 @@ It is free but closed, downloaded through an e-mail form, and its REST API is me
 {"update": {"id": 42, "tag_list": ["bug", "ui"]}}
 ```
 
-**Pros:**
+#### Pros
 
 - One call changes an issue and its tags.
 
-**Cons:**
+#### Cons
 
 - ADR-025 rejected the same shape for agile data: `redmine_issues` would describe a field most instances do not have, or change its schema with `--plugin`.
 - A dropped `tag_list` would turn an otherwise successful issue update into a failure, or be hidden inside it.
@@ -76,11 +76,11 @@ It is free but closed, downloaded through an e-mail form, and its REST API is me
 {"set": {"issue_id": 42, "tags": ["bug", "ui"]}}
 ```
 
-**Pros:**
+#### Pros
 
 - One request per write, and nothing is lost between a read and the write.
 
-**Cons:**
+#### Cons
 
 - To add one tag the model has to read the issue, copy every tag, and send them back, and a tag it forgets is removed.
 
@@ -90,11 +90,11 @@ It is free but closed, downloaded through an e-mail form, and its REST API is me
 {"add": {"issue_id": 42, "tags": ["needs-review"]}}
 ```
 
-**Pros:**
+#### Pros
 
 - The model names only the tags it changes.
 
-**Cons:**
+#### Cons
 
 - Each write reads the tags first, so a change made between the read and the write is lost.
 
@@ -120,7 +120,9 @@ We will add `additional_tags` as the third package of `omochice/redmine-plugins`
 `--readonly` drops `add` and `remove` as it drops the write actions of the other tools ([ADR-028](./adr-028-tool-surface.md)).
 The description says that the tool needs the Additional Tags plugin with issue tags switched on, names the three permissions, and says that `list` needs an administrator.
 
-**Rationale**: the opt-in follows ADR-017 and ADR-025, because redmoon cannot tell which plugins an instance runs.
+#### Rationale
+
+The opt-in follows ADR-017 and ADR-025, because redmoon cannot tell which plugins an instance runs.
 The value names the plugin rather than tags in general, so RedmineUP Tags can be given a value of its own if it is ever supported; it is left out now because there is nothing public to build its types on.
 The actions follow the names of [ADR-028](./adr-028-tool-surface.md): `show` reads one thing as in every core tool, and a second listing in one tool is `list_<thing>` as `list_queries` is in `redmine_issues`.
 `redmine_agile` names its read `get`, but one plugin tool was not reason enough to depart from the rest.
@@ -132,15 +134,19 @@ The actions follow the names of [ADR-028](./adr-028-tool-surface.md): `show` rea
 
 A `403` with an empty body from `list` is returned with status `403` and the single error `the tag list needs a Redmine administrator, and the API key may belong to a user who is not one`.
 
-**Rationale**: Redmine sends this `403` with an empty body, so the usual failure would be `{"status": 403, "errors": []}`, which a model cannot tell from a project or permission problem.
+#### Rationale
+
+Redmine sends this `403` with an empty body, so the usual failure would be `{"status": 403, "errors": []}`, which a model cannot tell from a project or permission problem.
 The plugin's controller rejects every non-administrator before it looks at any permission, so a `403` here has only one cause, and naming it lets the model stop retrying and fall back to `show`.
 Replacing the message is limited to `list`, because a `403` elsewhere can come from several permissions and Redmine's own errors are kept there.
 
 ### 3. `add` and `remove` read, merge, and replace
 
-**Change from**: no client for the plugin.
+#### Change from
 
-**Change to**:
+No client for the plugin.
+
+#### Change to
 
 ```moonbit
 pub async fn tags(Redmine, issue_id : Int32) -> Array[String] raise RedmineError
@@ -154,7 +160,9 @@ pub async fn remove(Redmine, issue_id : Int32, Array[String]) -> Array[String] r
 `remove` reads the tags and sends those whose names match none of the requested names in any case.
 When the merge leaves the tags unchanged, nothing is written, so removing a tag the issue does not carry succeeds without a request.
 
-**Rationale**: the plugin offers only replacement, so the merge has to happen somewhere, and placing it in the package keeps every consumer of the SDK from repeating it.
+#### Rationale
+
+The plugin offers only replacement, so the merge has to happen somewhere, and placing it in the package keeps every consumer of the SDK from repeating it.
 Matching in any case mirrors the plugin, which treats `Alpha` and `alpha` as one tag, so `add` does not send a duplicate that the plugin would fold away and `remove` does not miss a tag that differs only in case.
 Skipping an unchanged write keeps a no-op from adding an empty journal to the issue.
 
@@ -164,7 +172,9 @@ After a write, `add` and `remove` read the tags again.
 If an added name is missing or a removed name is still present, the call fails with status `0` and a message saying that Redmine accepted the update without saving the tags, which happens without `edit_issue_tags`, without `create_issue_tags` for a new name, or while the plugin's issue tags are off.
 `show`, and the reads inside `add` and `remove`, fail the same way when the answer carries no `tags` key.
 
-**Rationale**: the plugin answers `204` for a dropped `tag_list`, so the answer to the write cannot tell a saved list from a dropped one, and only a second read can.
+#### Rationale
+
+The plugin answers `204` for a dropped `tag_list`, so the answer to the write cannot tell a saved list from a dropped one, and only a second read can.
 Reporting it follows ADR-025's rule that a failure with a remedy is not swallowed.
 Status `0` is used because Redmine's own status was a success, and ADR-028 keeps `0` for failures that carry no Redmine status.
 The SDK raises it as `Decode`, the error [ADR-023](./adr-023-design-evolution-from-adr-007.md) gives a 2xx answer that cannot be used, but its message starts with what Redmine did rather than with ADR-023's sentence that the answer could not be read, because here the answer was read and it is its content that is wrong.
@@ -174,7 +184,9 @@ The SDK raises it as `Decode`, the error [ADR-023](./adr-023-design-evolution-fr
 Names are sent as a JSON array, never as a comma-separated string.
 A name that is empty after trimming, or that contains a comma, is rejected as an invalid argument with status `0` before any request, and so is an empty array of names.
 
-**Rationale**: the plugin rejects a comma string from a user without `create_issue_tags` even when every tag exists, and accepts the same names as an array.
+#### Rationale
+
+The plugin rejects a comma string from a user without `create_issue_tags` even when every tag exists, and accepts the same names as an array.
 A comma inside a name would be split into several tags, so the tag the model asked for would never exist, and rejecting it up front gives the model the reason instead of a read-back failure.
 
 ### 6. Issues are found by tag name
@@ -182,16 +194,22 @@ A comma inside a name would be split into several tags, so the tag the model ask
 `list_issues` sends `set_filter=1&f[]=tags&op[tags]==` with one `v[tags][]` per name.
 The status goes in as a filter of its own, `f[]=status_id` with `op[status_id]` set to `o`, `c`, or `*`, or to `=` with `v[status_id][]` for one status, and open issues are asked for when no status is given; the project goes in as `project_id`.
 
-**Rationale** for the status: once `f[]` is given, Redmine ignores the `status_id` shorthand that `redmine_issues` sends and lists issues of every status, which was observed with an open and a closed issue carrying the same tag.
+#### Rationale
+
+For the status: once `f[]` is given, Redmine ignores the `status_id` shorthand that `redmine_issues` sends and lists issues of every status, which was observed with an open and a closed issue carrying the same tag.
 Defaulting to open issues keeps `list_issues` answering what `list` of `redmine_issues` answers for the same status argument.
 
-**Rationale**: names are what a model reads in `show` and writes in `add`, while a tag's id is not stable, because the plugin deletes a tag no issue carries and gives the same name a new id when it is used again.
+#### Rationale
+
+Names are what a model reads in `show` and writes in `add`, while a tag's id is not stable, because the plugin deletes a tag no issue carries and gives the same name a new id when it is used again.
 `tag_id` would also need the id from `list`, which members cannot call.
 The explicit filter form was chosen over the `tags=` shorthand because it states the operator, and several names match any of them as a model asking for "issues tagged A or B" expects.
 
 The request goes through `@redmine.send`, paged by a copy of the paging helper of `omochice/redmine` kept in `redmine-plugins/src/internal/paging`, and each issue is decoded into `@issues.Issue`.
 
-**Rationale**: [ADR-017](./adr-017-redmine-plugin-sdk-module.md) has plugin packages reach Redmine only through `@redmine.send` and repeat the helpers they need, because widening `omochice/redmine`'s public surface to share them was rejected.
+#### Rationale
+
+[ADR-017](./adr-017-redmine-plugin-sdk-module.md) has plugin packages reach Redmine only through `@redmine.send` and repeat the helpers they need, because widening `omochice/redmine`'s public surface to share them was rejected.
 Opening the `Selection` trait of `@issues.list` to other modules was rejected for the same reason: it would let code outside `omochice/redmine` put parameters into a core request, which the trait is sealed to prevent.
 `@issues.Issue` is a public type and decoding into it sends nothing, so `list_issues` answers in the same shape as `list` of `redmine_issues` without touching how the plugin reaches Redmine.
 
@@ -201,7 +219,9 @@ Opening the `Selection` trait of `@issues.list` to other modules was rejected fo
 `task redmine:seed` also saves the API key of `redmoon-member` beside the administrator's, and `task test:integration` passes it as `REDMOON_TEST_MEMBER_API_KEY`.
 A second member, `redmoon-tagger`, holds a role that may also create tags, and its key is passed as `REDMOON_TEST_TAGGER_API_KEY`.
 
-**Rationale**: unlike RedmineUP Agile, the plugin can be installed from its repository, so its shapes are measured and covered by live tests rather than taken from a third party.
+#### Rationale
+
+Unlike RedmineUP Agile, the plugin can be installed from its repository, so its shapes are measured and covered by live tests rather than taken from a third party.
 The main branch of additionals requires Redmine 7.0.3, which has no image yet, while 4.6.0 accepts any 7.0.
 The behaviours that most need a live test, the dropped write and the `403` of `list`, happen only to a user who is not an administrator, so the tests need a member key, and a new tag saved for a member needs a second member who may create tags.
 
