@@ -31,6 +31,8 @@ static void (*g_hash_table_unref)(GHashTable *);
 static void (*g_error_free)(GError *);
 static void (*g_list_free)(GList *);
 static void (*g_object_unref)(void *);
+static uint32_t (*g_dbus_error_quark)(void);
+static uint32_t (*g_io_error_quark)(void);
 
 static const SecretSchema schema = {
     "org.omochice.keyring",
@@ -45,7 +47,8 @@ static int load_store(void) {
   void *secret = dlopen("libsecret-1.so.0", RTLD_LAZY);
   void *glib = dlopen("libglib-2.0.so.0", RTLD_LAZY);
   void *gobject = dlopen("libgobject-2.0.so.0", RTLD_LAZY);
-  if (!secret || !glib || !gobject) return 0;
+  void *gio = dlopen("libgio-2.0.so.0", RTLD_LAZY);
+  if (!secret || !glib || !gobject || !gio) return 0;
 #define LOAD(h, name) \
   do { *(void **)&name = dlsym(h, #name); if (!name) return 0; } while (0)
   LOAD(secret, secret_password_store_sync);
@@ -59,18 +62,42 @@ static int load_store(void) {
   LOAD(glib, g_error_free);
   LOAD(glib, g_list_free);
   LOAD(gobject, g_object_unref);
+  LOAD(gio, g_dbus_error_quark);
+  LOAD(gio, g_io_error_quark);
 #undef LOAD
   state = 1;
   return 1;
 }
 
+/* Positions in GDBusError and GIOErrorEnum of gio/gioenums.h, which have no
+   explicit initializers and are ABI, so they are written here rather than read
+   from a header this file deliberately does not include. */
+#define G_DBUS_ERROR_SERVICE_UNKNOWN 2
+#define G_DBUS_ERROR_NAME_HAS_NO_OWNER 3
+#define G_DBUS_ERROR_NO_SERVER 11
+#define G_DBUS_ERROR_SPAWN_EXEC_FAILED 23
+#define G_DBUS_ERROR_SPAWN_NO_MEMORY 34
+#define G_IO_ERROR_DBUS_ERROR 36
+
 /* Failing to reach the D-Bus service is the user's to fix by installing or
-   starting a provider, unlike an error about the item itself. */
+   starting a provider, unlike an error about the item itself.
+   The domain and code are matched rather than the message, whose text follows
+   GLib's version and the locale.
+   A GIO error other than a relayed remote error means the bus itself could
+   not be reached, before any store was spoken to. */
+static int no_store_error(const GError *err) {
+  if (err->domain == g_dbus_error_quark()) {
+    return err->code == G_DBUS_ERROR_SERVICE_UNKNOWN || err->code == G_DBUS_ERROR_NAME_HAS_NO_OWNER ||
+           err->code == G_DBUS_ERROR_NO_SERVER ||
+           (err->code >= G_DBUS_ERROR_SPAWN_EXEC_FAILED && err->code <= G_DBUS_ERROR_SPAWN_NO_MEMORY);
+  }
+  return err->domain == g_io_error_quark() && err->code != G_IO_ERROR_DBUS_ERROR;
+}
+
+/* A code of 0 is a real GError code but equals KEYRING_OK, so it cannot be
+   passed through as a Refused payload. */
 static int32_t status_of_error(GError *err) {
-  int32_t rc = err->code ? err->code : KEYRING_INTERNAL;
-  if (err->message && (strstr(err->message, "org.freedesktop.secrets") ||
-                       strstr(err->message, "D-Bus") || strstr(err->message, "dbus")))
-    rc = KEYRING_NO_STORE;
+  int32_t rc = no_store_error(err) ? KEYRING_NO_STORE : (err->code ? err->code : KEYRING_INTERNAL);
   g_error_free(err);
   return rc;
 }
