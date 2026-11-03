@@ -98,3 +98,12 @@ fn text_of(result : @mcp.ToolResult) -> String {
   }
   text
 }
+
+///|
+/// Shared by the fakes so a project reads the same in every call log.
+fn project_label(project : @redmine.ProjectRef) -> String {
+  match project {
+    Id(id) => id.to_string()
+    Identifier(name) => name
+  }
+}

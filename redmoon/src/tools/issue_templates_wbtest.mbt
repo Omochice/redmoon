@@ -38,11 +38,7 @@ impl IssueTemplatePort for FakeIssueTemplates with fn list_issue_templates(
   project,
   tracker_id,
 ) {
-  let label = match project {
-    Id(id) => id.to_string()
-    Identifier(name) => name
-  }
-  self.calls.push("list \{label} tracker \{tracker_id}")
+  self.calls.push("list \{project_label(project)} tracker \{tracker_id}")
   if self.failure is Some(error) {
     raise error
   }

@@ -21,14 +21,6 @@ fn FakeWikiPages::record(
 }
 
 ///|
-fn wiki_project_label(project : @redmine.ProjectRef) -> String {
-  match project {
-    Id(id) => id.to_string()
-    Identifier(name) => name
-  }
-}
-
-///|
 fn[T : Show] wiki_option_label(value : T?) -> String {
   match value {
     Some(v) => "\{v}"
@@ -38,7 +30,7 @@ fn[T : Show] wiki_option_label(value : T?) -> String {
 
 ///|
 impl WikiPagePort for FakeWikiPages with fn list_wiki_pages(self, project) {
-  self.record("list \{wiki_project_label(project)}")
+  self.record("list \{project_label(project)}")
   [
     {
       title: "Home",
@@ -58,7 +50,7 @@ impl WikiPagePort for FakeWikiPages with fn show_wiki_page(
   version,
 ) {
   self.record(
-    "show \{wiki_project_label(project)} \{title} \{wiki_option_label(version)}",
+    "show \{project_label(project)} \{title} \{wiki_option_label(version)}",
   )
   {
     title,
@@ -82,7 +74,7 @@ impl WikiPagePort for FakeWikiPages with fn create_wiki_page(
   parent_title,
 ) {
   self.record(
-    "create \{wiki_project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(parent_title)}",
+    "create \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(parent_title)}",
   )
 }
 
@@ -97,7 +89,7 @@ impl WikiPagePort for FakeWikiPages with fn update_wiki_page(
   parent_title,
 ) {
   self.record(
-    "update \{wiki_project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(version)} \{wiki_option_label(parent_title)}",
+    "update \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(version)} \{wiki_option_label(parent_title)}",
   )
 }
 
@@ -107,7 +99,7 @@ impl WikiPagePort for FakeWikiPages with fn delete_wiki_page(
   project,
   title,
 ) {
-  self.record("delete \{wiki_project_label(project)} \{title}")
+  self.record("delete \{project_label(project)} \{title}")
 }
 
 ///|

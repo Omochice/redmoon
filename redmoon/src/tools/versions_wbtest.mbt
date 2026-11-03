@@ -39,16 +39,8 @@ fn fake_version(name : String) -> @versions.Version {
 }
 
 ///|
-fn version_project_label(project : @redmine.ProjectRef) -> String {
-  match project {
-    Id(id) => id.to_string()
-    Identifier(name) => name
-  }
-}
-
-///|
 impl VersionPort for FakeVersions with fn list_versions(self, project) {
-  self.record("list \{version_project_label(project)}")
+  self.record("list \{project_label(project)}")
   [fake_version("v1")]
 }
 
@@ -64,8 +56,8 @@ impl VersionPort for FakeVersions with fn create_version(
   project,
   attributes,
 ) {
-  self.record("create \{version_project_label(project)}")
-  self.created.push((version_project_label(project), attributes))
+  self.record("create \{project_label(project)}")
+  self.created.push((project_label(project), attributes))
   fake_version(attributes.name)
 }
 
