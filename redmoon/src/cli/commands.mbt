@@ -7,7 +7,7 @@
 /// or a failing store.
 pub async fn run_login(
   endpoint : String,
-  store : &CredentialStore,
+  store : &KeyringPort,
   read_secret : async () -> String,
 ) -> String raise CliError {
   let account = canonicalize_endpoint(endpoint)
@@ -25,7 +25,7 @@ pub async fn run_login(
 /// Removes the stored API key for `endpoint` and returns its account.
 pub fn run_logout(
   endpoint : String,
-  store : &CredentialStore,
+  store : &KeyringPort,
 ) -> String raise CliError {
   let account = canonicalize_endpoint(endpoint)
   store.delete(account)
@@ -34,7 +34,7 @@ pub fn run_logout(
 
 ///|
 /// Returns the endpoints that have a stored API key, sorted for stable output.
-pub fn run_list(store : &CredentialStore) -> Array[String] raise CliError {
+pub fn run_list(store : &KeyringPort) -> Array[String] raise CliError {
   let endpoints = store.list()
   endpoints.sort()
   endpoints
@@ -54,7 +54,7 @@ pub(all) struct Credential {
 /// `Message` telling the user to run `redmoon login` when no key is stored.
 pub fn resolve_api_key(
   endpoint : String,
-  store : &CredentialStore,
+  store : &KeyringPort,
 ) -> Credential raise CliError {
   let account = canonicalize_endpoint(endpoint)
   match store.get(account) {
@@ -77,7 +77,7 @@ pub async fn run_serve(
   endpoint : String,
   read_only : Bool,
   plugins : Array[Plugin],
-  store : &CredentialStore,
+  store : &KeyringPort,
 ) -> Unit raise CliError {
   let credential = resolve_api_key(endpoint, store)
   let redmine = @redmine.new(

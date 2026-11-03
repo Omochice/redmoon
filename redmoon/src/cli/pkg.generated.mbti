@@ -19,15 +19,15 @@ pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise CliError
 
 pub fn registered_tools(@redmine.Redmine, @tools.Mode, Array[Plugin]) -> Array[@mcp.Tool]
 
-pub fn resolve_api_key(String, &CredentialStore) -> Credential raise CliError
+pub fn resolve_api_key(String, &KeyringPort) -> Credential raise CliError
 
-pub fn run_list(&CredentialStore) -> Array[String] raise CliError
+pub fn run_list(&KeyringPort) -> Array[String] raise CliError
 
-pub async fn run_login(String, &CredentialStore, async () -> String) -> String raise CliError
+pub async fn run_login(String, &KeyringPort, async () -> String) -> String raise CliError
 
-pub fn run_logout(String, &CredentialStore) -> String raise CliError
+pub fn run_logout(String, &KeyringPort) -> String raise CliError
 
-pub async fn run_serve(String, Bool, Array[Plugin], &CredentialStore) -> Unit raise CliError
+pub async fn run_serve(String, Bool, Array[Plugin], &KeyringPort) -> Unit raise CliError
 
 // Errors
 pub suberror CliError {
@@ -60,7 +60,7 @@ pub fn OsKeyring::delete(Self, String) -> Unit raise CliError
 pub fn OsKeyring::get(Self, String) -> String? raise CliError
 pub fn OsKeyring::list(Self) -> Array[String] raise CliError
 pub fn OsKeyring::set(Self, String, String) -> Unit raise CliError
-pub impl CredentialStore for OsKeyring
+pub impl KeyringPort for OsKeyring
 
 #derive(Eq, @debug.Debug)
 pub(all) enum Plugin {
@@ -75,7 +75,7 @@ pub fn Plugin::to_repr(Self) -> @debug.Repr
 // Type aliases
 
 // Traits
-pub(open) trait CredentialStore {
+pub(open) trait KeyringPort {
   fn get(Self, String) -> String? raise CliError
   fn set(Self, String, String) -> Unit raise CliError
   fn delete(Self, String) -> Unit raise CliError

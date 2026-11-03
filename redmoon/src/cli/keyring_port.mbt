@@ -5,7 +5,7 @@ pub const SERVICE : String = "redmoon"
 
 ///|
 /// Where API keys are kept, addressed by canonical endpoint.
-pub(open) trait CredentialStore {
+pub(open) trait KeyringPort {
   fn get(Self, account : String) -> String? raise CliError
   fn set(Self, account : String, secret : String) -> Unit raise CliError
   fn delete(Self, account : String) -> Unit raise CliError
@@ -43,32 +43,32 @@ fn describe(error : @keyring.KeyringError, account : String?) -> CliError {
 }
 
 ///|
-pub impl CredentialStore for OsKeyring with fn get(_, account) {
+pub impl KeyringPort for OsKeyring with fn get(_, account) {
   @keyring.get(SERVICE, account) catch {
     error => raise describe(error, Some(account))
   }
 }
 
 ///|
-pub impl CredentialStore for OsKeyring with fn set(_, account, secret) {
+pub impl KeyringPort for OsKeyring with fn set(_, account, secret) {
   @keyring.set(SERVICE, account, secret) catch {
     error => raise describe(error, Some(account))
   }
 }
 
 ///|
-pub impl CredentialStore for OsKeyring with fn delete(_, account) {
+pub impl KeyringPort for OsKeyring with fn delete(_, account) {
   @keyring.delete(SERVICE, account) catch {
     error => raise describe(error, Some(account))
   }
 }
 
 ///|
-pub impl CredentialStore for OsKeyring with fn list(_) {
+pub impl KeyringPort for OsKeyring with fn list(_) {
   @keyring.list(SERVICE) catch {
     error => raise describe(error, None)
   }
 }
 
 ///|
-pub extend OsKeyring with CredentialStore::{get, set, delete, list}
+pub extend OsKeyring with KeyringPort::{get, set, delete, list}

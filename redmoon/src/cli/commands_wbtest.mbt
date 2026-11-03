@@ -4,22 +4,22 @@ struct FakeStore {
 }
 
 ///|
-impl CredentialStore for FakeStore with fn get(self, account) {
+impl KeyringPort for FakeStore with fn get(self, account) {
   self.entries.get(account)
 }
 
 ///|
-impl CredentialStore for FakeStore with fn set(self, account, secret) {
+impl KeyringPort for FakeStore with fn set(self, account, secret) {
   self.entries[account] = secret
 }
 
 ///|
-impl CredentialStore for FakeStore with fn delete(self, account) {
+impl KeyringPort for FakeStore with fn delete(self, account) {
   self.entries.remove(account)
 }
 
 ///|
-impl CredentialStore for FakeStore with fn list(self) {
+impl KeyringPort for FakeStore with fn list(self) {
   self.entries.keys().collect()
 }
 
