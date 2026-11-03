@@ -15,9 +15,7 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
   let list_input = {
     let project_id = @schema.optional(
       "project_id",
-      record_id().describe(
-        "Project whose entries to list, its subprojects included.",
-      ),
+      record_id().describe("Project whose entries to list."),
     )
     let user_id = @schema.optional(
       "user_id",
