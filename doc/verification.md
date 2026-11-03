@@ -36,8 +36,8 @@ It also saves the public issue query `Demo open issues` on `demo`, filtering ope
 The default data provides only global queries, and the integration tests need a project query to show that it answers only under its own `project_id`.
 It switches on the issue tags of Additional Tags and lets the Developer role attach existing tags but not create new ones, through `docker/redmine/seed-additional-tags.rb`, because the plugin keeps tags off until its setting is changed and drops a write the user may not make.
 It also adds `redmoon-tagger` to `demo` with a role that may create tags as well.
-That script writes the API keys of `redmoon-member` and `redmoon-tagger` to `_build/redmine-member-api-key` and `_build/redmine-tagger-api-key`, because a dropped write, the administrator-only tag list, and the permission to create tags show only for a user who is not the admin.
-The key goes to a file instead of the terminal so that no log carries it, and `_build/` is already gitignored.
+The script prints the API keys of `redmoon-member` and `redmoon-tagger`, and the task writes them to `_build/redmine-member-api-key` and `_build/redmine-tagger-api-key`, because a dropped write, the administrator-only tag list, and the permission to create tags show only for a user who is not the admin.
+The keys go to files instead of the terminal so that no log carries them, and `_build/` is already gitignored.
 `task redmine:up` and `task redmine:seed` are safe to re-run against an instance that is already prepared.
 
 The task runs `rails runner` through `docker compose exec`, which runs outside the entrypoint that exports `SECRET_KEY_BASE`, so the task sets it explicitly.
