@@ -22,11 +22,12 @@
 ///   )
 /// }
 /// ```
+#derive(Debug, ToJson)
 pub(all) suberror RedmineError {
   Response(status~ : Int32, errors~ : Array[String])
   Decode(message~ : String)
   Transport(message~ : String)
-} derive(Debug, ToJson)
+}
 
 ///|
 pub extend RedmineError with @debug.Debug::{to_repr}

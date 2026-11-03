@@ -1,11 +1,12 @@
 ///|
 /// A Redmine enumeration value: an issue priority, time entry activity, or document category.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Enumeration {
   id : Int32
   name : String
   is_default : Bool
   active : Bool
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Enumeration with @json.FromJson::{from_json}

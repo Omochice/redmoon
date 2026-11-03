@@ -12,10 +12,11 @@ render() {
   cat <<MBT
 ///|
 /// The commit a binary was built from.
+#derive(ToJson)
 pub(all) struct BuildInfo {
   commit : String
   dirty : Bool
-} derive(ToJson)
+}
 
 ///|
 pub extend BuildInfo with ToJson::{to_json}

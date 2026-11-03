@@ -1,9 +1,10 @@
 ///|
 /// A reference to another Redmine record by id and display name.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct IdName {
   id : Int32
   name : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend IdName with @json.FromJson::{from_json}

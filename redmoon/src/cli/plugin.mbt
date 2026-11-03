@@ -1,11 +1,12 @@
 ///|
 /// A Redmine plugin whose tools `serve --plugin` adds.
 /// redmoon cannot tell which plugins an instance runs, so the user names them.
+#derive(Eq, @debug.Debug)
 pub(all) enum Plugin {
   IssueTemplates
   Agile
   AdditionalTags
-} derive(Eq, @debug.Debug)
+}
 
 ///|
 pub extend Plugin with Eq::{equal, not_equal}

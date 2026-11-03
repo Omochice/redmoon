@@ -1,9 +1,10 @@
 ///|
 /// A tag in the plugin's catalogue and the number of records that carry it.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Tag {
   name : String
   count : Int32
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Tag with @json.FromJson::{from_json}
@@ -23,9 +24,10 @@ const ADMIN_NEEDED : String = "the tag list needs a Redmine administrator, and t
 
 ///|
 /// A record answers its tags as `{"id", "name"}` pairs, and ids are left out because the plugin gives a reused name a new one.
+#derive(FromJson)
 priv struct TagName {
   name : String
-} derive(FromJson)
+}
 
 ///|
 /// Trims `names` as the plugin does, so that the merge and the read-back compare what the plugin stores.

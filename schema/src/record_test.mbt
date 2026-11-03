@@ -1,4 +1,5 @@
 ///|
+#derive(Debug)
 struct VersionRecord {
   project_id : Int32
   name : String
@@ -6,7 +7,7 @@ struct VersionRecord {
   status : String?
   sharing : String
   notes : Array[String]
-} derive(Debug)
+}
 
 ///|
 let r_project_id : @schema.Field[Int32] = @schema.required(

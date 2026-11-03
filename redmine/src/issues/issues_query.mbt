@@ -1,9 +1,10 @@
 ///|
 /// An association a listed issue can carry.
+#derive(Eq, Debug)
 pub(all) enum ListInclude {
   Attachments
   Relations
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ListInclude with Eq::{equal, not_equal}
@@ -13,6 +14,7 @@ pub extend ListInclude with @debug.Debug::{to_repr}
 
 ///|
 /// An association a shown issue can carry.
+#derive(Eq, Debug)
 pub(all) enum Include {
   Children
   Attachments
@@ -21,7 +23,7 @@ pub(all) enum Include {
   Journals
   Watchers
   AllowedStatuses
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Include with Eq::{equal, not_equal}
@@ -40,12 +42,13 @@ pub extend Include with @debug.Debug::{to_repr}
 ///   assert_eq(one_status.status_id, Some(@issues.StatusFilter::Id(3)))
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) enum StatusFilter {
   Id(Int32)
   Open
   Closed
   All
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend StatusFilter with Eq::{equal, not_equal}
@@ -55,11 +58,12 @@ pub extend StatusFilter with @debug.Debug::{to_repr}
 
 ///|
 /// Which issues to list by assignee.
+#derive(Eq, Debug)
 pub(all) enum AssigneeFilter {
   User(Int32)
   /// The user the API key belongs to.
   Me
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AssigneeFilter with Eq::{equal, not_equal}

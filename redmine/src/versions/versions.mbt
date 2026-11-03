@@ -1,10 +1,11 @@
 ///|
 /// Whether issues can still be assigned to a version.
+#derive(Eq, Debug)
 pub(all) enum Status {
   Open
   Locked
   Closed
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Status with Eq::{equal, not_equal}
@@ -39,13 +40,14 @@ pub impl @json.FromJson for Status with fn from_json(json, path) {
 
 ///|
 /// Which projects can use a version.
+#derive(Eq, Debug)
 pub(all) enum Sharing {
   None
   Descendants
   Hierarchy
   Tree
   System
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Sharing with Eq::{equal, not_equal}
@@ -84,6 +86,7 @@ pub impl @json.FromJson for Sharing with fn from_json(json, path) {
 
 ///|
 /// A project version (milestone).
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Version {
   id : Int32
   project : @redmine.IdName
@@ -95,7 +98,7 @@ pub(all) struct Version {
   wiki_page_title : String?
   created_on : String
   updated_on : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Version with @json.FromJson::{from_json}
@@ -125,6 +128,7 @@ pub extend Version with @debug.Debug::{to_repr}
 ///   assert_eq(create.status, Some(@versions.Status::Open))
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) struct Create {
   name : String
   description : String?
@@ -132,7 +136,7 @@ pub(all) struct Create {
   due_date : String?
   sharing : Sharing?
   wiki_page_title : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Create with Eq::{equal, not_equal}
@@ -142,6 +146,7 @@ pub extend Create with @debug.Debug::{to_repr}
 
 ///|
 /// Attributes of a version to change; fields left `None` are not sent.
+#derive(Eq, Debug)
 pub(all) struct Update {
   name : String?
   description : String?
@@ -149,7 +154,7 @@ pub(all) struct Update {
   due_date : String?
   sharing : Sharing?
   wiki_page_title : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Update with Eq::{equal, not_equal}

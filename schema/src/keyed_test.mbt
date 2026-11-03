@@ -1,10 +1,11 @@
 ///|
+#derive(Debug)
 enum Input {
   List(Int32?)
   Show(Int32)
   Note(Int32, String)
   NoteDelete(Int32, Int32)
-} derive(Debug)
+}
 
 ///|
 let limit : @schema.Field[Int32?] = @schema.optional("limit", integer(min=1))

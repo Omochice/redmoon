@@ -10,10 +10,11 @@
 ///   inspect(by_identifier.segment(), content="demo")
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) enum ProjectRef {
   Id(Int32)
   Identifier(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectRef with Eq::{equal, not_equal}

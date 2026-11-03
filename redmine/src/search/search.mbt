@@ -1,10 +1,11 @@
 ///|
 /// Which attachments a search includes, as Redmine's three-way `attachments` parameter.
+#derive(Eq, Debug)
 pub(all) enum AttachmentScope {
   Excluded
   Included
   Only
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AttachmentScope with Eq::{equal, not_equal}
@@ -44,6 +45,7 @@ fn AttachmentScope::to_wire(self : AttachmentScope) -> String {
 ///   assert_eq(query.attachments, Some(@search.AttachmentScope::Included))
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) struct Query {
   q : String
   scope : String?
@@ -58,7 +60,7 @@ pub(all) struct Query {
   messages : Bool?
   projects : Bool?
   attachments : AttachmentScope?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Query with Eq::{equal, not_equal}
@@ -68,6 +70,7 @@ pub extend Query with @debug.Debug::{to_repr}
 
 ///|
 /// One match of a search. `kind` holds Redmine's `type` field, which MoonBit cannot name.
+#derive(Eq, Debug, FromJson(fields(kind(rename="type"))))
 pub(all) struct Match {
   id : Int32
   title : String
@@ -75,7 +78,7 @@ pub(all) struct Match {
   url : String
   description : String?
   datetime : String
-} derive(Eq, Debug, FromJson(fields(kind(rename="type"))))
+}
 
 ///|
 pub extend Match with Eq::{equal, not_equal}

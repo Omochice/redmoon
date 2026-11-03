@@ -1,6 +1,7 @@
 ///|
 /// A size in bytes as Redmine reports it, which may exceed the range of `Int32`.
-pub(all) struct ByteSize(Int64) derive(Eq, Debug)
+#derive(Eq, Debug)
+pub(all) struct ByteSize(Int64)
 
 ///|
 pub extend ByteSize with Eq::{equal, not_equal}
@@ -42,6 +43,7 @@ pub fn ByteSize::to_int64(self : ByteSize) -> Int64 {
 
 ///|
 /// A file attached to a Redmine record.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Attachment {
   id : Int32
   filename : String
@@ -52,7 +54,7 @@ pub(all) struct Attachment {
   thumbnail_url : String?
   author : @redmine.IdName
   created_on : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Attachment with @json.FromJson::{from_json}

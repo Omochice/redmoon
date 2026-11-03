@@ -1,9 +1,10 @@
 ///|
 /// The value of an issue custom field: one string, or several for a multi-value field.
+#derive(Eq, Debug)
 pub(all) enum CustomFieldValue {
   Single(String)
   Multiple(Array[String])
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CustomFieldValue with Eq::{equal, not_equal}
@@ -39,12 +40,13 @@ pub impl ToJson for CustomFieldValue with fn to_json(self) {
 
 ///|
 /// A custom field as it appears on an issue.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct CustomField {
   id : Int32
   name : String
   value : CustomFieldValue?
   multiple : Bool?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend CustomField with @json.FromJson::{from_json}
@@ -60,11 +62,12 @@ pub extend CustomField with @debug.Debug::{to_repr}
 
 ///|
 /// An issue status; `is_closed` is absent where Redmine does not report it.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Status {
   id : Int32
   name : String
   is_closed : Bool?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Status with @json.FromJson::{from_json}
@@ -80,9 +83,10 @@ pub extend Status with @debug.Debug::{to_repr}
 
 ///|
 /// The parent of an issue.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Parent {
   id : Int32
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Parent with @json.FromJson::{from_json}
@@ -98,11 +102,12 @@ pub extend Parent with @debug.Debug::{to_repr}
 
 ///|
 /// A child issue, as listed by `include=children`.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Child {
   id : Int32
   tracker : @redmine.IdName
   subject : String
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Child with @json.FromJson::{from_json}
@@ -118,13 +123,14 @@ pub extend Child with @debug.Debug::{to_repr}
 
 ///|
 /// A relation between issues, as listed by `include=relations`.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Relation {
   id : Int32?
   issue_id : Int32?
   issue_to_id : Int32?
   relation_type : String?
   delay : Int32?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Relation with @json.FromJson::{from_json}
@@ -140,12 +146,13 @@ pub extend Relation with @debug.Debug::{to_repr}
 
 ///|
 /// One field change recorded in a journal.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct JournalDetail {
   property : String
   name : String
   old_value : String?
   new_value : String?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend JournalDetail with @json.FromJson::{from_json}
@@ -161,6 +168,7 @@ pub extend JournalDetail with @debug.Debug::{to_repr}
 
 ///|
 /// A comment and field-change history entry of an issue.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Journal {
   id : Int32
   user : @redmine.IdName
@@ -168,7 +176,7 @@ pub(all) struct Journal {
   created_on : String
   private_notes : Bool
   details : Array[JournalDetail]
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Journal with @json.FromJson::{from_json}
@@ -186,6 +194,7 @@ pub extend Journal with @debug.Debug::{to_repr}
 /// An issue.
 /// The association fields (`journals` and below) are present only when they
 /// were asked for with the matching include.
+#derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Issue {
   id : Int32
   project : @redmine.IdName
@@ -218,7 +227,7 @@ pub(all) struct Issue {
   changesets : Array[Json]?
   watchers : Array[@redmine.IdName]?
   allowed_statuses : Array[Status]?
-} derive(FromJson, ToJson, Eq, Debug)
+}
 
 ///|
 pub extend Issue with @json.FromJson::{from_json}

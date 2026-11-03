@@ -1,11 +1,12 @@
 ///|
 /// A file uploaded beforehand, to attach to an issue.
+#derive(Eq, Debug)
 pub(all) struct UploadToken {
   token : String
   filename : String?
   description : String?
   content_type : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend UploadToken with Eq::{equal, not_equal}
@@ -39,10 +40,11 @@ pub fn UploadToken::new(
 
 ///|
 /// A custom field value to write.
+#derive(Eq, Debug)
 pub(all) struct CustomFieldInput {
   id : Int32
   value : CustomFieldValue
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CustomFieldInput with Eq::{equal, not_equal}
