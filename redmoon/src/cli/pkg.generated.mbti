@@ -54,11 +54,12 @@ pub fn Invocation::equal(Self, Self) -> Bool
 pub fn Invocation::not_equal(Self, Self) -> Bool
 pub fn Invocation::to_repr(Self) -> @debug.Repr
 
-pub(all) struct OsKeyring {
+pub struct OsKeyring {
 }
 pub fn OsKeyring::delete(Self, String) -> Unit raise CliError
 pub fn OsKeyring::get(Self, String) -> String? raise CliError
 pub fn OsKeyring::list(Self) -> Array[String] raise CliError
+pub fn OsKeyring::new() -> Self
 pub fn OsKeyring::set(Self, String, String) -> Unit raise CliError
 pub impl KeyringPort for OsKeyring
 
