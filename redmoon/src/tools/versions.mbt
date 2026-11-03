@@ -39,7 +39,10 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
   let status = @schema.optional("status", version_status())
   let due_date = @schema.optional("due_date", @schema.iso_date())
   let sharing = @schema.optional("sharing", version_sharing())
-  let wiki_page_title = @schema.optional("wiki_page_title", @schema.string())
+  let wiki_page_title = @schema.optional(
+    "wiki_page_title",
+    @schema.string(max_length=255),
+  )
   let create_name = @schema.required("name", @schema.not_blank(max_length=60))
   let read = [
     (

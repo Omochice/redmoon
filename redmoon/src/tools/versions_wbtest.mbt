@@ -318,6 +318,38 @@ async test "a description of exactly 255 characters is accepted on create and up
 }
 
 ///|
+async test "a wiki_page_title over 255 characters is rejected on create and update" {
+  let long = String::make(256, 'a')
+  assert_eq(
+    rejected_version({
+      "create": { "project_id": 1, "name": "n", "wiki_page_title": long },
+    }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.wiki_page_title: must be at most 255 characters\"]}",
+  )
+  assert_eq(
+    rejected_version({ "update": { "id": 7, "wiki_page_title": long } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update.wiki_page_title: must be at most 255 characters\"]}",
+  )
+}
+
+///|
+async test "a wiki_page_title of exactly 255 characters is accepted on create and update" {
+  let fake = FakeVersions::new()
+  let tools = version_tools(fake)
+  let title = String::make(255, 'a')
+  let created = call_tool(tools, "redmine_versions", {
+    "create": { "project_id": 1, "name": "n", "wiki_page_title": title },
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  assert_eq(fake.created[0].1.wiki_page_title, Some(title))
+  let updated = call_tool(tools, "redmine_versions", {
+    "update": { "id": 7, "wiki_page_title": title },
+  })
+  assert_eq(updated.is_error, false, msg=updated.text)
+  assert_eq(fake.updated[0].1.wiki_page_title, Some(title))
+}
+
+///|
 async test "readonly mode makes the write actions unknown" {
   let fake = FakeVersions::new()
   let called = call_tool(
@@ -353,7 +385,7 @@ async test "tools/list advertises the versions tool in full mode" {
   let listed = list_tools(version_tools(FakeVersions::new()))
   assert_eq(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_versions\",\"description\":\"Create, read, update, and delete Redmine project versions (milestones). Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\"}},\"required\":[\"project_id\",\"name\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_versions\",\"description\":\"Create, read, update, and delete Redmine project versions (milestones). Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\",\"maxLength\":255}},\"required\":[\"project_id\",\"name\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\",\"maxLength\":255}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
 
