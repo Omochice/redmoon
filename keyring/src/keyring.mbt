@@ -46,6 +46,18 @@ extern "C" fn ffi_result_size() -> Int32 = "omochice_keyring_result_size"
 extern "C" fn ffi_result_take(dst : Bytes) = "omochice_keyring_result_take"
 
 ///|
+extern "C" fn ffi_platform() -> Int32 = "omochice_keyring_platform"
+
+///|
+let platform_darwin : Int32 = 1
+
+///|
+let platform_linux : Int32 = 2
+
+///|
+let platform_windows : Int32 = 3
+
+///|
 let ok : Int32 = 0
 
 ///|
@@ -66,11 +78,23 @@ fn check(status : Int32) -> Unit raise KeyringError {
     return
   }
   if status == no_store {
-    raise NoStore(
-      "no credential store is available; on Linux install libsecret and run a Secret Service provider such as gnome-keyring",
-    )
+    raise NoStore(no_store_message(ffi_platform()))
   }
   raise Refused(status)
+}
+
+///|
+fn no_store_message(platform : Int32) -> String {
+  let hint = if platform == platform_darwin {
+    "the Security and CoreFoundation frameworks could not be loaded"
+  } else if platform == platform_linux {
+    "install libsecret and run a Secret Service provider such as gnome-keyring"
+  } else if platform == platform_windows {
+    "the Credential Manager needs an interactive logon session"
+  } else {
+    "unknown platform \{platform}"
+  }
+  "no credential store is available; \{hint}"
 }
 
 ///|

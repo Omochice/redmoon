@@ -69,6 +69,8 @@ static int load_store(void) {
   return 1;
 }
 
+int32_t omochice_keyring_platform(void) { return KEYRING_PLATFORM_LINUX; }
+
 /* Positions in GDBusError and GIOErrorEnum of gio/gioenums.h, which have no
    explicit initializers and are ABI, so they are written here rather than read
    from a header this file deliberately does not include. */

@@ -117,6 +117,8 @@ static CFTypeRef make_query(const char *service, const char *account) {
   return q;
 }
 
+int32_t omochice_keyring_platform(void) { return KEYRING_PLATFORM_DARWIN; }
+
 static int32_t status_of(OSStatus s) {
   if (s == 0) return KEYRING_OK;
   if (s == errSecItemNotFound) return KEYRING_NOT_FOUND;

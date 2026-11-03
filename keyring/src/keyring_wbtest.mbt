@@ -25,6 +25,25 @@ test "the no-store status raises NoStore" {
 }
 
 ///|
+test "the no-store message names what the running platform lacks" {
+  inspect(
+    no_store_message(platform_darwin),
+    content="no credential store is available; the Security and CoreFoundation frameworks could not be loaded",
+  )
+  inspect(
+    no_store_message(platform_linux),
+    content="no credential store is available; install libsecret and run a Secret Service provider such as gnome-keyring",
+  )
+  inspect(
+    no_store_message(platform_windows),
+    content="no credential store is available; the Credential Manager needs an interactive logon session",
+  )
+  assert_true(
+    [platform_darwin, platform_linux, platform_windows].contains(ffi_platform()),
+  )
+}
+
+///|
 test "any other status raises Refused with the native code" {
   try check(-25308) catch {
     Refused(-25308) => ()

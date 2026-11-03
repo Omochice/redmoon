@@ -27,6 +27,8 @@ static wchar_t *target_name(const char *service, const char *account) {
   return w;
 }
 
+int32_t omochice_keyring_platform(void) { return KEYRING_PLATFORM_WINDOWS; }
+
 static int32_t status_of(DWORD e) {
   if (e == ERROR_NOT_FOUND) return KEYRING_NOT_FOUND;
   if (e == ERROR_NO_SUCH_LOGON_SESSION) return KEYRING_NO_STORE;
