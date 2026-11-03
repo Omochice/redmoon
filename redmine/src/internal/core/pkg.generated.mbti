@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/internal/core"
+
+import {
+  "moonbitlang/async/http",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn connect(String, String) -> Connection?
+
+pub fn interpret(Int32, String) -> Interpretation
+
+pub async fn open_api(Connection, Array[String], query? : Array[(String, String)]) -> (@http.Client, String)
+
+pub async fn open_client(Connection, String, accept? : String) -> @http.Client
+
+pub fn origin(Connection) -> String
+
+// Errors
+
+// Types and methods
+pub struct Connection {
+  // private fields
+}
+
+pub enum Interpretation {
+  Body(@json.Json)
+  Rejected(status~ : Int32, errors~ : Array[String])
+  Malformed(message~ : String)
+}
+
+// Type aliases
+
+// Traits

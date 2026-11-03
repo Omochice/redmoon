@@ -1,0 +1,67 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine"
+
+import {
+  "moonbitlang/async/http",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine/internal/core",
+}
+
+// Values
+pub fn connection(Redmine) -> @core.Connection
+
+pub fn new(endpoint~ : String, api_key~ : String) -> Redmine raise RedmineError
+
+pub async fn send(Redmine, @http.RequestMethod, Array[String], query? : Array[(String, String)], body? : @json.Json) -> @json.Json raise RedmineError
+
+pub fn unwrap(@core.Interpretation) -> @json.Json raise RedmineError
+
+// Errors
+#derive(@debug.Debug, @json.ToJson)
+pub(all) suberror RedmineError {
+  Response(status~ : Int32, errors~ : Array[String])
+  Decode(message~ : String)
+  Transport(message~ : String)
+}
+pub fn RedmineError::to_json(Self) -> @json.Json
+pub fn RedmineError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) enum Clearable[T] {
+  Set(T)
+  Clear
+}
+pub fn[T : Eq] Clearable::equal(Self[T], Self[T]) -> Bool
+pub fn[T : Eq] Clearable::not_equal(Self[T], Self[T]) -> Bool
+pub fn[T : @debug.Debug] Clearable::to_repr(Self[T]) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct IdName {
+  id : Int32
+  name : String
+}
+pub fn IdName::equal(Self, Self) -> Bool
+pub fn IdName::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IdName::not_equal(Self, Self) -> Bool
+pub fn IdName::to_json(Self) -> @json.Json
+pub fn IdName::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum ProjectRef {
+  Id(Int32)
+  Identifier(String)
+}
+pub fn ProjectRef::equal(Self, Self) -> Bool
+pub fn ProjectRef::not_equal(Self, Self) -> Bool
+pub fn ProjectRef::segment(Self) -> String
+pub fn ProjectRef::to_repr(Self) -> @debug.Repr
+
+pub struct Redmine {
+  // private fields
+}
+
+// Type aliases
+
+// Traits

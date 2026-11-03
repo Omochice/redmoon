@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/relations"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn create(@redmine.Redmine, Int32, issue_to_id~ : Int32, relation_type~ : Type, delay? : Int32) -> Relation raise @redmine.RedmineError
+
+pub async fn delete(@redmine.Redmine, Int32) -> Unit raise @redmine.RedmineError
+
+pub async fn list(@redmine.Redmine, Int32) -> Array[Relation] raise @redmine.RedmineError
+
+pub async fn show(@redmine.Redmine, Int32) -> Relation raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Relation {
+  id : Int32
+  issue_id : Int32
+  issue_to_id : Int32
+  relation_type : Type
+  delay : Int32?
+}
+pub fn Relation::equal(Self, Self) -> Bool
+pub fn Relation::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Relation::not_equal(Self, Self) -> Bool
+pub fn Relation::to_json(Self) -> @json.Json
+pub fn Relation::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum Type {
+  Relates
+  Duplicates
+  Duplicated
+  Blocks
+  Blocked
+  Precedes
+  Follows
+  CopiedTo
+  CopiedFrom
+}
+pub fn Type::equal(Self, Self) -> Bool
+pub fn Type::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Type::not_equal(Self, Self) -> Bool
+pub fn Type::to_json(Self) -> @json.Json
+pub fn Type::to_repr(Self) -> @debug.Repr
+pub impl @json.FromJson for Type
+pub impl @json.ToJson for Type
+
+// Type aliases
+
+// Traits

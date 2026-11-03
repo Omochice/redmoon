@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/internal/decode"
+
+import {
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub fn[T : @json.FromJson] decode(@json.Json) -> T raise @redmine.RedmineError
+
+pub fn[T : @json.FromJson] decode_field(@json.Json, String) -> T raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

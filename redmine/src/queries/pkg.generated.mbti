@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/queries"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn list(@redmine.Redmine) -> Array[Query] raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Query {
+  id : Int32
+  name : String
+  is_public : Bool
+  project_id : Int32?
+}
+pub fn Query::equal(Self, Self) -> Bool
+pub fn Query::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Query::not_equal(Self, Self) -> Bool
+pub fn Query::to_json(Self) -> @json.Json
+pub fn Query::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

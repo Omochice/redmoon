@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/internal/wire"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn encode_query(Array[(String, String)]) -> String
+
+pub fn errors_from_body(String) -> Array[String]
+
+pub fn is_redirect_status(Int32) -> Bool
+
+pub fn normalize_origin(String) -> String
+
+pub fn parse_absolute_url(String) -> Location?
+
+pub fn present_members(Array[(String, @json.Json?)]) -> @json.Json
+
+pub fn resolve_location(Location, String) -> Location?
+
+pub fn same_origin(String, String) -> Bool
+
+pub fn strip_nulls(@json.Json) -> @json.Json
+
+// Errors
+
+// Types and methods
+pub(all) struct Endpoint {
+  origin : String
+  base_path : String
+}
+pub fn Endpoint::parse(String) -> Self?
+pub fn Endpoint::path(Self, Array[String]) -> String
+
+pub(all) struct Location {
+  origin : String
+  target : String
+}
+
+// Type aliases
+
+// Traits

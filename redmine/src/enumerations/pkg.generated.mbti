@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/enumerations"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn document_categories(@redmine.Redmine) -> Array[Enumeration] raise @redmine.RedmineError
+
+pub async fn issue_priorities(@redmine.Redmine) -> Array[Enumeration] raise @redmine.RedmineError
+
+pub async fn time_entry_activities(@redmine.Redmine) -> Array[Enumeration] raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Enumeration {
+  id : Int32
+  name : String
+  is_default : Bool
+  active : Bool
+}
+pub fn Enumeration::equal(Self, Self) -> Bool
+pub fn Enumeration::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Enumeration::not_equal(Self, Self) -> Bool
+pub fn Enumeration::to_json(Self) -> @json.Json
+pub fn Enumeration::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

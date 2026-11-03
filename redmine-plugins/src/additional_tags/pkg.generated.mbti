@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine-plugins/additional_tags"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+  "omochice/redmine/issues",
+  "omochice/redmine/wiki",
+}
+
+// Values
+pub async fn add(@redmine.Redmine, Int32, Array[String]) -> Array[String] raise @redmine.RedmineError
+
+pub async fn list(@redmine.Redmine) -> Array[Tag] raise @redmine.RedmineError
+
+pub async fn list_issues(@redmine.Redmine, Array[String], project_id? : Int32, status_id? : @issues.StatusFilter, limit? : Int32) -> Array[@issues.Issue] raise @redmine.RedmineError
+
+pub async fn list_wiki_pages(@redmine.Redmine, @redmine.ProjectRef, String) -> Array[@wiki.PageSummary] raise @redmine.RedmineError
+
+pub async fn remove(@redmine.Redmine, Int32, Array[String]) -> Array[String] raise @redmine.RedmineError
+
+pub async fn tags(@redmine.Redmine, Int32) -> Array[String] raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Tag {
+  name : String
+  count : Int32
+}
+pub fn Tag::equal(Self, Self) -> Bool
+pub fn Tag::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Tag::not_equal(Self, Self) -> Bool
+pub fn Tag::to_json(Self) -> @json.Json
+pub fn Tag::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/mcp"
+
+import {
+  "moonbitlang/async/io",
+  "omochice/schema",
+}
+
+// Values
+pub fn[T] tool(name~ : String, description~ : String, input~ : @schema.Schema[T], handler~ : async (T) -> ToolResult) -> Tool
+
+// Errors
+
+// Types and methods
+pub(all) enum Content {
+  Text(String)
+}
+
+pub struct Server {
+  // private fields
+}
+pub fn Server::new(name~ : String, version~ : String, tools~ : Array[Tool], instructions? : String, on_invalid? : (@schema.SchemaError) -> ToolResult) -> Self
+pub async fn Server::serve(Self, &@io.Reader, &@io.Writer) -> Unit
+pub async fn Server::serve_stdio(Self) -> Unit
+
+pub struct Tool {
+  // private fields
+}
+
+pub(all) struct ToolResult {
+  content : Array[Content]
+  is_error : Bool
+}
+pub fn ToolResult::error(String) -> Self
+pub fn ToolResult::text(String) -> Self
+
+// Type aliases
+
+// Traits

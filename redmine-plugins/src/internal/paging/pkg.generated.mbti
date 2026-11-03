@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine-plugins/internal/paging"
+
+import {
+  "moonbitlang/core/json",
+  "omochice/redmine",
+}
+
+// Values
+pub async fn[T : @json.FromJson] list_all(@redmine.Redmine, Array[String], key~ : String, query? : Array[(String, String)], limit? : Int32) -> Array[T] raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

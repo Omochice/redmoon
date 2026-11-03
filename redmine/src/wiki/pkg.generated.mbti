@@ -1,0 +1,68 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "omochice/redmine/wiki"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "omochice/redmine",
+  "omochice/redmine/attachments",
+}
+
+// Values
+pub async fn create(@redmine.Redmine, @redmine.ProjectRef, String, String, comments? : String, parent_title? : String) -> Unit raise @redmine.RedmineError
+
+pub async fn delete(@redmine.Redmine, @redmine.ProjectRef, String) -> Unit raise @redmine.RedmineError
+
+pub async fn list(@redmine.Redmine, @redmine.ProjectRef) -> Array[PageSummary] raise @redmine.RedmineError
+
+pub async fn show(@redmine.Redmine, @redmine.ProjectRef, String, version? : Int32) -> Page raise @redmine.RedmineError
+
+pub async fn update(@redmine.Redmine, @redmine.ProjectRef, String, String, comments? : String, version? : Int32, parent_title? : String) -> Unit raise @redmine.RedmineError
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Page {
+  title : String
+  version : Int32
+  text : String
+  author : @redmine.IdName
+  comments : String?
+  created_on : String
+  updated_on : String
+  attachments : Array[@attachments.Attachment]?
+}
+pub fn Page::equal(Self, Self) -> Bool
+pub fn Page::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Page::not_equal(Self, Self) -> Bool
+pub fn Page::to_json(Self) -> @json.Json
+pub fn Page::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct PageSummary {
+  title : String
+  version : Int32
+  created_on : String
+  updated_on : String
+  parent : Parent?
+}
+pub fn PageSummary::equal(Self, Self) -> Bool
+pub fn PageSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PageSummary::not_equal(Self, Self) -> Bool
+pub fn PageSummary::to_json(Self) -> @json.Json
+pub fn PageSummary::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct Parent {
+  title : String
+}
+pub fn Parent::equal(Self, Self) -> Bool
+pub fn Parent::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Parent::not_equal(Self, Self) -> Bool
+pub fn Parent::to_json(Self) -> @json.Json
+pub fn Parent::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -11,6 +11,8 @@ task test
 nix fmt
 ```
 
+`task check` also rewrites each package's `pkg.generated.mbti`, and CI fails unless the rewritten files are committed.
+
 `task --list` shows the other tasks.
 
 The integration tests need a running Redmine.
