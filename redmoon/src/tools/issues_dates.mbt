@@ -31,12 +31,12 @@ fn date_period() -> @schema.Schema[@issues.DatePeriod] {
   @schema.choice([
     ("today", Today),
     ("yesterday", Yesterday),
-    ("thisWeek", ThisWeek),
-    ("lastWeek", LastWeek),
-    ("lastTwoWeeks", LastTwoWeeks),
-    ("thisMonth", ThisMonth),
-    ("lastMonth", LastMonth),
-    ("thisYear", ThisYear),
+    ("this_week", ThisWeek),
+    ("last_week", LastWeek),
+    ("last_two_weeks", LastTwoWeeks),
+    ("this_month", ThisMonth),
+    ("last_month", LastMonth),
+    ("this_year", ThisYear),
     ("any", Any),
     ("none", Blank),
   ])
@@ -107,8 +107,8 @@ pub fn date_filter() -> @schema.Schema[@issues.DateFilter] {
   let forward : Array[@schema.Schema[@issues.DateFilter]] = [
     @schema.choice([
       ("tomorrow", Tomorrow),
-      ("nextWeek", NextWeek),
-      ("nextMonth", NextMonth),
+      ("next_week", NextWeek),
+      ("next_month", NextMonth),
     ]),
     days_from_now()
     |> @schema.Schema::map(days => @issues.DateFilter::DaysFromNow(days))

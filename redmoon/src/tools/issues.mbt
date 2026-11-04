@@ -33,7 +33,7 @@ fn show_includes() -> @schema.Schema[Array[@issues.Include]] {
       ("children", @issues.Include::Children),
       ("changesets", @issues.Include::Changesets),
       ("watchers", @issues.Include::Watchers),
-      ("allowedStatuses", @issues.Include::AllowedStatuses),
+      ("allowed_statuses", @issues.Include::AllowedStatuses),
     ]),
   ).describe(
     "Associations Redmine omits unless asked for. `journals` are the comments and the field-change history.",
@@ -303,7 +303,7 @@ let update_input : @schema.Schema[IssueAction] = {
   let status_id = @schema.optional(
     "status_id",
     record_id().describe(
-      "Status to move the issue to. Redmine ignores, without an error, a status the workflow does not allow; `show` with `include: [\"allowedStatuses\"]` lists the ones it does.",
+      "Status to move the issue to. Redmine ignores, without an error, a status the workflow does not allow; `show` with `include: [\"allowed_statuses\"]` lists the ones it does.",
     ),
   )
   let priority_id = @schema.optional("priority_id", record_id())
@@ -533,7 +533,7 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
 fn issues_description(mode : Mode) -> String {
   let base = [
     describe_crud_tool("issues", mode),
-    "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowedStatuses` as needed.",
+    "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowed_statuses` as needed.",
     "`list` accepts only `attachments` and `relations`.",
     "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
     "A saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.",
