@@ -15,7 +15,6 @@ There is no binary for Intel macOS, Linux arm64, or Windows at the moment.
 ### login
 
 `login` prompts for the key of an endpoint and stores it.
-A user of [denomine-mcp](https://github.com/Omochice/denomine-mcp) runs it once per endpoint too, because redmoon stores the key under its own service name and does not read denomine-mcp's.
 
 ```console
 $ redmoon login --endpoint https://redmine.example.com
