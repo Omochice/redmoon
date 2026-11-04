@@ -1,7 +1,6 @@
 # omochice/schema
 
 A typed schema DSL in which one definition yields both a JSON Schema and a decoder to a MoonBit value, so the schema a program advertises and the validation it performs cannot drift apart.
-[ADR-003](../doc/adr/adr-003-typed-schema-dsl.md) records why the module exists, and [ADR-011](../doc/adr/adr-011-design-evolution-from-adr-003.md) records the member handles that replaced its first object builder.
 
 ## What is supported
 

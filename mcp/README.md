@@ -1,7 +1,6 @@
 # omochice/mcp
 
 A dual-era MCP tool server over stdio, written for redmoon and usable by any MoonBit program that offers tools.
-[ADR-004](../doc/adr/adr-004-mcp-sdk-scope.md) records why the module exists and why it covers only what is listed below.
 
 ## What is supported
 
@@ -15,7 +14,7 @@ A client can rely on the following, whichever era it speaks.
 
 ## What is not supported
 
-The gaps below are the ones ADR-004 accepted with the decision.
+The module implements only what a tool server needs, so the gaps below are left open on purpose rather than waiting to be filled.
 
 - Resources, prompts, progress, logging, subscriptions, and multi round-trip requests.
 - `structuredContent`; a tool result carries text content only.
