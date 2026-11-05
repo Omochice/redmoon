@@ -139,15 +139,16 @@ int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, m
       CFDictionarySetValue(add, kSecAttrAccount, CFDictionaryGetValue(q, kSecAttrAccount));
       CFDictionarySetValue(add, kSecValueData, data);
       OSStatus s = SecItemAdd(add, NULL);
+      CFTypeRef upd = NULL;
       if (s == errSecDuplicateItem) {
-        CFTypeRef upd = CFDictionaryCreateMutable(NULL, 0, kDictKeyCallBacks, kDictValueCallBacks);
+        upd = CFDictionaryCreateMutable(NULL, 0, kDictKeyCallBacks, kDictValueCallBacks);
         if (upd) {
           CFDictionarySetValue(upd, kSecValueData, data);
           s = SecItemUpdate(q, upd);
           CFRelease(upd);
         }
       }
-      rc = status_of(s);
+      if (s != errSecDuplicateItem || upd) rc = status_of(s);
       CFRelease(add);
     }
   }
