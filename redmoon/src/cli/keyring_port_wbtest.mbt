@@ -18,7 +18,7 @@ test "the recovery hint without a known account stays generic" {
 test "a failure inside the keyring module is not reported as a store code" {
   inspect(
     refusal(@keyring.INTERNAL, Some("https://r.example.com")),
-    content="the credential store could not be used; the keyring module failed before the store answered",
+    content="the credential store could not be used; the keyring module itself failed, not the store",
   )
 }
 
