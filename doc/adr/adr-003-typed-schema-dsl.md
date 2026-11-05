@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-011](./adr-011-design-evolution-from-adr-003.md))
+Accepted (refined by [ADR-011](./adr-011-design-evolution-from-adr-003.md); the `parse` field of `Schema` in decision 1 is named `decode` in the code)
 
 ## Context
 
@@ -70,7 +70,7 @@ We will write `omochice/schema` as a module of its own, and `omochice/mcp` will 
 ```moonbit
 struct Schema[T] {
   json : () -> Json
-  decode : (Json, Array[String]) -> T raise SchemaError
+  parse : (Json, Array[String]) -> T raise SchemaError
 }
 ```
 
