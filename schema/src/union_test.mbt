@@ -8,7 +8,7 @@ enum DayBound {
 ///|
 let day_bound : Schema[DayBound] = union([
   integer(min=0).map(n => Days(n)),
-  picklist(["today", "any"]).map(s => Period(s)),
+  choice([("today", "today"), ("any", "any")]).map(s => Period(s)),
 ])
 
 ///|
@@ -56,11 +56,11 @@ test "union parses with the first matching alternative" {
 test "union lists alternatives when none matches" {
   assert_eq(
     outcome(day_bound, "true"),
-    "error: no alternative matched: expected an integer; must be one of today, any",
+    "error: no alternative matched: expected an integer; expected a string",
   )
   assert_eq(
     outcome(day_bound, "-1"),
-    "error: no alternative matched: must be at least 0; must be one of today, any",
+    "error: no alternative matched: must be at least 0; expected a string",
   )
 }
 
@@ -93,7 +93,7 @@ test "union errors carry the caller's path" {
   let id = @schema.required("id", integer())
   let s = @schema.record([id.as_member()], v => v.get(id))
   let u = union([s, s])
-  let result = try u.parse_at(j("{}"), ["act"]) catch {
+  let result = try (u.decode)(j("{}"), ["act"]) catch {
     e => e.message()
   } noraise {
     _ => "ok"

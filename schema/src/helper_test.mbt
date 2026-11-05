@@ -8,7 +8,6 @@ using @schema {
   not_blank,
   boolean,
   literal,
-  picklist,
   choice,
   array,
   nullable,

@@ -37,6 +37,34 @@ fn RpcError::new(code : Int32, message : String, data? : Json) -> RpcError {
 }
 
 ///|
+fn parse_error(reason : String) -> RpcError {
+  RpcError::new(parse_error_code, "Parse error: \{reason}")
+}
+
+///|
+fn invalid_request(reason : String) -> RpcError {
+  RpcError::new(invalid_request_code, "Invalid Request: \{reason}")
+}
+
+///|
+fn method_not_found(name : String) -> RpcError {
+  RpcError::new(method_not_found_code, "Method not found: \{name}")
+}
+
+///|
+fn invalid_params(message : String) -> RpcError {
+  RpcError::new(invalid_params_code, message)
+}
+
+///|
+fn unsupported_version(requested : String) -> RpcError {
+  RpcError::new(unsupported_version_code, "Unsupported protocol version", data={
+    "supported": Json::array(supported_versions().map(v => Json(v))),
+    "requested": Json(requested),
+  })
+}
+
+///|
 fn result_response(id : Json, result : Json) -> Json {
   { "jsonrpc": "2.0", "id": id, "result": result }
 }

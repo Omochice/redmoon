@@ -68,7 +68,7 @@ pub fn[T : ToJson] optional_or(
 ) -> Field[T] {
   {
     name,
-    json: () => with_keywords((schema.json)(), [("default", Json(default))]),
+    json: () => compose((schema.json)(), "default", Json(default)),
     required: false,
     read: (value, path) => {
       match value {

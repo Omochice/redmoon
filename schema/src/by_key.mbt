@@ -6,7 +6,7 @@ pub fn[T] by_key(
   alternatives : Array[(String, Schema[T])],
   otherwise? : Schema[T],
 ) -> Schema[T] {
-  let keys = alternatives.map(a => a.0).join(", ")
+  let keys = listing(alternatives.map(a => a.0))
   let shapes = alternatives.map(a => a.1)
   if otherwise is Some(fallback) {
     shapes.push(fallback)

@@ -56,4 +56,15 @@ fn[T] fail(path : Array[String], message : String) -> T raise SchemaError {
 }
 
 ///|
+/// Names quoted and joined for a message, as in "`a`, `b` and `c`", so every
+/// message that lists the acceptable names reads the same.
+fn listing(names : Array[String]) -> String {
+  let quoted = names.map(name => "`\{name}`")
+  match quoted.length() {
+    0 | 1 => quoted.join("")
+    n => quoted[:n - 1].join(", ") + " and " + quoted[n - 1]
+  }
+}
+
+///|
 pub extend SchemaError with Show::{to_string, output}

@@ -30,13 +30,13 @@ let r_description : @schema.Field[String] = @schema.required(
 ///|
 let r_status : @schema.Field[String?] = @schema.optional(
   "status",
-  picklist(["open", "locked", "closed"]),
+  choice([("open", "open"), ("locked", "locked"), ("closed", "closed")]),
 )
 
 ///|
 let r_sharing : @schema.Field[String] = @schema.optional_or(
   "sharing",
-  picklist(["none", "system"]),
+  choice([("none", "none"), ("system", "system")]),
   "none",
 )
 
@@ -128,7 +128,7 @@ test "record errors name the member" {
   )
   assert_eq(
     outcome(version_record, "{\"project_id\":1," + ok + ",\"status\":\"x\"}"),
-    "error: status: must be one of open, locked, closed",
+    "error: status: must be one of `open`, `locked` and `closed`",
   )
   assert_eq(
     outcome(version_record, "{\"project_id\":1," + ok + ",\"notes\":[\"a\",2]}"),
@@ -159,7 +159,7 @@ test "record reports every failing member, but unknown keys alone" {
 ///|
 test "record errors are prefixed by the caller's path" {
   let result = try
-    version_record.parse_at(j("{\"extra\":1}"), ["create"])
+    (version_record.decode)(j("{\"extra\":1}"), ["create"])
   catch {
     e => e.message()
   } noraise {

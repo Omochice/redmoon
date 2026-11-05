@@ -81,7 +81,7 @@ async test "an unknown action is reported with the invalid arguments wording" {
   assert_eq(called.is_error, true)
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `list_nothing`, one of: list_time_entry_activities, list_issue_priorities, list_document_categories\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `list_nothing`, one of `list_time_entry_activities`, `list_issue_priorities` and `list_document_categories`\"]}",
   )
 }
 

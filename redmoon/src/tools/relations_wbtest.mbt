@@ -209,7 +209,7 @@ async test "an unknown relation type is rejected with the allowed names" {
   assert_eq(called.is_error, true)
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: create.relation_type: must be one of relates, duplicates, duplicated, blocks, blocked, precedes, follows, copied_to, copied_from\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.relation_type: must be one of `relates`, `duplicates`, `duplicated`, `blocks`, `blocked`, `precedes`, `follows`, `copied_to` and `copied_from`\"]}",
   )
 }
 
@@ -236,7 +236,7 @@ async test "readonly refuses a create as an unknown action" {
   assert_eq(called.is_error, true)
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `create`, one of: list, show\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `create`, one of `list` and `show`\"]}",
   )
 }
 

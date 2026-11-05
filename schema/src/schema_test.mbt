@@ -77,6 +77,18 @@ test "not_blank carries a real pattern" {
 }
 
 ///|
+test "not_blank bounds the length like string" {
+  let s = not_blank(max_length=3)
+  assert_eq(
+    schema_json(s),
+    "{\"type\":\"string\",\"maxLength\":3,\"pattern\":\"\\\\S\"}",
+  )
+  assert_eq(outcome(s, "\"abc\""), "ok: \"abc\"")
+  assert_eq(outcome(s, "\"abcd\""), "error: must be at most 3 characters")
+  assert_eq(outcome(s, "\"   \""), "error: must not be blank")
+}
+
+///|
 test "boolean" {
   assert_eq(schema_json(boolean()), "{\"type\":\"boolean\"}")
   assert_eq(outcome(boolean(), "true"), "ok: true")
@@ -93,22 +105,11 @@ test "literal" {
 }
 
 ///|
-test "picklist" {
-  let s = picklist(["open", "locked", "closed"])
-  assert_eq(
-    schema_json(s),
-    "{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]}",
-  )
-  assert_eq(outcome(s, "\"locked\""), "ok: \"locked\"")
-  assert_eq(outcome(s, "\"x\""), "error: must be one of open, locked, closed")
-  assert_eq(outcome(s, "1"), "error: must be one of open, locked, closed")
-}
-
-///|
 test "choice maps names to values" {
   let s = choice([("asc", 1), ("desc", -1)])
   assert_eq(outcome(s, "\"desc\""), "ok: -1")
-  assert_eq(outcome(s, "\"up\""), "error: must be one of asc, desc")
+  assert_eq(outcome(s, "\"up\""), "error: must be one of `asc` and `desc`")
+  assert_eq(outcome(s, "1"), "error: expected a string")
   assert_eq(schema_json(s), "{\"type\":\"string\",\"enum\":[\"asc\",\"desc\"]}")
 }
 
@@ -124,8 +125,8 @@ test "array" {
   assert_eq(outcome(s, "[1,0]"), "error: 1: must be at least 1")
   assert_eq(outcome(s, "{}"), "error: expected an array")
   assert_eq(
-    outcome(array(picklist(["a"])), "[\"a\",\"b\"]"),
-    "error: 1: must be one of a",
+    outcome(array(choice([("a", "a")])), "[\"a\",\"b\"]"),
+    "error: 1: must be one of `a`",
   )
 }
 
@@ -145,7 +146,7 @@ test "map converts the parsed value only" {
 }
 
 ///|
-test "refine rejects and merges keywords" {
+test "refine rejects and adds keywords" {
   let s = string().refine(v => v.has_prefix("#"), "must start with #", keywords=[
     ("pattern", "^#"),
   ])
@@ -155,12 +156,25 @@ test "refine rejects and merges keywords" {
 }
 
 ///|
-test "parse_at prefixes the path" {
-  let s = integer(min=1)
-  let result = try s.parse_at(j("0"), ["create", "id"]) catch {
-    e => e.message()
-  } noraise {
-    _ => "ok"
-  }
-  assert_eq(result, "create.id: must be at least 1")
+test "a refine stacked on another keeps both keywords under allOf" {
+  let s = not_blank().refine(
+    v => !v.contains_char(','),
+    "must not contain a comma",
+    keywords=[("pattern", "^[^,]*$")],
+  )
+  assert_eq(
+    schema_json(s),
+    "{\"type\":\"string\",\"allOf\":[{\"pattern\":\"\\\\S\"},{\"pattern\":\"^[^,]*$\"}]}",
+  )
+  assert_eq(outcome(s, "\"a\""), "ok: \"a\"")
+  assert_eq(outcome(s, "\" \""), "error: must not be blank")
+  assert_eq(outcome(s, "\"a,b\""), "error: must not contain a comma")
+}
+
+///|
+test "describe twice keeps the last description" {
+  assert_eq(
+    schema_json(string().describe("A name").describe("The name")),
+    "{\"type\":\"string\",\"description\":\"The name\"}",
+  )
 }

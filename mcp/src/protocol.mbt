@@ -11,19 +11,9 @@ priv enum Action {
 fn Server::dispatch(self : Server, line : String) -> Action {
   match parse_message(line) {
     Unparseable(reason) =>
-      Reply(
-        error_response(
-          Json::null(),
-          RpcError::new(parse_error_code, "Parse error: \{reason}"),
-        ),
-      )
+      Reply(error_response(Json::null(), parse_error(reason)))
     Malformed(id~, reason~) =>
-      Reply(
-        error_response(
-          id,
-          RpcError::new(invalid_request_code, "Invalid Request: \{reason}"),
-        ),
-      )
+      Reply(error_response(id, invalid_request(reason)))
     Response => Nothing
     Notification(name~, params~) =>
       match (name, params.get("requestId")) {
@@ -55,7 +45,7 @@ fn Server::route(
         Ok((tool, arguments, era)) => return Call(id~, tool~, arguments~, era~)
         Err(error) => Err(error)
       }
-    _ => Err(RpcError::new(method_not_found_code, "Method not found: \{name}"))
+    _ => Err(method_not_found(name))
   }
   match outcome {
     Ok(result) => Reply(result_response(id, result))
@@ -119,12 +109,7 @@ fn Server::discover(
 ) -> Result[Json, RpcError] {
   match resolve_era(params, self.initialized) {
     Err(error) => Err(error)
-    Ok(Legacy) =>
-      Err(
-        RpcError::new(
-          method_not_found_code, "Method not found: server/discover",
-        ),
-      )
+    Ok(Legacy) => Err(method_not_found("server/discover"))
     Ok(Modern) => {
       let fields : Array[(String, Json)] = [
         (

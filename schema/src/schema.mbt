@@ -19,21 +19,10 @@ pub fn[T] Schema::parse(self : Schema[T], input : Json) -> T raise SchemaError {
 }
 
 ///|
-/// Like `parse`, with `path` prepended to every reported path, so a caller can
-/// name the action the value belongs to.
-pub fn[T] Schema::parse_at(
-  self : Schema[T],
-  input : Json,
-  path : Array[String],
-) -> T raise SchemaError {
-  (self.decode)(input, path)
-}
-
-///|
 /// Adds a `description` to the emitted schema.
 pub fn[T] Schema::describe(self : Schema[T], text : String) -> Schema[T] {
   {
-    json: () => with_keywords((self.json)(), [("description", Json(text))]),
+    json: () => compose((self.json)(), "description", Json(text)),
     decode: self.decode,
   }
 }
@@ -46,8 +35,11 @@ pub fn[A, B] Schema::map(self : Schema[A], f : (A) -> B) -> Schema[B] {
 
 ///|
 /// Rejects values for which `check` is false with `message`. `keywords` are
-/// merged into the emitted schema so the advertised schema states the same
+/// added to the emitted schema so the advertised schema states the same
 /// constraint, e.g. a `pattern` that MoonBit cannot evaluate itself.
+/// A keyword the schema already carries with another value is kept beside the
+/// new one under `allOf`, since `check` is enforced on top of the earlier
+/// constraint rather than instead of it.
 pub fn[T] Schema::refine(
   self : Schema[T],
   check : (T) -> Bool,
@@ -55,7 +47,11 @@ pub fn[T] Schema::refine(
   keywords~ : Array[(String, Json)] = [],
 ) -> Schema[T] {
   {
-    json: () => with_keywords((self.json)(), keywords),
+    json: () => {
+      keywords.fold(init=(self.json)(), (json, entry) => {
+        compose(json, entry.0, entry.1)
+      })
+    },
     decode: (input, path) => {
       let value = (self.decode)(input, path)
       if !check(value) {
@@ -71,14 +67,11 @@ pub fn[T] Schema::refine(
 pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
   {
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "integer")]
-      if min is Some(m) {
-        entries.push(("minimum", Json(m)))
-      }
-      if max is Some(m) {
-        entries.push(("maximum", Json(m)))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "integer",
+        ("minimum", min.map(m => Json(m))),
+        ("maximum", max.map(m => Json(m))),
+      )
     },
     decode: (input, path) => {
       guard input is Number(d, ..) &&
@@ -104,16 +97,13 @@ pub fn integer(min? : Int32, max? : Int32) -> Schema[Int32] {
 /// bounded (inclusive).
 pub fn integer64(min? : Int64, max? : Int64) -> Schema[Int64] {
   {
+    // `Json(m)` would emit the bound as a string, since core encodes `Int64` that way.
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "integer")]
-      // `Json(m)` would emit the bound as a string, since core encodes `Int64` that way.
-      if min is Some(m) {
-        entries.push(("minimum", Json::number(m.to_double())))
-      }
-      if max is Some(m) {
-        entries.push(("maximum", Json::number(m.to_double())))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "integer",
+        ("minimum", min.map(m => Json::number(m.to_double()))),
+        ("maximum", max.map(m => Json::number(m.to_double()))),
+      )
     },
     decode: (input, path) => {
       // 2^63 itself is excluded, since it is one past the largest `Int64`.
@@ -140,14 +130,11 @@ pub fn integer64(min? : Int64, max? : Int64) -> Schema[Int64] {
 pub fn number(min? : Double, max? : Double) -> Schema[Double] {
   {
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "number")]
-      if min is Some(m) {
-        entries.push(("minimum", Json(m)))
-      }
-      if max is Some(m) {
-        entries.push(("maximum", Json(m)))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "number",
+        ("minimum", min.map(m => Json(m))),
+        ("maximum", max.map(m => Json(m))),
+      )
     },
     decode: (input, path) => {
       guard input is Number(d, ..) else { fail(path, "expected a number") }
@@ -167,14 +154,11 @@ pub fn number(min? : Double, max? : Double) -> Schema[Double] {
 pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String] {
   {
     json: () => {
-      let entries : Array[(String, Json)] = [("type", "string")]
-      if min_length is Some(m) {
-        entries.push(("minLength", Json(m)))
-      }
-      if max_length is Some(m) {
-        entries.push(("maxLength", Json(m)))
-      }
-      Json::object(Map::from_array(entries))
+      bounded(
+        "string",
+        ("minLength", min_length.map(m => Json(m))),
+        ("maxLength", max_length.map(m => Json(m))),
+      )
     },
     decode: (input, path) => {
       guard input is String(s) else { fail(path, "expected a string") }
@@ -191,9 +175,10 @@ pub fn string(min_length? : Int32, max_length? : Int32) -> Schema[String] {
 }
 
 ///|
-/// A string containing at least one non-whitespace character.
-pub fn not_blank() -> Schema[String] {
-  string().refine(
+/// A string containing at least one non-whitespace character, optionally
+/// bounded in length (in characters) like `string`.
+pub fn not_blank(min_length? : Int32, max_length? : Int32) -> Schema[String] {
+  string(min_length?, max_length?).refine(
     s => s.iter().any(c => !c.is_whitespace()),
     "must not be blank",
     keywords=[("pattern", "\\S")],
@@ -230,12 +215,6 @@ pub fn literal(value : String) -> Schema[String] {
 }
 
 ///|
-/// One of the listed strings.
-pub fn picklist(values : Array[String]) -> Schema[String] {
-  choice(values.map(v => (v, v)))
-}
-
-///|
 /// One of the listed names, parsed to the value paired with it.
 pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
   let names = options.map(o => o.0)
@@ -245,15 +224,13 @@ pub fn[T] choice(options : Array[(String, T)]) -> Schema[T] {
       "enum": Json::array(names.map(n => Json(n))),
     },
     decode: (input, path) => {
-      guard input is String(s) else {
-        fail(path, "must be one of \{names.join(", ")}")
-      }
+      guard input is String(s) else { fail(path, "expected a string") }
       for option in options {
         if option.0 == s {
           return option.1
         }
       }
-      fail(path, "must be one of \{names.join(", ")}")
+      fail(path, "must be one of \{listing(names)}")
     },
   }
 }

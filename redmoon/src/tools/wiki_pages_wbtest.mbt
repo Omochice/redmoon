@@ -249,7 +249,7 @@ async test "readonly mode makes the write actions unknown" {
   })
   assert_eq(
     called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of: list, show\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
   )
   assert_eq(fake.calls, [])
 }

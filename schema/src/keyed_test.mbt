@@ -91,18 +91,18 @@ test "keyed parses the named action" {
 
 ///|
 test "keyed rejects a wrong shape" {
-  let expected = "error: expected an object with exactly one key naming the action, one of: list, show, update_note"
+  let expected = "error: expected an object with exactly one key naming the action, one of `list`, `show` and `update_note`"
   assert_eq(outcome(tool, "{}"), expected)
   assert_eq(outcome(tool, "{\"list\":{},\"show\":{\"id\":1}}"), expected)
-  assert_eq(outcome(tool, "[]"), expected)
-  assert_eq(outcome(tool, "null"), expected)
+  assert_eq(outcome(tool, "[]"), "error: expected an object")
+  assert_eq(outcome(tool, "null"), "error: expected an object")
 }
 
 ///|
 test "keyed rejects an unknown action" {
   assert_eq(
     outcome(tool, "{\"delete\":{}}"),
-    "error: unknown action `delete`, one of: list, show, update_note",
+    "error: unknown action `delete`, one of `list`, `show` and `update_note`",
   )
 }
 
@@ -124,7 +124,7 @@ test "keyed names the action and field in errors" {
 test "keyed reports the errors of the shape an action selects" {
   assert_eq(
     outcome(tool, "{\"update_note\":{\"id\":1}}"),
-    "error: update_note: expected one of the keys text, journal_id",
+    "error: update_note: expected one of the keys `text` and `journal_id`",
   )
   assert_eq(
     outcome(tool, "{\"update_note\":{\"id\":1,\"text\":\" \"}}"),
@@ -134,7 +134,7 @@ test "keyed reports the errors of the shape an action selects" {
 
 ///|
 test "keyed can be nested under a caller's path" {
-  let result = try tool.parse_at(j("{\"show\":{}}"), ["tool"]) catch {
+  let result = try (tool.decode)(j("{\"show\":{}}"), ["tool"]) catch {
     e => e.message()
   } noraise {
     _ => "ok"
