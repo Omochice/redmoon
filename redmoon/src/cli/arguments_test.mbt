@@ -26,10 +26,14 @@ test "login, logout and list" {
 }
 
 ///|
-test "a missing endpoint or subcommand is rejected" {
+test "a missing endpoint or subcommand is rejected with the usage" {
   for argv in [["serve"], ["login"], ["logout"], ["frobnicate"]] {
     try @cli.parse_arguments(argv~) catch {
-      _ => ()
+      error =>
+        assert_true(
+          error.to_string().contains("\nUsage: redmoon"),
+          msg="\{argv.join(" ")} was rejected without the usage: \{error}",
+        )
     } noraise {
       _ => fail("\{argv.join(" ")} was accepted")
     }
