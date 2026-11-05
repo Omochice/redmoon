@@ -1111,19 +1111,23 @@ async test "list rejects a limit below 1, which would answer without asking Redm
 }
 
 ///|
-async test "a blank or overlong subject is rejected on create and update, as Redmine limits it to 255 characters" {
-  let long = String::make(256, 'a')
+async test "a blank subject is rejected on create and update" {
   assert_eq(
     rejected("create", with_field(new_issue, "subject", " ")),
     "{\"status\":0,\"errors\":[\"invalid arguments: create.subject: must not be blank\"]}",
   )
   assert_eq(
-    rejected("create", with_field(new_issue, "subject", Json::string(long))),
-    "{\"status\":0,\"errors\":[\"invalid arguments: create.subject: must be at most 255 characters\"]}",
-  )
-  assert_eq(
     rejected("update", { "id": 1, "subject": " " }),
     "{\"status\":0,\"errors\":[\"invalid arguments: update.subject: must not be blank\"]}",
+  )
+}
+
+///|
+async test "a subject over 255 characters is rejected on create and update, as Redmine limits it" {
+  let long = String::make(256, 'a')
+  assert_eq(
+    rejected("create", with_field(new_issue, "subject", Json::string(long))),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.subject: must be at most 255 characters\"]}",
   )
   assert_eq(
     rejected("update", { "id": 1, "subject": long }),

@@ -248,19 +248,23 @@ async fn rejected_version(arguments : Json) -> String {
 }
 
 ///|
-async test "a blank or overlong name is rejected on create and update, as Redmine limits it to 60 characters" {
-  let long = String::make(61, 'a')
+async test "a blank name is rejected on create and update" {
   assert_eq(
     rejected_version({ "create": { "project_id": 1, "name": " " } }),
     "{\"status\":0,\"errors\":[\"invalid arguments: create.name: must not be blank\"]}",
   )
   assert_eq(
-    rejected_version({ "create": { "project_id": 1, "name": long } }),
-    "{\"status\":0,\"errors\":[\"invalid arguments: create.name: must be at most 60 characters\"]}",
-  )
-  assert_eq(
     rejected_version({ "update": { "id": 7, "name": " " } }),
     "{\"status\":0,\"errors\":[\"invalid arguments: update.name: must not be blank\"]}",
+  )
+}
+
+///|
+async test "a name over 60 characters is rejected on create and update, as Redmine limits it" {
+  let long = String::make(61, 'a')
+  assert_eq(
+    rejected_version({ "create": { "project_id": 1, "name": long } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.name: must be at most 60 characters\"]}",
   )
   assert_eq(
     rejected_version({ "update": { "id": 7, "name": long } }),
