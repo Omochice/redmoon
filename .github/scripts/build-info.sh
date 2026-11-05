@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 # Usage: build-info.sh stamp | verify
 #
-# `stamp` rewrites the `pub let build` line of the build-info source with the
-# checkout's commit and dirty flag; `verify` fails unless that line is in its
-# `None` form.
-# Only the one line is touched so that the rest of the file is owned by the
-# source alone and a comment edit there needs no change here.
+# Only the `pub let build` line is touched, so the rest of info.mbt is owned by
+# the source alone and a comment edit there needs no change here.
 set -euo pipefail
 
 target="redmoon/src/build/info.mbt"
