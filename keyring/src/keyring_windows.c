@@ -27,6 +27,8 @@ static wchar_t *target_name(const char *service, const char *account) {
   return w;
 }
 
+int32_t omochice_keyring_platform(void) { return KEYRING_PLATFORM_WINDOWS; }
+
 static int32_t status_of(DWORD e) {
   if (e == ERROR_NOT_FOUND) return KEYRING_NOT_FOUND;
   if (e == ERROR_NO_SUCH_LOGON_SESSION) return KEYRING_NO_STORE;
@@ -35,7 +37,7 @@ static int32_t status_of(DWORD e) {
 
 int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, moonbit_bytes_t secret) {
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   wchar_t *target = (svc && acct) ? target_name(svc, acct) : NULL;
   wchar_t *user = acct ? widen(acct, -1) : NULL;
   if (target && user) {
@@ -57,12 +59,12 @@ int32_t omochice_keyring_set(moonbit_bytes_t service, moonbit_bytes_t account, m
 
 int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   wchar_t *target = (svc && acct) ? target_name(svc, acct) : NULL;
   if (target) {
     PCREDENTIALW cred = NULL;
     if (CredReadW(target, CRED_TYPE_GENERIC, 0, &cred)) {
-      rc = keyring_result_set(cred->CredentialBlob, cred->CredentialBlobSize) ? KEYRING_OK : -1;
+      rc = keyring_result_set(cred->CredentialBlob, cred->CredentialBlobSize) ? KEYRING_OK : KEYRING_INTERNAL;
       SecureZeroMemory(cred->CredentialBlob, cred->CredentialBlobSize);
       CredFree(cred);
     } else {
@@ -77,7 +79,7 @@ int32_t omochice_keyring_get(moonbit_bytes_t service, moonbit_bytes_t account) {
 
 int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account) {
   char *svc = keyring_cstr(service), *acct = keyring_cstr(account);
-  int32_t rc = -1;
+  int32_t rc = KEYRING_INTERNAL;
   wchar_t *target = (svc && acct) ? target_name(svc, acct) : NULL;
   if (target) {
     rc = CredDeleteW(target, CRED_TYPE_GENERIC, 0) ? KEYRING_OK : status_of(GetLastError());
@@ -90,22 +92,22 @@ int32_t omochice_keyring_delete(moonbit_bytes_t service, moonbit_bytes_t account
 
 int32_t omochice_keyring_list(moonbit_bytes_t service) {
   char *svc = keyring_cstr(service);
-  if (!svc) return -1;
+  if (!svc) return KEYRING_INTERNAL;
   size_t n = strlen(svc) + 3;
   char *pattern = malloc(n);
-  if (!pattern) { keyring_cstr_free(svc); return -1; }
+  if (!pattern) { keyring_cstr_free(svc); return KEYRING_INTERNAL; }
   snprintf(pattern, n, "%s:*", svc);
   wchar_t *filter = widen(pattern, -1);
   free(pattern);
   keyring_cstr_free(svc);
-  if (!filter) return -1;
+  if (!filter) return KEYRING_INTERNAL;
 
   DWORD count = 0;
   PCREDENTIALW *creds = NULL;
   int32_t rc;
   if (!CredEnumerateW(filter, 0, &count, &creds)) {
     DWORD e = GetLastError();
-    rc = e == ERROR_NOT_FOUND ? (keyring_result_set("", 0) ? KEYRING_OK : -1) : status_of(e);
+    rc = e == ERROR_NOT_FOUND ? (keyring_result_set("", 0) ? KEYRING_OK : KEYRING_INTERNAL) : status_of(e);
     free(filter);
     return rc;
   }
@@ -113,14 +115,14 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
 
   size_t cap = 256, len = 0;
   char *buf = malloc(cap);
-  rc = buf ? KEYRING_OK : -1;
+  rc = buf ? KEYRING_OK : KEYRING_INTERNAL;
   for (DWORD i = 0; buf && i < count; i++) {
     if (!creds[i]->UserName) continue;
     int need = WideCharToMultiByte(CP_UTF8, 0, creds[i]->UserName, -1, NULL, 0, NULL, NULL);
     if (need <= 0) continue;
     while (len + (size_t)need + 1 > cap) {
       char *grown = realloc(buf, cap *= 2);
-      if (!grown) { rc = -1; break; }
+      if (!grown) { rc = KEYRING_INTERNAL; break; }
       buf = grown;
     }
     if (rc != KEYRING_OK) break;
@@ -129,7 +131,7 @@ int32_t omochice_keyring_list(moonbit_bytes_t service) {
     buf[len++] = '\n';
   }
   CredFree(creds);
-  if (rc == KEYRING_OK && !keyring_result_set(buf, len)) rc = -1;
+  if (rc == KEYRING_OK && !keyring_result_set(buf, len)) rc = KEYRING_INTERNAL;
   free(buf);
   return rc;
 }

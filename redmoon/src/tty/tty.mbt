@@ -1,10 +1,9 @@
 ///|
+/// A secret that could not be read from the terminal or stdin; the message is
+/// shown to the user as is.
 pub suberror TtyError {
   Message(String)
 }
-
-///|
-pub extend TtyError with Show::{to_string, output}
 
 ///|
 pub impl Show for TtyError with fn output(self, logger) {
@@ -12,6 +11,9 @@ pub impl Show for TtyError with fn output(self, logger) {
     Message(message) => logger.write_string(message)
   }
 }
+
+///|
+pub extend TtyError with Show::{to_string, output}
 
 ///|
 extern "C" fn ffi_is_terminal() -> Int32 = "omochice_tty_is_terminal"

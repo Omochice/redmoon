@@ -2,6 +2,8 @@
 package "omochice/keyring"
 
 // Values
+pub const INTERNAL : Int32 = 1000000003
+
 pub fn delete(String, String) -> Unit raise KeyringError
 
 pub fn get(String, String) -> String? raise KeyringError

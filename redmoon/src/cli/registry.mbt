@@ -5,26 +5,23 @@ pub fn registered_tools(
   mode : @tools.Mode,
   plugins : Array[Plugin],
 ) -> Array[@mcp.Tool] {
+  let files = @tools.LocalFile::new()
   let tools = [
-    @tools.issues_tool(redmine, @tools.LocalFile::new(), mode),
-    @tools.wiki_pages_tool(redmine, @tools.LocalFile::new(), mode),
+    @tools.issues_tool(redmine, files, mode),
+    @tools.wiki_pages_tool(redmine, files, mode),
     @tools.versions_tool(redmine, mode),
     @tools.relations_tool(redmine, mode),
     @tools.search_tool(redmine),
     @tools.time_entries_tool(redmine, mode),
     @tools.enumerations_tool(redmine),
     @tools.memberships_tool(redmine),
-    @tools.attachments_tool(redmine, @tools.LocalFile::new(), mode),
+    @tools.attachments_tool(redmine, files, mode),
     @tools.server_info_tool(),
   ]
-  if plugins.contains(IssueTemplates) {
-    tools.push(@tools.issue_templates_tool(redmine))
-  }
-  if plugins.contains(Agile) {
-    tools.push(@tools.agile_tool(redmine, mode))
-  }
-  if plugins.contains(AdditionalTags) {
-    tools.push(@tools.tags_tool(redmine, mode))
+  for entry in known_plugins {
+    if plugins.contains(entry.plugin) {
+      tools.push((entry.tool)(redmine, mode))
+    }
   }
   tools
 }

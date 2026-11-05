@@ -13,7 +13,8 @@
 pub suberror KeyringError {
   /// No credential store can be opened; the payload tells the user what to install or start.
   NoStore(String)
-  /// The store rejected the operation; the payload is its native error code.
+  /// The store rejected the operation; the payload is its native error code,
+  /// or `INTERNAL` when this module failed before or after talking to it.
   Refused(Int32)
 }
 
@@ -45,6 +46,18 @@ extern "C" fn ffi_result_size() -> Int32 = "omochice_keyring_result_size"
 extern "C" fn ffi_result_take(dst : Bytes) = "omochice_keyring_result_take"
 
 ///|
+extern "C" fn ffi_platform() -> Int32 = "omochice_keyring_platform"
+
+///|
+let platform_darwin : Int32 = 1
+
+///|
+let platform_linux : Int32 = 2
+
+///|
+let platform_windows : Int32 = 3
+
+///|
 let ok : Int32 = 0
 
 ///|
@@ -54,16 +67,34 @@ let not_found : Int32 = 1000000001
 let no_store : Int32 = 1000000002
 
 ///|
+/// The `Refused` payload for a failure of this module itself, such as an
+/// allocation failure or a secret that cannot be decoded, which no store
+/// reported.
+pub const INTERNAL : Int32 = 1000000003
+
+///|
 fn check(status : Int32) -> Unit raise KeyringError {
   if status == ok {
     return
   }
   if status == no_store {
-    raise NoStore(
-      "no credential store is available; on Linux install libsecret and run a Secret Service provider such as gnome-keyring",
-    )
+    raise NoStore(no_store_message(ffi_platform()))
   }
   raise Refused(status)
+}
+
+///|
+fn no_store_message(platform : Int32) -> String {
+  let hint = if platform == platform_darwin {
+    "the Security and CoreFoundation frameworks could not be loaded"
+  } else if platform == platform_linux {
+    "install libsecret and run a Secret Service provider such as gnome-keyring"
+  } else if platform == platform_windows {
+    "the Credential Manager needs an interactive logon session"
+  } else {
+    "unknown platform \{platform}"
+  }
+  "no credential store is available; \{hint}"
 }
 
 ///|
@@ -77,7 +108,7 @@ fn take_result() -> Bytes {
 /// A store holding bytes that are not UTF-8 is reported as refusing, since the secret cannot be returned as text.
 fn decode(bytes : Bytes) -> String raise KeyringError {
   @utf8.decode(bytes) catch {
-    _ => raise Refused(-1)
+    _ => raise Refused(INTERNAL)
   }
 }
 
@@ -108,9 +139,12 @@ pub fn get(service : String, account : String) -> String? raise KeyringError {
 
 ///|
 /// Stores `secret` for `service` and `account`, replacing any existing one.
+/// A secret containing a NUL character is refused with `INTERNAL` on every
+/// platform, because the Secret Service takes a C string and would otherwise
+/// store a truncated secret on Linux only.
 ///
 /// # Raises
-/// `NoStore` when no credential store is reachable, `Refused` when the store rejects the write.
+/// `NoStore` when no credential store is reachable, `Refused` when the store rejects the write or the secret contains NUL.
 ///
 /// ```mbt check
 /// #skip("touches the OS credential store")
@@ -123,6 +157,9 @@ pub fn set(
   account : String,
   secret : String,
 ) -> Unit raise KeyringError {
+  if secret.contains("\u{0}") {
+    raise Refused(INTERNAL)
+  }
   check(
     ffi_set(@utf8.encode(service), @utf8.encode(account), @utf8.encode(secret)),
   )
@@ -142,6 +179,8 @@ pub fn set(
 /// ```
 pub fn delete(service : String, account : String) -> Unit raise KeyringError {
   let status = ffi_delete(@utf8.encode(service), @utf8.encode(account))
+  // Every C file reports an absent entry as not found so the fold into success
+  // exists once, here, instead of once per platform.
   if status == not_found {
     return
   }

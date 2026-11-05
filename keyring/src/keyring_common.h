@@ -11,6 +11,14 @@
 #define KEYRING_OK 0
 #define KEYRING_NOT_FOUND 1000000001
 #define KEYRING_NO_STORE 1000000002
+#define KEYRING_INTERNAL 1000000003
+
+/* Which store NoStore refers to is decided in C, where the platform is known
+   at compile time, and worded in MoonBit, where the message is tested. */
+#define KEYRING_PLATFORM_DARWIN 1
+#define KEYRING_PLATFORM_LINUX 2
+#define KEYRING_PLATFORM_WINDOWS 3
+int32_t omochice_keyring_platform(void);
 
 /* Results go through one buffer instead of a returned MoonBit object so the
    plaintext has a single owner that is wiped as soon as it is taken. */

@@ -4,22 +4,22 @@ struct FakeStore {
 }
 
 ///|
-impl CredentialStore for FakeStore with fn get(self, account) {
+impl KeyringPort for FakeStore with fn get(self, account) {
   self.entries.get(account)
 }
 
 ///|
-impl CredentialStore for FakeStore with fn set(self, account, secret) {
+impl KeyringPort for FakeStore with fn set(self, account, secret) {
   self.entries[account] = secret
 }
 
 ///|
-impl CredentialStore for FakeStore with fn delete(self, account) {
+impl KeyringPort for FakeStore with fn delete(self, account) {
   self.entries.remove(account)
 }
 
 ///|
-impl CredentialStore for FakeStore with fn list(self) {
+impl KeyringPort for FakeStore with fn list(self) {
   self.entries.keys().collect()
 }
 
@@ -51,6 +51,21 @@ async test "login rejects an empty key" {
 }
 
 ///|
+async test "login reports a failed secret read and stores nothing" {
+  let store = fake([])
+  try
+    run_login("https://r.example.com", store, () => {
+      raise Message("stdin is not a terminal")
+    })
+  catch {
+    e => inspect(e, content="stdin is not a terminal")
+  } noraise {
+    _ => fail("a failed secret read was stored")
+  }
+  assert_true(store.entries.is_empty())
+}
+
+///|
 test "resolve returns the stored key for the canonical account" {
   let store = fake([("https://r.example.com", "k")])
   let credential = resolve_api_key("https://r.example.com/", store)
@@ -64,7 +79,7 @@ test "resolve tells the user to log in when no key is stored" {
     e =>
       inspect(
         e,
-        content="no stored API key for https://r.example.com; run `login --endpoint https://r.example.com` first",
+        content="no stored API key for https://r.example.com; run `redmoon login --endpoint https://r.example.com` first",
       )
   } noraise {
     _ => fail("a missing key was resolved")

@@ -3,14 +3,17 @@
 /// account it was stored under.
 ///
 /// # Raises
-/// `Message` for an invalid endpoint, an empty key, or a failing store.
+/// `Message` for an invalid endpoint, a key that cannot be read or is empty,
+/// or a failing store.
 pub async fn run_login(
   endpoint : String,
-  store : &CredentialStore,
+  store : &KeyringPort,
   read_secret : async () -> String,
-) -> String {
+) -> String raise CliError {
   let account = canonicalize_endpoint(endpoint)
-  let secret = read_secret().trim().to_owned()
+  let secret = (read_secret() catch { error => raise Message("\{error}") })
+    .trim()
+    .to_owned()
   if secret == "" {
     raise Message("no API key was provided")
   }
@@ -20,9 +23,12 @@ pub async fn run_login(
 
 ///|
 /// Removes the stored API key for `endpoint` and returns its account.
+///
+/// # Raises
+/// `Message` for an invalid endpoint or a failing store.
 pub fn run_logout(
   endpoint : String,
-  store : &CredentialStore,
+  store : &KeyringPort,
 ) -> String raise CliError {
   let account = canonicalize_endpoint(endpoint)
   store.delete(account)
@@ -31,7 +37,10 @@ pub fn run_logout(
 
 ///|
 /// Returns the endpoints that have a stored API key, sorted for stable output.
-pub fn run_list(store : &CredentialStore) -> Array[String] raise CliError {
+///
+/// # Raises
+/// `Message` for a failing store.
+pub fn run_list(store : &KeyringPort) -> Array[String] raise CliError {
   let endpoints = store.list()
   endpoints.sort()
   endpoints
@@ -40,7 +49,9 @@ pub fn run_list(store : &CredentialStore) -> Array[String] raise CliError {
 ///|
 /// An endpoint paired with the API key stored for it.
 pub(all) struct Credential {
+  /// The canonical endpoint, which is also the keyring account.
   endpoint : String
+  /// The Redmine API key stored for `endpoint`.
   api_key : String
 }
 
@@ -48,17 +59,17 @@ pub(all) struct Credential {
 /// Looks up the API key for `endpoint`.
 ///
 /// # Raises
-/// `Message` telling the user to run `login` when no key is stored.
+/// `Message` telling the user to run `redmoon login` when no key is stored.
 pub fn resolve_api_key(
   endpoint : String,
-  store : &CredentialStore,
+  store : &KeyringPort,
 ) -> Credential raise CliError {
   let account = canonicalize_endpoint(endpoint)
   match store.get(account) {
     Some(api_key) => { endpoint: account, api_key, }
     None =>
       raise Message(
-        "no stored API key for \{account}; run `login --endpoint \{account}` first",
+        "no stored API key for \{account}; run `redmoon login --endpoint \{account}` first",
       )
   }
 }
@@ -68,18 +79,22 @@ pub fn resolve_api_key(
 /// Nothing else may write to stdout, because it is the protocol channel.
 ///
 /// # Raises
-/// `Message` when no API key is stored for `endpoint` or the endpoint is not an
-/// http(s) URL.
+/// `Message` when no API key is stored for `endpoint`, the endpoint is not an
+/// http(s) URL, or the server fails while serving.
 pub async fn run_serve(
   endpoint : String,
   read_only : Bool,
   plugins : Array[Plugin],
-  store : &CredentialStore,
-) -> Unit {
+  store : &KeyringPort,
+) -> Unit raise CliError {
   let credential = resolve_api_key(endpoint, store)
   let redmine = @redmine.new(
     endpoint=credential.endpoint,
     api_key=credential.api_key,
-  )
-  build_server(redmine, read_only, plugins).serve_stdio()
+  ) catch {
+    _ => raise Message("invalid endpoint URL: \{credential.endpoint}")
+  }
+  build_server(redmine, read_only, plugins).serve_stdio() catch {
+    error => raise Message("\{error}")
+  }
 }

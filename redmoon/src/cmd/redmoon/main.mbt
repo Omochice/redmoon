@@ -1,9 +1,9 @@
 ///|
-extern "c" fn exit(code : Int32) = "exit"
+extern "C" fn exit(code : Int32) = "exit"
 
 ///|
 async fn run() -> Unit {
-  let store = @cli.OsKeyring::{ }
+  let store = @cli.OsKeyring::new()
   match @cli.parse_arguments() {
     Serve(endpoint~, read_only~, plugins~) =>
       @cli.run_serve(endpoint, read_only, plugins, store)

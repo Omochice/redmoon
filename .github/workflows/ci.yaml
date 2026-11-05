@@ -32,6 +32,7 @@ jobs:
       - name: Verify the build-info source is committed in its None form
         run: nix develop --command task build-info:verify
 
+      - run: nix develop --command moon version --all
       - run: nix develop --command task check
       - name: Verify the generated package interfaces are committed
         run: |

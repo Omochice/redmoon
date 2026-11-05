@@ -68,11 +68,18 @@ fn command() -> @argparse.Command {
 /// Parses the process arguments, or `argv` when given.
 ///
 /// # Raises
-/// The parse error, whose text includes the usage; `--help` and `--version`
-/// print and exit instead of returning.
-pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise {
-  let matches = command().parse(argv?, env=Map([]))
-  guard matches.subcommand is Some((name, sub)) else { fail("no subcommand") }
+/// `Message` with the parse error, whose text includes the usage; `--help`
+/// and `--version` print and exit instead of returning.
+pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise CliError {
+  let matches = command().parse(argv?, env=Map([])) catch {
+    error => raise Message("\{error}")
+  }
+  // The parser already rejects a missing subcommand, a name outside the four
+  // above, and a missing --endpoint, so the fallbacks below only complete the
+  // Option and the match; no argv reaches them.
+  guard matches.subcommand is Some((name, sub)) else {
+    raise Message("no subcommand")
+  }
   let endpoint = sub.values.get("endpoint").map(values => values[0])
   match (name, endpoint) {
     ("serve", Some(endpoint)) =>
@@ -84,6 +91,6 @@ pub fn parse_arguments(argv? : ArrayView[String]) -> Invocation raise {
     ("login", Some(endpoint)) => Login(endpoint~)
     ("logout", Some(endpoint)) => Logout(endpoint~)
     ("list", _) => List
-    _ => fail("unknown subcommand \{name}")
+    _ => raise Message("unknown subcommand \{name}")
   }
 }
