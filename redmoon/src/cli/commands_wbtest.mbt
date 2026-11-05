@@ -51,6 +51,21 @@ async test "login rejects an empty key" {
 }
 
 ///|
+async test "login reports a failed secret read and stores nothing" {
+  let store = fake([])
+  try
+    run_login("https://r.example.com", store, () => {
+      raise Message("stdin is not a terminal")
+    })
+  catch {
+    e => inspect(e, content="stdin is not a terminal")
+  } noraise {
+    _ => fail("a failed secret read was stored")
+  }
+  assert_true(store.entries.is_empty())
+}
+
+///|
 test "resolve returns the stored key for the canonical account" {
   let store = fake([("https://r.example.com", "k")])
   let credential = resolve_api_key("https://r.example.com/", store)
