@@ -4,7 +4,7 @@ A typed schema DSL in which one definition yields both a JSON Schema and a decod
 
 ## What is supported
 
-The combinators below are the whole public surface of the module.
+A schema is built from the combinators below.
 
 - Scalars: `string`, `not_blank`, `literal`, `choice`, `iso_date`, `integer` (`Int32`), `integer64` (`Int64`), `number`, and `boolean`.
 - Containers: `array`, `nullable`, and `record`, whose members are `required`, `optional`, and `optional_or` handles read back through `Values::get`.
