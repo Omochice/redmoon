@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-027](./adr-027-release-distribution.md))
+Accepted (refined by [ADR-017](./adr-017-redmine-plugin-sdk-module.md), which adds the sixth module, and by [ADR-027](./adr-027-release-distribution.md))
 
 ## Context
 

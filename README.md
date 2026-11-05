@@ -10,6 +10,7 @@ The API key is kept in the OS keyring rather than in the MCP client's configurat
 ## Usage
 
 Prebuilt binaries for `aarch64-apple-darwin` and `x86_64-unknown-linux-gnu` are attached to each [release](https://github.com/Omochice/redmoon/releases).
+There is no binary for Intel macOS, Linux arm64, or Windows at the moment.
 
 ### login
 
@@ -39,6 +40,7 @@ The MCP client then runs `serve` over stdio.
 
 `--readonly` drops every create, update, and delete action.
 `--plugin issue_templates` adds the tools of the [redmine_issue_templates](https://github.com/agileware-jp/redmine_issue_templates) plugin.
+`--plugin agile` adds the tools of the [RedmineUP Agile](https://www.redmineup.com/pages/plugins/agile) plugin.
 `--plugin additional_tags` adds the tools of the [Additional Tags](https://github.com/AlphaNodes/additional_tags) plugin.
 `redmoon serve --help` lists every option.
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-027](./adr-027-release-distribution.md))
+Accepted (refined by [ADR-027](./adr-027-release-distribution.md), whose section 6 builds and tests only the nix platforms for now, so no Windows job runs the unit tests)
 
 ## Context
 

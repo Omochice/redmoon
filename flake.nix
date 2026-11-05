@@ -91,6 +91,7 @@
               );
               includes = [
                 "*.mbt"
+                "*.mbt.md"
                 "moon.mod"
                 "moon.pkg"
               ];
