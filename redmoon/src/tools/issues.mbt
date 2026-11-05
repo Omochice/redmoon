@@ -226,7 +226,7 @@ let create_input : @schema.Schema[IssueAction] = {
   let tracker_id = @schema.required("tracker_id", record_id())
   let status_id = @schema.required("status_id", record_id())
   let priority_id = @schema.required("priority_id", record_id())
-  let subject = @schema.required("subject", @schema.string())
+  let subject = @schema.required("subject", @schema.not_blank(max_length=255))
   let description = @schema.optional("description", @schema.string())
   let description_path = text_path("description")
   let fixed_version_id = @schema.optional("fixed_version_id", record_id())
@@ -246,7 +246,10 @@ let create_input : @schema.Schema[IssueAction] = {
     @schema.iso_date().describe(written_date_text("due_date", "is due", false)),
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
-  let estimated_hours = @schema.optional("estimated_hours", @schema.number())
+  let estimated_hours = @schema.optional(
+    "estimated_hours",
+    @schema.number(min=0.0),
+  )
   let custom_fields = @schema.optional(
     "custom_fields",
     custom_field_inputs(custom_field_value).describe(custom_fields_text),
@@ -294,7 +297,7 @@ let create_input : @schema.Schema[IssueAction] = {
 
 ///|
 let update_input : @schema.Schema[IssueAction] = {
-  let subject = @schema.optional("subject", @schema.string())
+  let subject = @schema.optional("subject", @schema.not_blank(max_length=255))
   let description = @schema.optional("description", @schema.string())
   let description_path = text_path("description")
   let status_id = @schema.optional(
@@ -346,7 +349,10 @@ let update_input : @schema.Schema[IssueAction] = {
     @schema.integer(min=0, max=100),
   )
   let is_private = @schema.optional("is_private", @schema.boolean())
-  let estimated_hours = @schema.optional("estimated_hours", @schema.number())
+  let estimated_hours = @schema.optional(
+    "estimated_hours",
+    @schema.number(min=0.0),
+  )
   let notes = @schema.optional("notes", @schema.string())
   let notes_path = text_path("notes")
   let private_notes = @schema.optional("private_notes", @schema.boolean())

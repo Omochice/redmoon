@@ -262,6 +262,84 @@ async test "a missing required hours is reported with its action path" {
 }
 
 ///|
+async test "negative hours are rejected on create and update, as Redmine refuses them" {
+  let fake = FakeTimeEntries::new()
+  let tools = time_entry_tools(fake)
+  for hours in [-1.0, -0.25] {
+    let created = call_tool(tools, "redmine_time_entries", {
+      "create": { "hours": hours, "project_id": 1 },
+    })
+    assert_eq(
+      created.text,
+      "{\"status\":0,\"errors\":[\"invalid arguments: create.hours: must be at least 0\"]}",
+    )
+    let updated = call_tool(tools, "redmine_time_entries", {
+      "update": { "id": 7, "hours": hours },
+    })
+    assert_eq(
+      updated.text,
+      "{\"status\":0,\"errors\":[\"invalid arguments: update.hours: must be at least 0\"]}",
+    )
+  }
+  assert_true(fake.creates.is_empty() && fake.updates.is_empty())
+}
+
+///|
+async test "zero hours are accepted on create and update" {
+  let fake = FakeTimeEntries::new()
+  let tools = time_entry_tools(fake)
+  let created = call_tool(tools, "redmine_time_entries", {
+    "create": { "hours": 0, "project_id": 1 },
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  assert_eq(fake.creates[0].hours, 0.0)
+  let updated = call_tool(tools, "redmine_time_entries", {
+    "update": { "id": 7, "hours": 0 },
+  })
+  assert_eq(updated.is_error, false, msg=updated.text)
+  assert_eq(fake.updates[0].1.hours, Some(0.0))
+}
+
+///|
+async test "comments over 1024 characters are rejected on create and update" {
+  let fake = FakeTimeEntries::new()
+  let tools = time_entry_tools(fake)
+  let long = String::make(1025, 'a')
+  let created = call_tool(tools, "redmine_time_entries", {
+    "create": { "hours": 1, "project_id": 1, "comments": long },
+  })
+  assert_eq(
+    created.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.comments: must be at most 1024 characters\"]}",
+  )
+  let updated = call_tool(tools, "redmine_time_entries", {
+    "update": { "id": 7, "comments": long },
+  })
+  assert_eq(
+    updated.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: update.comments: must be at most 1024 characters\"]}",
+  )
+  assert_true(fake.creates.is_empty() && fake.updates.is_empty())
+}
+
+///|
+async test "comments of exactly 1024 characters are accepted on create and update" {
+  let fake = FakeTimeEntries::new()
+  let tools = time_entry_tools(fake)
+  let comments = String::make(1024, 'a')
+  let created = call_tool(tools, "redmine_time_entries", {
+    "create": { "hours": 1, "project_id": 1, "comments": comments },
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  assert_eq(fake.creates[0].comments, Some(comments))
+  let updated = call_tool(tools, "redmine_time_entries", {
+    "update": { "id": 7, "comments": comments },
+  })
+  assert_eq(updated.is_error, false, msg=updated.text)
+  assert_eq(fake.updates[0].1.comments, Some(comments))
+}
+
+///|
 async test "a malformed date is rejected before reaching the port" {
   let fake = FakeTimeEntries::new()
   let called = call_tool(time_entry_tools(fake), "redmine_time_entries", {
@@ -322,7 +400,7 @@ async test "tools/list advertises the full time entry tool" {
   let advertised = list_tools([time_entries_tool(FakeTimeEntries::new(), Full)])
   assert_eq(
     advertised.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_time_entries\",\"description\":\"Create, read, update, and delete Redmine time entries. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"user_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"hours\":{\"type\":\"number\"},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\"}},\"required\":[\"hours\"],\"additionalProperties\":false,\"anyOf\":[{\"required\":[\"issue_id\"]},{\"required\":[\"project_id\"]}]},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"hours\":{\"type\":\"number\"},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_time_entries\",\"description\":\"Create, read, update, and delete Redmine time entries. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"user_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"from\":{\"type\":\"string\",\"format\":\"date\"},\"to\":{\"type\":\"string\",\"format\":\"date\"}},\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"hours\":{\"type\":\"number\",\"minimum\":0},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\",\"maxLength\":1024}},\"required\":[\"hours\"],\"additionalProperties\":false,\"anyOf\":[{\"required\":[\"issue_id\"]},{\"required\":[\"project_id\"]}]},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"hours\":{\"type\":\"number\",\"minimum\":0},\"issue_id\":{\"type\":\"integer\",\"minimum\":1},\"project_id\":{\"type\":\"integer\",\"minimum\":1},\"spent_on\":{\"type\":\"string\",\"format\":\"date\"},\"activity_id\":{\"type\":\"integer\",\"minimum\":1},\"comments\":{\"type\":\"string\",\"maxLength\":1024}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
 

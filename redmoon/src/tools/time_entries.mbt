@@ -70,14 +70,14 @@ let time_entry_activity_id : @schema.Field[Int32?] = @schema.optional(
 ///|
 let time_entry_comments : @schema.Field[String?] = @schema.optional(
   "comments",
-  @schema.string(),
+  @schema.string(max_length=1024),
 )
 
 ///|
 /// Redmine derives the project from the issue, so a new entry is accepted with
 /// either one or both but rejected with neither.
 let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
-  let hours = @schema.required("hours", @schema.number())
+  let hours = @schema.required("hours", @schema.number(min=0.0))
   @schema.record(
     [
       hours.as_member(),
@@ -105,7 +105,7 @@ let time_entry_create_input : @schema.Schema[TimeEntryAction] = {
 
 ///|
 let time_entry_update_input : @schema.Schema[TimeEntryAction] = {
-  let hours = @schema.optional("hours", @schema.number())
+  let hours = @schema.optional("hours", @schema.number(min=0.0))
   @schema.record(
     [
       time_entry_id.as_member(),

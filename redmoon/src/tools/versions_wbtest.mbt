@@ -239,6 +239,121 @@ async test "validation reports the exact message for each rule" {
 }
 
 ///|
+async fn rejected_version(arguments : Json) -> String {
+  let fake = FakeVersions::new()
+  let called = call_tool(version_tools(fake), "redmine_versions", arguments)
+  assert_eq(called.is_error, true, msg="accepted \{arguments.stringify()}")
+  assert_eq(fake.calls, [])
+  called.text
+}
+
+///|
+async test "a blank name is rejected on create and update" {
+  assert_eq(
+    rejected_version({ "create": { "project_id": 1, "name": " " } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.name: must not be blank\"]}",
+  )
+  assert_eq(
+    rejected_version({ "update": { "id": 7, "name": " " } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update.name: must not be blank\"]}",
+  )
+}
+
+///|
+async test "a name over 60 characters is rejected on create and update, as Redmine limits it" {
+  let long = String::make(61, 'a')
+  assert_eq(
+    rejected_version({ "create": { "project_id": 1, "name": long } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.name: must be at most 60 characters\"]}",
+  )
+  assert_eq(
+    rejected_version({ "update": { "id": 7, "name": long } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update.name: must be at most 60 characters\"]}",
+  )
+}
+
+///|
+async test "a name of exactly 60 characters is accepted on create and update" {
+  let fake = FakeVersions::new()
+  let tools = version_tools(fake)
+  let name = String::make(60, 'a')
+  let created = call_tool(tools, "redmine_versions", {
+    "create": { "project_id": 1, "name": name },
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  assert_eq(fake.created[0].1.name, name)
+  let updated = call_tool(tools, "redmine_versions", {
+    "update": { "id": 7, "name": name },
+  })
+  assert_eq(updated.is_error, false, msg=updated.text)
+  assert_eq(fake.updated[0].1.name, Some(name))
+}
+
+///|
+async test "a description over 255 characters is rejected on create and update" {
+  let long = String::make(256, 'a')
+  assert_eq(
+    rejected_version({
+      "create": { "project_id": 1, "name": "n", "description": long },
+    }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.description: must be at most 255 characters\"]}",
+  )
+  assert_eq(
+    rejected_version({ "update": { "id": 7, "description": long } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update.description: must be at most 255 characters\"]}",
+  )
+}
+
+///|
+async test "a description of exactly 255 characters is accepted on create and update" {
+  let fake = FakeVersions::new()
+  let tools = version_tools(fake)
+  let description = String::make(255, 'a')
+  let created = call_tool(tools, "redmine_versions", {
+    "create": { "project_id": 1, "name": "n", "description": description },
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  assert_eq(fake.created[0].1.description, Some(description))
+  let updated = call_tool(tools, "redmine_versions", {
+    "update": { "id": 7, "description": description },
+  })
+  assert_eq(updated.is_error, false, msg=updated.text)
+  assert_eq(fake.updated[0].1.description, Some(description))
+}
+
+///|
+async test "a wiki_page_title over 255 characters is rejected on create and update" {
+  let long = String::make(256, 'a')
+  assert_eq(
+    rejected_version({
+      "create": { "project_id": 1, "name": "n", "wiki_page_title": long },
+    }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: create.wiki_page_title: must be at most 255 characters\"]}",
+  )
+  assert_eq(
+    rejected_version({ "update": { "id": 7, "wiki_page_title": long } }),
+    "{\"status\":0,\"errors\":[\"invalid arguments: update.wiki_page_title: must be at most 255 characters\"]}",
+  )
+}
+
+///|
+async test "a wiki_page_title of exactly 255 characters is accepted on create and update" {
+  let fake = FakeVersions::new()
+  let tools = version_tools(fake)
+  let title = String::make(255, 'a')
+  let created = call_tool(tools, "redmine_versions", {
+    "create": { "project_id": 1, "name": "n", "wiki_page_title": title },
+  })
+  assert_eq(created.is_error, false, msg=created.text)
+  assert_eq(fake.created[0].1.wiki_page_title, Some(title))
+  let updated = call_tool(tools, "redmine_versions", {
+    "update": { "id": 7, "wiki_page_title": title },
+  })
+  assert_eq(updated.is_error, false, msg=updated.text)
+  assert_eq(fake.updated[0].1.wiki_page_title, Some(title))
+}
+
+///|
 async test "readonly mode makes the write actions unknown" {
   let fake = FakeVersions::new()
   let called = call_tool(
@@ -274,7 +389,7 @@ async test "tools/list advertises the versions tool in full mode" {
   let listed = list_tools(version_tools(FakeVersions::new()))
   assert_eq(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_versions\",\"description\":\"Create, read, update, and delete Redmine project versions (milestones). Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\"}},\"required\":[\"project_id\",\"name\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    "{\"tools\":[{\"name\":\"redmine_versions\",\"description\":\"Create, read, update, and delete Redmine project versions (milestones). Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\",\"maxLength\":255}},\"required\":[\"project_id\",\"name\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\",\"maxLength\":255}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
   )
 }
 
