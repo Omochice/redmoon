@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-027](./adr-027-release-distribution.md), whose section 6 builds only the nix platforms for now, so the Windows and Linux arm64 jobs and their Task setup action do not exist)
+Accepted (refined by [ADR-042](./adr-042-design-evolution-from-adr-027.md), which brings back the Windows and Linux arm64 jobs and installs Task with its setup action on every build runner)
 
 ## Context
 

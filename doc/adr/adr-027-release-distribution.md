@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (refined by [ADR-042](./adr-042-design-evolution-from-adr-027.md), which builds every asset with the official toolchain and all four platforms)
 
 ## Context
 

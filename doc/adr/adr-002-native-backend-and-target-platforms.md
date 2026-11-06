@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-027](./adr-027-release-distribution.md), whose section 6 builds and tests only the nix platforms for now, so no Windows job runs the unit tests)
+Accepted (refined by [ADR-042](./adr-042-design-evolution-from-adr-027.md), which builds all four platforms with the official toolchain; no job runs the unit tests on Windows or Linux arm64)
 
 ## Context
 
