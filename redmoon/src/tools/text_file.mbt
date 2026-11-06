@@ -13,12 +13,6 @@ fn text_path(field : String) -> @schema.Field[String?] {
 }
 
 ///|
-/// A local file path argument described by `description`.
-fn path_schema(description : String) -> @schema.Schema[String] {
-  @schema.not_blank().describe(description)
-}
-
-///|
 /// Counts the bytes as they stream because the size the file declared when
 /// opened is not the size it has by the time it is read.
 async fn read_bounded(reader : &@io.Reader, path : String) -> Bytes {

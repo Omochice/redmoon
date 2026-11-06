@@ -80,13 +80,32 @@ test "on_invalid prefixes each message" {
 
 ///|
 test "describe_crud_tool drops the write verbs in readonly mode" {
-  assert_eq(
+  inspect(
     describe_crud_tool("issues", Readonly),
-    "List and show Redmine issues. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.",
+    content=(
+      #|List and show Redmine issues.
+      #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
+    ),
   )
-  assert_eq(
+  inspect(
     describe_crud_tool("wiki pages", Full),
-    "Create, read, update, and delete Redmine wiki pages. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.",
+    content=(
+      #|Create, read, update, and delete Redmine wiki pages.
+      #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
+    ),
+  )
+}
+
+///|
+test "describe_crud_tool puts the extra lines between the summary and the hint" {
+  inspect(
+    describe_crud_tool("issues", Full, lines=["first", "second"]),
+    content=(
+      #|Create, read, update, and delete Redmine issues.
+      #|first
+      #|second
+      #|Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{"<operation>": {...}}`.
+    ),
   )
 }
 

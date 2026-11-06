@@ -104,7 +104,7 @@ fn tags_description(mode : Mode) -> String {
         "Needs the Additional Tags plugin with its issue tags, and its wiki tags for `list_wiki_pages`, switched on; reading needs the view_issue_tags permission, `add` and `remove` need edit_issue_tags, and `add` of a name no issue carries yet needs create_issue_tags.",
       ]
   }
-  [..lines, operation_key_hint].join("\n")
+  describe_tool(lines)
 }
 
 ///|
@@ -117,7 +117,7 @@ pub fn tags_tool(port : &TagPort, mode : Mode) -> @mcp.Tool {
     input=tags_input(mode),
     handler=async fn(action) {
       match action {
-        Show(issue_id) => respond(() => port.issue_tags(issue_id))
+        Show(issue_id) => respond(() => port.show_issue_tags(issue_id))
         Add(issue_id, names) =>
           respond(() => port.add_issue_tags(issue_id, names))
         Remove(issue_id, names) =>

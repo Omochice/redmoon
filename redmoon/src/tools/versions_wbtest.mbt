@@ -39,16 +39,8 @@ fn fake_version(name : String) -> @versions.Version {
 }
 
 ///|
-fn version_project_label(project : @redmine.ProjectRef) -> String {
-  match project {
-    Id(id) => id.to_string()
-    Identifier(name) => name
-  }
-}
-
-///|
 impl VersionPort for FakeVersions with fn list_versions(self, project) {
-  self.record("list \{version_project_label(project)}")
+  self.record("list \{project_label(project)}")
   [fake_version("v1")]
 }
 
@@ -64,8 +56,8 @@ impl VersionPort for FakeVersions with fn create_version(
   project,
   attributes,
 ) {
-  self.record("create \{version_project_label(project)}")
-  self.created.push((version_project_label(project), attributes))
+  self.record("create \{project_label(project)}")
+  self.created.push((project_label(project), attributes))
   fake_version(attributes.name)
 }
 
@@ -81,14 +73,14 @@ impl VersionPort for FakeVersions with fn delete_version(self, id) {
 }
 
 ///|
-fn version_tools(fake : FakeVersions, mode~ : Mode = Full) -> Array[@mcp.Tool] {
+fn versions_tools(fake : FakeVersions, mode~ : Mode = Full) -> Array[@mcp.Tool] {
   [versions_tool(fake, mode)]
 }
 
 ///|
 async test "list and show reach their port methods" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let listed = call_tool(tools, "redmine_versions", {
     "list": { "project_id": "demo" },
   })
@@ -105,7 +97,7 @@ async test "list and show reach their port methods" {
 ///|
 async test "create maps every argument and answers the created version" {
   let fake = FakeVersions::new()
-  let called = call_tool(version_tools(fake), "redmine_versions", {
+  let called = call_tool(versions_tools(fake), "redmine_versions", {
     "create": {
       "project_id": 1,
       "name": "Sprint",
@@ -137,7 +129,7 @@ async test "create maps every argument and answers the created version" {
 async test "create with only a name leaves the rest unset" {
   let fake = FakeVersions::new()
   ignore(
-    call_tool(version_tools(fake), "redmine_versions", {
+    call_tool(versions_tools(fake), "redmine_versions", {
       "create": { "project_id": "demo", "name": "Sprint" },
     }),
   )
@@ -159,7 +151,7 @@ async test "create with only a name leaves the rest unset" {
 ///|
 async test "update maps the supplied arguments and answers ok" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let called = call_tool(tools, "redmine_versions", {
     "update": {
       "id": 7,
@@ -186,9 +178,9 @@ async test "update maps the supplied arguments and answers ok" {
 }
 
 ///|
-async test "delete answers ok" {
+async test "versions: delete answers ok" {
   let fake = FakeVersions::new()
-  let called = call_tool(version_tools(fake), "redmine_versions", {
+  let called = call_tool(versions_tools(fake), "redmine_versions", {
     "delete": { "id": 7 },
   })
   assert_eq(called.text, "{\"ok\":true}")
@@ -196,8 +188,8 @@ async test "delete answers ok" {
 }
 
 ///|
-async test "validation reports the exact message for each rule" {
-  let tools = version_tools(FakeVersions::new())
+async test "versions: validation reports the exact message for each rule" {
+  let tools = versions_tools(FakeVersions::new())
   let cases : Array[(Json, String)] = [
     (
       { "create": { "project_id": 1 } },
@@ -239,9 +231,42 @@ async test "validation reports the exact message for each rule" {
 }
 
 ///|
+async test "versions: readonly mode makes the write actions unknown" {
+  let fake = FakeVersions::new()
+  let called = call_tool(
+    versions_tools(fake, mode=Readonly),
+    "redmine_versions",
+    { "delete": { "id": 7 } },
+  )
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
+  )
+  assert_eq(fake.calls, [])
+}
+
+///|
+async test "versions: a Redmine failure becomes a failure payload" {
+  let tools = versions_tools(
+    FakeVersions::new(failure=Response(status=404, errors=["Not Found"])),
+  )
+  let requests : Array[Json] = [
+    { "show": { "id": 7 } },
+    { "delete": { "id": 7 } },
+  ]
+  for arguments in requests {
+    let called = call_tool(tools, "redmine_versions", arguments)
+    assert_eq(called.is_error, true)
+    assert_eq(called.text, "{\"status\":404,\"errors\":[\"Not Found\"]}")
+  }
+}
+
+///|
+
+///|
 async fn rejected_version(arguments : Json) -> String {
   let fake = FakeVersions::new()
-  let called = call_tool(version_tools(fake), "redmine_versions", arguments)
+  let called = call_tool(versions_tools(fake), "redmine_versions", arguments)
   assert_eq(called.is_error, true, msg="accepted \{arguments.stringify()}")
   assert_eq(fake.calls, [])
   called.text
@@ -275,7 +300,7 @@ async test "a name over 60 characters is rejected on create and update, as Redmi
 ///|
 async test "a name of exactly 60 characters is accepted on create and update" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let name = String::make(60, 'a')
   let created = call_tool(tools, "redmine_versions", {
     "create": { "project_id": 1, "name": name },
@@ -307,7 +332,7 @@ async test "a description over 255 characters is rejected on create and update" 
 ///|
 async test "a description of exactly 255 characters is accepted on create and update" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let description = String::make(255, 'a')
   let created = call_tool(tools, "redmine_versions", {
     "create": { "project_id": 1, "name": "n", "description": description },
@@ -339,7 +364,7 @@ async test "a wiki_page_title over 255 characters is rejected on create and upda
 ///|
 async test "a wiki_page_title of exactly 255 characters is accepted on create and update" {
   let fake = FakeVersions::new()
-  let tools = version_tools(fake)
+  let tools = versions_tools(fake)
   let title = String::make(255, 'a')
   let created = call_tool(tools, "redmine_versions", {
     "create": { "project_id": 1, "name": "n", "wiki_page_title": title },
@@ -354,50 +379,23 @@ async test "a wiki_page_title of exactly 255 characters is accepted on create an
 }
 
 ///|
-async test "readonly mode makes the write actions unknown" {
-  let fake = FakeVersions::new()
-  let called = call_tool(
-    version_tools(fake, mode=Readonly),
-    "redmine_versions",
-    { "delete": { "id": 7 } },
-  )
-  assert_eq(
-    called.text,
-    "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
-  )
-  assert_eq(fake.calls, [])
-}
-
-///|
-async test "a Redmine failure becomes a failure payload" {
-  let tools = version_tools(
-    FakeVersions::new(failure=Response(status=404, errors=["Not Found"])),
-  )
-  let requests : Array[Json] = [
-    { "show": { "id": 7 } },
-    { "delete": { "id": 7 } },
-  ]
-  for arguments in requests {
-    let called = call_tool(tools, "redmine_versions", arguments)
-    assert_eq(called.is_error, true)
-    assert_eq(called.text, "{\"status\":404,\"errors\":[\"Not Found\"]}")
-  }
-}
-
-///|
 async test "tools/list advertises the versions tool in full mode" {
-  let listed = list_tools(version_tools(FakeVersions::new()))
-  assert_eq(
+  let listed = list_tools(versions_tools(FakeVersions::new()))
+  inspect(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_versions\",\"description\":\"Create, read, update, and delete Redmine project versions (milestones). Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\",\"maxLength\":255}},\"required\":[\"project_id\",\"name\"],\"additionalProperties\":false},\"update\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1},\"name\":{\"type\":\"string\",\"maxLength\":60,\"pattern\":\"\\\\S\"},\"description\":{\"type\":\"string\",\"maxLength\":255},\"status\":{\"type\":\"string\",\"enum\":[\"open\",\"locked\",\"closed\"]},\"due_date\":{\"type\":\"string\",\"format\":\"date\"},\"sharing\":{\"type\":\"string\",\"enum\":[\"none\",\"descendants\",\"hierarchy\",\"tree\",\"system\"]},\"wiki_page_title\":{\"type\":\"string\",\"maxLength\":255}},\"required\":[\"id\"],\"additionalProperties\":false},\"delete\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    content=(
+      #|{"tools":[{"name":"redmine_versions","description":"Create, read, update, and delete Redmine project versions (milestones).\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."}},"required":["project_id"],"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"create":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"name":{"type":"string","maxLength":60,"pattern":"\\S","description":"Name of the version, unique within its project."},"description":{"type":"string","maxLength":255,"description":"Free text shown on the version's page."},"status":{"type":"string","enum":["open","locked","closed"],"description":"`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it."},"due_date":{"type":"string","format":"date","description":"Day the version is due, as an ISO date (`YYYY-MM-DD`)."},"sharing":{"type":"string","enum":["none","descendants","hierarchy","tree","system"],"description":"Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project."},"wiki_page_title":{"type":"string","maxLength":255,"description":"Title of the wiki page in the same project that the version links to."}},"required":["project_id","name"],"additionalProperties":false},"update":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"name":{"type":"string","maxLength":60,"pattern":"\\S","description":"Name of the version, unique within its project."},"description":{"type":"string","maxLength":255,"description":"Free text shown on the version's page."},"status":{"type":"string","enum":["open","locked","closed"],"description":"`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it."},"due_date":{"type":"string","format":"date","description":"Day the version is due, as an ISO date (`YYYY-MM-DD`)."},"sharing":{"type":"string","enum":["none","descendants","hierarchy","tree","system"],"description":"Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project."},"wiki_page_title":{"type":"string","maxLength":255,"description":"Title of the wiki page in the same project that the version links to."}},"required":["id"],"additionalProperties":false},"delete":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+    ),
   )
 }
 
 ///|
 async test "tools/list advertises the versions tool in readonly mode" {
-  let listed = list_tools(version_tools(FakeVersions::new(), mode=Readonly))
-  assert_eq(
+  let listed = list_tools(versions_tools(FakeVersions::new(), mode=Readonly))
+  inspect(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_versions\",\"description\":\"List and show Redmine project versions (milestones). Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\",\"minimum\":1}},\"required\":[\"id\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    content=(
+      #|{"tools":[{"name":"redmine_versions","description":"List and show Redmine project versions (milestones).\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."}},"required":["project_id"],"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+    ),
   )
 }

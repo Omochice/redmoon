@@ -150,7 +150,7 @@ impl FilePort for FakeFiles with fn open(self, path) {
 }
 
 ///|
-fn attachments_for(
+fn attachments_tools(
   port : FakeAttachments,
   files : FakeFiles,
   mode~ : Mode = Full,
@@ -161,7 +161,7 @@ fn attachments_for(
 ///|
 async test "show answers the attachment metadata" {
   let called = call_tool(
-    attachments_for(FakeAttachments::new(), FakeFiles::new()),
+    attachments_tools(FakeAttachments::new(), FakeFiles::new()),
     "redmine_attachments",
     { "show": { "id": 7 } },
   )
@@ -173,7 +173,7 @@ async test "show answers the attachment metadata" {
 ///|
 async test "show answers a filesize above 2 GiB as a JSON number" {
   let called = call_tool(
-    attachments_for(
+    attachments_tools(
       FakeAttachments::new(declared_size=3000000000L),
       FakeFiles::new(),
     ),
@@ -188,7 +188,7 @@ async test "show answers a filesize above 2 GiB as a JSON number" {
 async test "download saves the stream and answers the written file" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(FakeAttachments::new(), files),
+    attachments_tools(FakeAttachments::new(), files),
     "redmine_attachments",
     { "download": { "id": 7, "path": "out/report.txt" } },
   )
@@ -205,7 +205,7 @@ async test "download saves the stream and answers the written file" {
 async test "download passes max_size to the file port" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(FakeAttachments::new(), files),
+    attachments_tools(FakeAttachments::new(), files),
     "redmine_attachments",
     { "download": { "id": 7, "path": "a", "max_size": 5 } },
   )
@@ -217,7 +217,7 @@ async test "download passes max_size to the file port" {
 async test "download refuses a declared size above max_size before saving" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(FakeAttachments::new(), files),
+    attachments_tools(FakeAttachments::new(), files),
     "redmine_attachments",
     { "download": { "id": 7, "path": "a", "max_size": 4 } },
   )
@@ -233,7 +233,7 @@ async test "download refuses a declared size above max_size before saving" {
 async test "download accepts a max_size above 2 GiB for an attachment that size" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(FakeAttachments::new(declared_size=3000000000L), files),
+    attachments_tools(FakeAttachments::new(declared_size=3000000000L), files),
     "redmine_attachments",
     { "download": { "id": 7, "path": "a", "max_size": 4000000000 } },
   )
@@ -246,7 +246,7 @@ async test "download accepts a max_size above 2 GiB for an attachment that size"
 async test "download refuses a declared size above a max_size beyond 2 GiB" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(FakeAttachments::new(declared_size=5000000000L), files),
+    attachments_tools(FakeAttachments::new(declared_size=5000000000L), files),
     "redmine_attachments",
     { "download": { "id": 7, "path": "a", "max_size": 4000000000 } },
   )
@@ -261,7 +261,7 @@ async test "download refuses a declared size above a max_size beyond 2 GiB" {
 ///|
 async test "download reports a file failure with status 0" {
   let called = call_tool(
-    attachments_for(
+    attachments_tools(
       FakeAttachments::new(),
       FakeFiles::new(save_failure="a: file exists"),
     ),
@@ -276,7 +276,7 @@ async test "download reports a file failure with status 0" {
 async test "download reports a Redmine failure" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(
+    attachments_tools(
       FakeAttachments::new(failure=Response(status=404, errors=["Not found"])),
       files,
     ),
@@ -291,7 +291,7 @@ async test "download reports a Redmine failure" {
 ///|
 async test "show reports a Redmine failure" {
   let called = call_tool(
-    attachments_for(
+    attachments_tools(
       FakeAttachments::new(failure=Response(status=403, errors=["Forbidden"])),
       FakeFiles::new(),
     ),
@@ -305,15 +305,19 @@ async test "show reports a Redmine failure" {
 async test "attach uploads the file and updates the issue" {
   let port = FakeAttachments::new()
   let files = FakeFiles::new()
-  let called = call_tool(attachments_for(port, files), "redmine_attachments", {
-    "attach": {
-      "issue_id": 3,
-      "path": "/tmp/dir/data.bin",
-      "filename": "renamed.bin",
-      "description": "d",
-      "notes": "n",
+  let called = call_tool(
+    attachments_tools(port, files),
+    "redmine_attachments",
+    {
+      "attach": {
+        "issue_id": 3,
+        "path": "/tmp/dir/data.bin",
+        "filename": "renamed.bin",
+        "description": "d",
+        "notes": "n",
+      },
     },
-  })
+  )
   assert_eq(called.is_error, false)
   assert_eq(
     called.text,
@@ -342,7 +346,7 @@ async test "attach names the upload after the last path segment" {
   for path in ["/a/b/c.txt", "C:\\a\\b\\c.txt", "c.txt", "/a\\b/c.txt"] {
     let port = FakeAttachments::new()
     let called = call_tool(
-      attachments_for(port, FakeFiles::new()),
+      attachments_tools(port, FakeFiles::new()),
       "redmine_attachments",
       { "attach": { "issue_id": 3, "path": path } },
     )
@@ -355,7 +359,7 @@ async test "attach names the upload after the last path segment" {
 async test "attach reports a missing file with status 0" {
   let port = FakeAttachments::new()
   let called = call_tool(
-    attachments_for(port, FakeFiles::new(open_failure="nope: not found")),
+    attachments_tools(port, FakeFiles::new(open_failure="nope: not found")),
     "redmine_attachments",
     { "attach": { "issue_id": 3, "path": "nope" } },
   )
@@ -367,7 +371,7 @@ async test "attach reports a missing file with status 0" {
 async test "attach reports a Redmine failure and still closes the file" {
   let files = FakeFiles::new()
   let called = call_tool(
-    attachments_for(
+    attachments_tools(
       FakeAttachments::new(failure=Response(status=422, errors=["Invalid"])),
       files,
     ),
@@ -380,7 +384,7 @@ async test "attach reports a Redmine failure and still closes the file" {
 
 ///|
 async test "arguments are validated" {
-  let tools = attachments_for(FakeAttachments::new(), FakeFiles::new())
+  let tools = attachments_tools(FakeAttachments::new(), FakeFiles::new())
   let cases : Array[Json] = [
     { "show": { "id": 0 } },
     { "show": {} },
@@ -412,7 +416,7 @@ async test "arguments are validated" {
 
 ///|
 async test "readonly drops attach from the schema and the description" {
-  let restricted = attachments_for(
+  let restricted = attachments_tools(
     FakeAttachments::new(),
     FakeFiles::new(),
     mode=Readonly,
@@ -433,7 +437,7 @@ async test "readonly drops attach from the schema and the description" {
 
 ///|
 test "max_size advertises an integer schema with a numeric default" {
-  let schema = attachment_input(Readonly).to_json_schema()
+  let schema = attachments_input(Readonly).to_json_schema()
   guard schema
     is {
       "properties": {
@@ -453,21 +457,21 @@ test "max_size advertises an integer schema with a numeric default" {
 ///|
 async test "tools/list advertises each mode" {
   let full = list_tools(
-    attachments_for(FakeAttachments::new(), FakeFiles::new()),
+    attachments_tools(FakeAttachments::new(), FakeFiles::new()),
   )
   let restricted_listing = list_tools(
-    attachments_for(FakeAttachments::new(), FakeFiles::new(), mode=Readonly),
+    attachments_tools(FakeAttachments::new(), FakeFiles::new(), mode=Readonly),
   )
   inspect(
     full.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\n`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false},"attach":{"type":"object","properties":{"issue_id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"},"notes":{"type":"string","description":"Comment to add to the issue in the same history entry as the attachment."}},"required":["issue_id","path"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\n`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false},"attach":{"type":"object","properties":{"issue_id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"},"notes":{"type":"string","description":"Comment to add to the issue in the same history entry as the attachment."}},"required":["issue_id","path"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
   inspect(
     restricted_listing.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
 }
@@ -624,7 +628,7 @@ async test "cancelling a download writes no response and leaves no partial file"
 async test "download omits the content type when Redmine reports none" {
   let attachments = FakeAttachments::new()
   let called = call_tool(
-    attachments_for({ ..attachments, content_type: None, }, FakeFiles::new()),
+    attachments_tools({ ..attachments, content_type: None, }, FakeFiles::new()),
     "redmine_attachments",
     { "download": { "id": 7, "path": "out/report.txt" } },
   )

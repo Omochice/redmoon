@@ -18,16 +18,11 @@ impl ToJson for ByteLimit with fn to_json(self) {
 }
 
 ///|
-fn attachment_path(description : String) -> @schema.Schema[String] {
-  @schema.not_blank().describe(description)
-}
-
-///|
-fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
+fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let id = @schema.required("id", record_id())
   let download_path = @schema.required(
     "path",
-    attachment_path(
+    path_schema(
       "Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.",
     ),
   )
@@ -55,7 +50,7 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let issue_id = @schema.required("issue_id", record_id())
   let path = @schema.required(
     "path",
-    attachment_path(
+    path_schema(
       "Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process.",
     ),
   )
@@ -99,19 +94,21 @@ fn attachment_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
 }
 
 ///|
-fn describe_attachments(mode : Mode) -> String {
-  let base = [
-    "Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file. \{operation_key_hint}",
+fn attachments_description(mode : Mode) -> String {
+  let reads = [
+    "Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.",
     "Call `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.",
     "`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.",
     "`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.",
-  ].join("\n")
-  match mode {
-    Readonly => base
+  ]
+  let lines = match mode {
+    Readonly => reads
     Full =>
-      base +
-      "\n`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first."
+      [
+        ..reads, "`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first.",
+      ]
   }
+  describe_tool(lines)
 }
 
 ///|
@@ -144,9 +141,9 @@ async fn download_attachment(
     })
   catch {
     FileError(message~) => local_failure([message])
-    @redmine.Response(status~, errors~) => failure(status, errors)
-    @redmine.Decode(message~) | @redmine.Transport(message~) =>
-      local_failure([message])
+    (@redmine.Response(..) as error)
+    | (@redmine.Decode(..) as error)
+    | (@redmine.Transport(..) as error) => failure_of(error)
     other => raise other
   } noraise {
     _ => success(saved.unwrap())
@@ -197,8 +194,8 @@ pub fn attachments_tool(
 ) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_attachments",
-    description=describe_attachments(mode),
-    input=attachment_input(mode),
+    description=attachments_description(mode),
+    input=attachments_input(mode),
     handler=async fn(action) {
       match action {
         Show(id) => respond(() => port.show_attachment(id))

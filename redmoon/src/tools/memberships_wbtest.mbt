@@ -1,12 +1,24 @@
 ///|
 struct FakeMemberships {
-  mut listed : (@redmine.ProjectRef, Int32?)?
+  calls : Array[String]
+  listed : Array[(@redmine.ProjectRef, Int32?)]
   failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeMemberships::new(failure? : @redmine.RedmineError) -> FakeMemberships {
-  { listed: None, failure, }
+  { calls: [], listed: [], failure, }
+}
+
+///|
+fn FakeMemberships::record(
+  self : FakeMemberships,
+  call : String,
+) -> Unit raise @redmine.RedmineError {
+  self.calls.push(call)
+  if self.failure is Some(error) {
+    raise error
+  }
 }
 
 ///|
@@ -15,10 +27,8 @@ impl MembershipPort for FakeMemberships with fn list_memberships(
   project,
   limit,
 ) {
-  self.listed = Some((project, limit))
-  if self.failure is Some(error) {
-    raise error
-  }
+  self.listed.push((project, limit))
+  self.record("list")
   [
     {
       id: 7,
@@ -42,7 +52,7 @@ async test "list sends the project and limit to the port and answers the members
     "list": { "project_id": "demo", "limit": 5 },
   })
   assert_eq(called.is_error, false)
-  assert_eq(fake.listed, Some((Identifier("demo"), Some(5))))
+  assert_eq(fake.listed, [(Identifier("demo"), Some(5))])
   inspect(
     called.text,
     content=(
@@ -59,7 +69,7 @@ async test "list takes a numeric project id and no limit" {
       "list": { "project_id": 1 },
     }),
   )
-  assert_eq(fake.listed, Some((Id(1), None)))
+  assert_eq(fake.listed, [(Id(1), None)])
 }
 
 ///|
@@ -69,7 +79,7 @@ async test "list without a project is rejected before reaching the port" {
     "list": {},
   })
   assert_eq(called.is_error, true)
-  assert_eq(fake.listed, None)
+  assert_eq(fake.listed, [])
 }
 
 ///|
@@ -90,7 +100,7 @@ async test "tools/list advertises the memberships tool" {
   inspect(
     advertised,
     content=(
-      #|{"tools":[{"name":"redmine_memberships","description":"Lists the members of a Redmine project, each user or group with its roles, to find whom an issue can be assigned to.\nThe id to pass as `assigned_to_id` to `redmine_issues` is the principal's, `user.id` or `group.id`, never the membership's own top-level `id`.\nBeing listed does not make a principal assignable: one of its roles must have \"Issues can be assigned to this role\" enabled, a group also needs the Redmine setting \"Allow issue assignment to groups\", and the built-in groups `group_anonymous` and `group_non_member` cannot be assigned.\nPass the arguments under the single key `list`: `{\"list\": {\"project_id\": \"demo\"}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"limit":{"type":"integer","minimum":1}},"required":["project_id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_memberships","description":"Lists the members of a Redmine project, each user or group with its roles, to find whom an issue can be assigned to.\nThe id to pass as `assigned_to_id` to `redmine_issues` is the principal's, `user.id` or `group.id`, never the membership's own top-level `id`.\nBeing listed does not make a principal assignable: one of its roles must have \"Issues can be assigned to this role\" enabled, a group also needs the Redmine setting \"Allow issue assignment to groups\", and the built-in groups `group_anonymous` and `group_non_member` cannot be assigned.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"limit":{"type":"integer","minimum":1}},"required":["project_id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
 }

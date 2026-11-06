@@ -21,14 +21,6 @@ fn FakeWikiPages::record(
 }
 
 ///|
-fn wiki_project_label(project : @redmine.ProjectRef) -> String {
-  match project {
-    Id(id) => id.to_string()
-    Identifier(name) => name
-  }
-}
-
-///|
 fn[T : Show] wiki_option_label(value : T?) -> String {
   match value {
     Some(v) => "\{v}"
@@ -38,7 +30,7 @@ fn[T : Show] wiki_option_label(value : T?) -> String {
 
 ///|
 impl WikiPagePort for FakeWikiPages with fn list_wiki_pages(self, project) {
-  self.record("list \{wiki_project_label(project)}")
+  self.record("list \{project_label(project)}")
   [
     {
       title: "Home",
@@ -55,10 +47,10 @@ impl WikiPagePort for FakeWikiPages with fn show_wiki_page(
   self,
   project,
   title,
-  version?,
+  version,
 ) {
   self.record(
-    "show \{wiki_project_label(project)} \{title} \{wiki_option_label(version)}",
+    "show \{project_label(project)} \{title} \{wiki_option_label(version)}",
   )
   {
     title,
@@ -78,11 +70,11 @@ impl WikiPagePort for FakeWikiPages with fn create_wiki_page(
   project,
   title,
   text,
-  comments?,
-  parent_title?,
+  comments,
+  parent_title,
 ) {
   self.record(
-    "create \{wiki_project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(parent_title)}",
+    "create \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(parent_title)}",
   )
 }
 
@@ -92,12 +84,12 @@ impl WikiPagePort for FakeWikiPages with fn update_wiki_page(
   project,
   title,
   text,
-  comments?,
-  version?,
-  parent_title?,
+  comments,
+  version,
+  parent_title,
 ) {
   self.record(
-    "update \{wiki_project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(version)} \{wiki_option_label(parent_title)}",
+    "update \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(version)} \{wiki_option_label(parent_title)}",
   )
 }
 
@@ -107,7 +99,7 @@ impl WikiPagePort for FakeWikiPages with fn delete_wiki_page(
   project,
   title,
 ) {
-  self.record("delete \{wiki_project_label(project)} \{title}")
+  self.record("delete \{project_label(project)} \{title}")
 }
 
 ///|
@@ -179,7 +171,7 @@ async test "create and update answer ok and pass every argument" {
 }
 
 ///|
-async test "delete answers ok" {
+async test "wiki: delete answers ok" {
   let fake = FakeWikiPages::new()
   let deleted = call_tool(wiki_tools(fake), "redmine_wiki_pages", {
     "delete": { "project_id": "demo", "title": "Page" },
@@ -266,7 +258,7 @@ async test "validation reports missing fields, bad projects, and bad versions" {
 }
 
 ///|
-async test "readonly mode makes the write actions unknown" {
+async test "wiki: readonly mode makes the write actions unknown" {
   let fake = FakeWikiPages::new()
   let tools = wiki_tools(fake, mode=Readonly)
   let called = call_tool(tools, "redmine_wiki_pages", {
@@ -280,7 +272,7 @@ async test "readonly mode makes the write actions unknown" {
 }
 
 ///|
-async test "a Redmine failure becomes a failure payload" {
+async test "wiki: a Redmine failure becomes a failure payload" {
   let tools = wiki_tools(
     FakeWikiPages::new(failure=Response(status=409, errors=["Conflict"])),
   )
@@ -298,18 +290,22 @@ async test "a Redmine failure becomes a failure payload" {
 ///|
 async test "tools/list advertises the wiki tool in full mode" {
   let listed = list_tools(wiki_tools(FakeWikiPages::new()))
-  assert_eq(
+  inspect(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_wiki_pages\",\"description\":\"Create, read, update, and delete Redmine wiki pages. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text.\\nFor a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended).\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"title\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works.\"},\"version\":{\"type\":\"integer\",\"minimum\":1},\"text_path\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Destination file for the `text`. When given, the `text` is written to this file with its line breaks as `\\\\n`, and the response gives the absolute path written as `text_path` in place of `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.\"}},\"required\":[\"project_id\",\"title\"],\"additionalProperties\":false},\"create\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"title\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works.\"},\"text\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Content of the page. Exactly one of `text` and `text_path` is required.\"},\"text_path\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Local file holding the `text` to send, as an alternative to `text` for a long text. The file must be UTF-8 and at most 1 MiB, is sent as is with its trailing newline but without a leading byte order mark, and cannot be combined with `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process.\"},\"comments\":{\"type\":\"string\"},\"parent_title\":{\"type\":\"string\"}},\"required\":[\"project_id\",\"title\"],\"additionalProperties\":false,\"oneOf\":[{\"required\":[\"text\"]},{\"required\":[\"text_path\"]}]},\"update\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"title\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works.\"},\"text\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Content of the page. Exactly one of `text` and `text_path` is required.\"},\"text_path\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Local file holding the `text` to send, as an alternative to `text` for a long text. The file must be UTF-8 and at most 1 MiB, is sent as is with its trailing newline but without a leading byte order mark, and cannot be combined with `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process.\"},\"comments\":{\"type\":\"string\"},\"version\":{\"type\":\"integer\",\"minimum\":1},\"parent_title\":{\"type\":\"string\"}},\"required\":[\"project_id\",\"title\"],\"additionalProperties\":false,\"oneOf\":[{\"required\":[\"text\"]},{\"required\":[\"text_path\"]}]},\"delete\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"title\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works.\"}},\"required\":[\"project_id\",\"title\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    content=(
+      #|{"tools":[{"name":"redmine_wiki_pages","description":"Create, read, update, and delete Redmine wiki pages.\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text.\nFor a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended).\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."}},"required":["project_id"],"additionalProperties":false},"show":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"version":{"type":"integer","minimum":1},"text_path":{"type":"string","pattern":"\\S","description":"Destination file for the `text`. When given, the `text` is written to this file with its line breaks as `\\n`, and the response gives the absolute path written as `text_path` in place of `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."}},"required":["project_id","title"],"additionalProperties":false},"create":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"text":{"type":"string","pattern":"\\S","description":"Content of the page. Exactly one of `text` and `text_path` is required."},"text_path":{"type":"string","pattern":"\\S","description":"Local file holding the `text` to send, as an alternative to `text` for a long text. The file must be UTF-8 and at most 1 MiB, is sent as is with its trailing newline but without a leading byte order mark, and cannot be combined with `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"comments":{"type":"string"},"parent_title":{"type":"string"}},"required":["project_id","title"],"additionalProperties":false,"oneOf":[{"required":["text"]},{"required":["text_path"]}]},"update":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"text":{"type":"string","pattern":"\\S","description":"Content of the page. Exactly one of `text` and `text_path` is required."},"text_path":{"type":"string","pattern":"\\S","description":"Local file holding the `text` to send, as an alternative to `text` for a long text. The file must be UTF-8 and at most 1 MiB, is sent as is with its trailing newline but without a leading byte order mark, and cannot be combined with `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"comments":{"type":"string"},"version":{"type":"integer","minimum":1},"parent_title":{"type":"string"}},"required":["project_id","title"],"additionalProperties":false,"oneOf":[{"required":["text"]},{"required":["text_path"]}]},"delete":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."}},"required":["project_id","title"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+    ),
   )
 }
 
 ///|
 async test "tools/list advertises the wiki tool in readonly mode" {
   let listed = list_tools(wiki_tools(FakeWikiPages::new(), mode=Readonly))
-  assert_eq(
+  inspect(
     listed.stringify(),
-    "{\"tools\":[{\"name\":\"redmine_wiki_pages\",\"description\":\"List and show Redmine wiki pages. Pass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\\\"<operation>\\\": {...}}`.\\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"list\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"}},\"required\":[\"project_id\"],\"additionalProperties\":false},\"show\":{\"type\":\"object\",\"properties\":{\"project_id\":{\"anyOf\":[{\"type\":\"integer\",\"minimum\":1},{\"type\":\"string\",\"pattern\":\"^\\\\S+$\"}],\"description\":\"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...).\"},\"title\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works.\"},\"version\":{\"type\":\"integer\",\"minimum\":1},\"text_path\":{\"type\":\"string\",\"pattern\":\"\\\\S\",\"description\":\"Destination file for the `text`. When given, the `text` is written to this file with its line breaks as `\\\\n`, and the response gives the absolute path written as `text_path` in place of `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.\"}},\"required\":[\"project_id\",\"title\"],\"additionalProperties\":false}},\"minProperties\":1,\"maxProperties\":1,\"additionalProperties\":false}}]}",
+    content=(
+      #|{"tools":[{"name":"redmine_wiki_pages","description":"List and show Redmine wiki pages.\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."}},"required":["project_id"],"additionalProperties":false},"show":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"version":{"type":"integer","minimum":1},"text_path":{"type":"string","pattern":"\\S","description":"Destination file for the `text`. When given, the `text` is written to this file with its line breaks as `\\n`, and the response gives the absolute path written as `text_path` in place of `text`. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."}},"required":["project_id","title"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+    ),
   )
 }
 

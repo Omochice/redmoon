@@ -120,19 +120,20 @@ fn wiki_pages_input(mode : Mode) -> @schema.Schema[WikiPageAction] {
 
 ///|
 fn wiki_pages_description(mode : Mode) -> String {
-  let base = describe_crud_tool("wiki pages", mode) +
-    "\n`show` with `text_path` saves the text to a new local file and answers with that path instead of the text."
-  match mode {
-    Readonly => base
+  let saving = "`show` with `text_path` saves the text to a new local file and answers with that path instead of the text."
+  let lines = match mode {
+    Readonly => [saving]
     Full =>
-      base +
-      "\nFor a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended)."
+      [
+        saving, "For a long page, `create` and `update` take `text_path`, the path of a local UTF-8 file, instead of `text` (absolute is recommended).",
+      ]
   }
+  describe_crud_tool("wiki pages", mode, lines~)
 }
 
 ///|
-/// `redmine_wiki_pages`: the wiki pages of a project. `Readonly` mode leaves
-/// out create, update, and delete.
+/// `redmine_wiki_pages`: the wiki pages of a project.
+/// `Readonly` mode leaves out create, update, and delete.
 pub fn wiki_pages_tool(
   port : &WikiPagePort,
   files : &FilePort,
@@ -148,7 +149,7 @@ pub fn wiki_pages_tool(
       match action {
         List(project) => respond(() => port.list_wiki_pages(project))
         Show(project, title, version, text_path) => {
-          let page = port.show_wiki_page(project, title, version?) catch {
+          let page = port.show_wiki_page(project, title, version) catch {
             error => return failure_of(error)
           }
           respond_saving_text(
@@ -161,23 +162,12 @@ pub fn wiki_pages_tool(
         }
         Create(project, title, text, comments, parent_title) =>
           respond_ok(() => {
-            port.create_wiki_page(
-              project,
-              title,
-              text,
-              comments?,
-              parent_title?,
-            )
+            port.create_wiki_page(project, title, text, comments, parent_title)
           })
         Update(project, title, text, comments, version, parent_title) =>
           respond_ok(() => {
             port.update_wiki_page(
-              project,
-              title,
-              text,
-              comments?,
-              version?,
-              parent_title?,
+              project, title, text, comments, version, parent_title,
             )
           })
         Delete(project, title) =>

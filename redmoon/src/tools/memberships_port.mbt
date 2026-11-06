@@ -1,7 +1,7 @@
 ///|
 /// The Redmine operation behind `redmine_memberships`.
 pub(open) trait MembershipPort {
-  async fn list_memberships(Self, @redmine.ProjectRef, Int32?) -> Array[
+  async fn list_memberships(Self, project : @redmine.ProjectRef, limit : Int32?) -> Array[
     @memberships.Membership,
   ] raise @redmine.RedmineError
 }

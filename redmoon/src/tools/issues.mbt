@@ -41,36 +41,11 @@ fn show_includes() -> @schema.Schema[Array[@issues.Include]] {
 }
 
 ///|
-fn status_filter() -> @schema.Schema[@issues.StatusFilter] {
-  @schema.union([
-    record_id().map(id => @issues.StatusFilter::Id(id)),
-    @schema.choice([("open", Open), ("closed", Closed), ("*", All)]),
-  ])
-}
-
-///|
 fn assignee_filter() -> @schema.Schema[@issues.AssigneeFilter] {
   @schema.union([
     record_id().map(id => @issues.AssigneeFilter::User(id)),
     @schema.choice([("me", Me)]),
   ])
-}
-
-///|
-/// Maps `null` to `Clear` so that a field Redmine can empty keeps "leave alone",
-/// "empty" and "set" apart.
-fn[T] clearable(
-  schema : @schema.Schema[T],
-  description : String,
-) -> @schema.Schema[@redmine.Clearable[T]] {
-  @schema.nullable(schema)
-  .map(value => {
-    match value {
-      Some(value) => @redmine.Clearable::Set(value)
-      None => Clear
-    }
-  })
-  .describe(description)
 }
 
 ///|
@@ -114,12 +89,6 @@ let issue_id : @schema.Field[Int32] = @schema.required("id", record_id())
 let list_include : @schema.Field[Array[@issues.ListInclude]?] = @schema.optional(
   "include",
   list_includes(),
-)
-
-///|
-let list_limit : @schema.Field[Int32?] = @schema.optional(
-  "limit",
-  @schema.integer(min=1),
 )
 
 ///|
@@ -531,27 +500,27 @@ fn issues_input(mode : Mode) -> @schema.Schema[IssueAction] {
 
 ///|
 fn issues_description(mode : Mode) -> String {
-  let base = [
-    describe_crud_tool("issues", mode),
+  let reads = [
     "`show` returns the bare issue; pass `include: [\"journals\"]` to get its comments and field-change history, and add `attachments`, `relations`, `children`, `changesets`, `watchers`, or `allowed_statuses` as needed.",
-    "`list` accepts only `attachments` and `relations`.",
-    "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
+    "`list` accepts only `attachments` and `relations`.", "`list` takes either filters or the `query_id` of a saved query that `list_queries` lists, never both.",
     "A saved query listed with a `project_id` belongs to that project and must be used with exactly that `project_id`; without it, or with a subproject's id, Redmine answers 404.",
     "`show` with `description_path` saves the description to a new local file and answers with that path instead of the text.",
   ]
-  match mode {
-    Readonly => base.join("\n")
+  let lines = match mode {
+    Readonly => reads
     Full =>
       [
-        ..base, "`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.",
+        ..reads, "`update_note` edits the text or privacy of an existing comment, and `delete_note` erases its text; both take the journal id that `show` lists.",
         "For a long text, pass the path of a local UTF-8 file instead of the text itself: `description_path` on `create` and `update`, and `notes_path` on `update` and `update_note` (absolute is recommended).",
-      ].join("\n")
+      ]
   }
+  describe_crud_tool("issues", mode, lines~)
 }
 
 ///|
 /// `redmine_issues`: list, show, create, update and delete issues, list the
-/// saved queries that select them, and edit their comments. `Readonly` keeps `list`, `list_queries` and `show`.
+/// saved queries that select them, and edit their comments.
+/// `Readonly` keeps `list`, `list_queries` and `show`.
 pub fn issues_tool(
   port : &IssuePort,
   files : &FilePort,

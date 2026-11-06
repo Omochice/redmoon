@@ -15,7 +15,12 @@ fn attachment_scope_schema() -> @schema.Schema[@search.AttachmentScope] {
 ///|
 fn search_input() -> @schema.Schema[@search.Query] {
   let q = @schema.required("q", @schema.string())
-  let scope = @schema.optional("scope", @schema.string())
+  let scope = @schema.optional(
+    "scope",
+    @schema.string().describe(
+      "Projects to search: `all`, `my_projects` (the ones the caller is a member of), or `bookmarks` (the ones the caller bookmarked); every project when left out.",
+    ),
+  )
   let all_words = @schema.optional("all_words", @schema.boolean())
   let titles_only = @schema.optional("titles_only", @schema.boolean())
   let open_issues = @schema.optional("open_issues", @schema.boolean())
@@ -66,7 +71,10 @@ fn search_input() -> @schema.Schema[@search.Query] {
 pub fn search_tool(port : &SearchPort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_search",
-    description="Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.\nRequires `q`; narrow with `scope` and the per-resource flags.\nPass the arguments under the single key `search`: `{\"search\": {\"q\": \"login\"}}`.",
+    description=describe_tool([
+      "Full-text search across Redmine issues, wiki pages, news, documents, changesets, messages, and projects.",
+      "Requires `q`; narrow with `scope` and the per-resource flags.",
+    ]),
     input=@schema.keyed([("search", search_input())]),
     handler=async fn(query) { respond(() => port.search(query)) },
   )

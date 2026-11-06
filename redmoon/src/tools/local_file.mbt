@@ -3,6 +3,7 @@
 pub struct LocalFile {}
 
 ///|
+/// The filesystem of the server process, which the registry hands to every tool that reads or writes a file.
 pub fn LocalFile::new() -> LocalFile {
   LocalFile::{ }
 }
@@ -88,3 +89,15 @@ pub impl FilePort for LocalFile with fn open(_, path) {
 
 ///|
 pub extend LocalFile with FilePort::{save, open}
+
+///|
+/// The last segment of a path written with `/` or `\`.
+fn last_segment(path : String) -> String {
+  let slash = path.rev_find("/")
+  let backslash = path.rev_find("\\")
+  match (slash, backslash) {
+    (Some(i), Some(j)) => path[i.max(j) + 1:].to_owned()
+    (Some(i), None) | (None, Some(i)) => path[i + 1:].to_owned()
+    (None, None) => path
+  }
+}

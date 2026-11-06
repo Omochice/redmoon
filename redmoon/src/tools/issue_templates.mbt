@@ -23,7 +23,11 @@ fn issue_templates_input() -> @schema.Schema[IssueTemplateAction] {
 pub fn issue_templates_tool(port : &IssueTemplatePort) -> @mcp.Tool {
   @mcp.tool(
     name="redmine_issue_templates",
-    description="Lists the issue templates a Redmine project offers for new issues of one tracker: the global templates enabled for it, those inherited from its parent projects, and its own.\n`tracker_id` is the tracker's id, as an issue from `redmine_issues` carries it under `tracker`.\nNeeds the redmine_issue_templates plugin; an instance without it answers 404.\nPass the arguments under the single key `list`: `{\"list\": {\"project_id\": \"demo\", \"tracker_id\": 1}}`.",
+    description=describe_tool([
+      "Lists the issue templates a Redmine project offers for new issues of one tracker: the global templates enabled for it, those inherited from its parent projects, and its own.",
+      "`tracker_id` is the tracker's id, as an issue from `redmine_issues` carries it under `tracker`.",
+      "Needs the redmine_issue_templates plugin; an instance without it answers 404.",
+    ]),
     input=issue_templates_input(),
     handler=async fn(action) {
       match action {
