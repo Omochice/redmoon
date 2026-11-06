@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "omochice/redmine",
   "omochice/redmine/attachments",
+  "omochice/redmine/relations",
 }
 
 // Values
@@ -70,7 +71,7 @@ pub fn Create::new(project_id~ : Int32, tracker_id~ : Int32, status_id~ : Int32,
 pub(all) struct CustomField {
   id : Int32
   name : String
-  value : CustomFieldValue?
+  value : @redmine.CustomFieldValue?
   multiple : Bool?
 }
 pub fn CustomField::equal(Self, Self) -> Bool
@@ -82,24 +83,11 @@ pub fn CustomField::to_repr(Self) -> @debug.Repr
 #derive(Eq, @debug.Debug)
 pub(all) struct CustomFieldInput {
   id : Int32
-  value : CustomFieldValue
+  value : @redmine.CustomFieldValue
 }
 pub fn CustomFieldInput::equal(Self, Self) -> Bool
 pub fn CustomFieldInput::not_equal(Self, Self) -> Bool
 pub fn CustomFieldInput::to_repr(Self) -> @debug.Repr
-
-#derive(Eq, @debug.Debug)
-pub(all) enum CustomFieldValue {
-  Single(String)
-  Multiple(Array[String])
-}
-pub fn CustomFieldValue::equal(Self, Self) -> Bool
-pub fn CustomFieldValue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
-pub fn CustomFieldValue::not_equal(Self, Self) -> Bool
-pub fn CustomFieldValue::to_json(Self) -> @json.Json
-pub fn CustomFieldValue::to_repr(Self) -> @debug.Repr
-pub impl @json.FromJson for CustomFieldValue
-pub impl @json.ToJson for CustomFieldValue
 
 #derive(Eq, @debug.Debug)
 pub(all) enum DateFilter {
@@ -272,7 +260,7 @@ pub(all) struct Relation {
   id : Int32?
   issue_id : Int32?
   issue_to_id : Int32?
-  relation_type : String?
+  relation_type : @relations.Type?
   delay : Int32?
 }
 pub fn Relation::equal(Self, Self) -> Bool

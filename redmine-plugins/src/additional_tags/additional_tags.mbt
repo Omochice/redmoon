@@ -34,17 +34,17 @@ priv struct TagName {
 /// The plugin splits a name at commas, so such a name could never be read back as the tag that was asked for.
 fn validate(names : Array[String]) -> Array[String] raise @redmine.RedmineError {
   guard !names.is_empty() else {
-    raise @redmine.Transport(message="at least one tag name is needed")
+    raise @redmine.InvalidArgument(message="at least one tag name is needed")
   }
   names.map(name => {
     let trimmed = name.trim().to_owned()
     guard !trimmed.is_empty() else {
-      raise @redmine.Transport(
+      raise @redmine.InvalidArgument(
         message="a tag name must not be empty or only spaces",
       )
     }
     guard !trimmed.contains_char(',') else {
-      raise @redmine.Transport(
+      raise @redmine.InvalidArgument(
         message="the tag name `\{trimmed}` contains a comma, which the plugin would split into several tags",
       )
     }

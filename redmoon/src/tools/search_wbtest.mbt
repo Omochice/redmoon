@@ -47,21 +47,7 @@ impl SearchPort for FakeSearch with fn search(self, query) {
 
 ///|
 fn plain_query(q : String) -> @search.Query {
-  {
-    q,
-    scope: None,
-    all_words: None,
-    titles_only: None,
-    open_issues: None,
-    issues: None,
-    news: None,
-    documents: None,
-    changesets: None,
-    wiki_pages: None,
-    messages: None,
-    projects: None,
-    attachments: None,
-  }
+  @search.Query::new(q~)
 }
 
 ///|
@@ -99,21 +85,21 @@ async test "every flag and the scope reach the query" {
     },
   })
   assert_eq(fake.queries, [
-    {
-      q: "login",
-      scope: Some("all"),
-      all_words: Some(true),
-      titles_only: Some(false),
-      open_issues: Some(true),
-      issues: Some(true),
-      news: Some(false),
-      documents: Some(false),
-      changesets: Some(false),
-      wiki_pages: Some(true),
-      messages: Some(false),
-      projects: Some(false),
-      attachments: Some(Only),
-    },
+    @search.Query::new(
+      q="login",
+      scope="all",
+      all_words=true,
+      titles_only=false,
+      open_issues=true,
+      issues=true,
+      news=false,
+      documents=false,
+      changesets=false,
+      wiki_pages=true,
+      messages=false,
+      projects=false,
+      attachments=Only,
+    ),
   ])
 }
 

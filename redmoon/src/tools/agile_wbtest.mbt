@@ -71,14 +71,7 @@ async test "update sets the given fields, clears the null ones, and leaves the r
   assert_eq(called.is_error, false)
   assert_eq(called.text, "{\"ok\":true}")
   assert_eq(fake.updated, [
-    (
-      42,
-      {
-        story_points: Some(Set(5)),
-        agile_sprint_id: Some(Clear),
-        position: None,
-      },
-    ),
+    (42, @agile.Update::new(story_points=Set(5), agile_sprint_id=Clear)),
   ])
   ignore(
     call_tool(agile_tools(fake), "redmine_agile", {
@@ -87,14 +80,7 @@ async test "update sets the given fields, clears the null ones, and leaves the r
   )
   assert_eq(
     fake.updated[1],
-    (
-      7,
-      {
-        story_points: None,
-        agile_sprint_id: Some(Set(3)),
-        position: Some(Set(1)),
-      },
-    ),
+    (7, @agile.Update::new(agile_sprint_id=Set(3), position=Set(1))),
   )
 }
 

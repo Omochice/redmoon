@@ -24,29 +24,8 @@ fn AttachmentScope::to_wire(self : AttachmentScope) -> String {
 
 ///|
 /// The parameters of a search. A `None` flag is left out of the request, which keeps Redmine's default for it.
-///
-/// ```mbt check
-/// test {
-///   let query : @search.Query = {
-///     q: "timeout",
-///     scope: None,
-///     all_words: None,
-///     titles_only: Some(true),
-///     open_issues: None,
-///     issues: Some(true),
-///     news: None,
-///     documents: None,
-///     changesets: None,
-///     wiki_pages: None,
-///     messages: None,
-///     projects: None,
-///     attachments: Some(Included),
-///   }
-///   assert_eq(query.attachments, Some(@search.AttachmentScope::Included))
-/// }
-/// ```
 #derive(Eq, Debug)
-pub(all) struct Query {
+pub struct Query {
   q : String
   scope : String?
   all_words : Bool?
@@ -69,8 +48,55 @@ pub extend Query with Eq::{equal, not_equal}
 pub extend Query with @debug.Debug::{to_repr}
 
 ///|
+/// The parameters of a search; only `q` must be given.
+///
+/// ```mbt check
+/// test {
+///   let query = @search.Query::new(
+///     q="timeout",
+///     titles_only=true,
+///     issues=true,
+///     attachments=Included,
+///   )
+///   assert_eq(query.attachments, Some(@search.AttachmentScope::Included))
+///   assert_true(query.scope is None)
+/// }
+/// ```
+pub fn Query::new(
+  q~ : String,
+  scope? : String,
+  all_words? : Bool,
+  titles_only? : Bool,
+  open_issues? : Bool,
+  issues? : Bool,
+  news? : Bool,
+  documents? : Bool,
+  changesets? : Bool,
+  wiki_pages? : Bool,
+  messages? : Bool,
+  projects? : Bool,
+  attachments? : AttachmentScope,
+) -> Query {
+  {
+    q,
+    scope,
+    all_words,
+    titles_only,
+    open_issues,
+    issues,
+    news,
+    documents,
+    changesets,
+    wiki_pages,
+    messages,
+    projects,
+    attachments,
+  }
+}
+
+///|
 /// One match of a search. `kind` holds Redmine's `type` field, which MoonBit cannot name.
-#derive(Eq, Debug, FromJson(fields(kind(rename="type"))))
+#derive(Eq, Debug, FromJson(fields(kind(rename="type"))), ToJson(fields(kind(rename="type"))))
 pub(all) struct Match {
   id : Int32
   title : String
@@ -93,21 +119,6 @@ pub extend Match with @json.FromJson::{from_json}
 pub extend Match with ToJson::{to_json}
 
 ///|
-/// `description` is written as `null` when absent, as the tool output has always carried it.
-pub impl ToJson for Match with fn to_json(self) {
-  {
-    "id": self.id,
-    "title": self.title,
-    "type": self.kind,
-    "url": self.url,
-    "description": self.description
-    .map(fn(text) { Json(text) })
-    .unwrap_or(Json::null()),
-    "datetime": self.datetime,
-  }
-}
-
-///|
 /// Searches the resources Redmine indexes and returns the matches, up to `limit` when given.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
@@ -118,21 +129,7 @@ pub impl ToJson for Match with fn to_json(self) {
 ///     endpoint="https://redmine.example.com",
 ///     api_key="...",
 ///   )
-///   let query : @search.Query = {
-///     q: "timeout",
-///     scope: None,
-///     all_words: None,
-///     titles_only: None,
-///     open_issues: Some(true),
-///     issues: Some(true),
-///     news: None,
-///     documents: None,
-///     changesets: None,
-///     wiki_pages: None,
-///     messages: None,
-///     projects: None,
-///     attachments: None,
-///   }
+///   let query = @search.Query::new(q="timeout", open_issues=true, issues=true)
 ///   let matches = redmine |> @search.search(query, limit=20)
 ///   ignore(matches)
 /// }
@@ -146,30 +143,30 @@ pub async fn search(
     redmine,
     ["search.json"],
     key="results",
-    query=query_pairs(query),
+    query=query.to_query(),
     limit?,
   )
 }
 
 ///|
-fn query_pairs(query : Query) -> Array[(String, String)] {
-  let pairs : Array[(String, String)] = [("q", query.q)]
-  if query.scope is Some(scope) {
+fn Query::to_query(self : Query) -> Array[(String, String)] {
+  let pairs : Array[(String, String)] = [("q", self.q)]
+  if self.scope is Some(scope) {
     pairs.push(("scope", scope))
   }
-  if query.all_words is Some(all_words) {
+  if self.all_words is Some(all_words) {
     pairs.push(("all_words", if all_words { "1" } else { "" }))
   }
-  push_flag(pairs, "titles_only", query.titles_only)
-  push_flag(pairs, "open_issues", query.open_issues)
-  push_flag(pairs, "issues", query.issues)
-  push_flag(pairs, "news", query.news)
-  push_flag(pairs, "documents", query.documents)
-  push_flag(pairs, "changesets", query.changesets)
-  push_flag(pairs, "wiki_pages", query.wiki_pages)
-  push_flag(pairs, "messages", query.messages)
-  push_flag(pairs, "projects", query.projects)
-  if query.attachments is Some(scope) {
+  push_flag(pairs, "titles_only", self.titles_only)
+  push_flag(pairs, "open_issues", self.open_issues)
+  push_flag(pairs, "issues", self.issues)
+  push_flag(pairs, "news", self.news)
+  push_flag(pairs, "documents", self.documents)
+  push_flag(pairs, "changesets", self.changesets)
+  push_flag(pairs, "wiki_pages", self.wiki_pages)
+  push_flag(pairs, "messages", self.messages)
+  push_flag(pairs, "projects", self.projects)
+  if self.attachments is Some(scope) {
     pairs.push(("attachments", scope.to_wire()))
   }
   pairs

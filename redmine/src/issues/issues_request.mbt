@@ -43,7 +43,7 @@ pub fn UploadToken::new(
 #derive(Eq, Debug)
 pub(all) struct CustomFieldInput {
   id : Int32
-  value : CustomFieldValue
+  value : @redmine.CustomFieldValue
 }
 
 ///|
@@ -211,19 +211,6 @@ pub fn Update::new(
     due_date,
     custom_fields,
     uploads,
-  }
-}
-
-///|
-fn[T] @redmine.Clearable::to_member(
-  clearable : @redmine.Clearable[T]?,
-  clear~ : Json = Json::null(),
-  set~ : (T) -> Json,
-) -> Json? {
-  match clearable {
-    None => None
-    Some(Clear) => Some(clear)
-    Some(Set(value)) => Some(set(value))
   }
 }
 

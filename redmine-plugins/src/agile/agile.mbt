@@ -26,7 +26,7 @@ pub extend AgileData with @debug.Debug::{to_repr}
 /// Changes to an issue's agile data; an unset field keeps the value it has.
 /// `Clear` empties a field, which for `agile_sprint_id` takes the issue out of its sprint.
 #derive(Eq, Debug)
-pub(all) struct Update {
+pub struct Update {
   story_points : @redmine.Clearable[Int32]?
   agile_sprint_id : @redmine.Clearable[Int32]?
   position : @redmine.Clearable[Int32]?
@@ -147,7 +147,7 @@ pub async fn update(
     redmine
     |> @redmine.send(
       Put,
-      ["issues", issue_id.to_string() + ".json"],
+      ["issues", "\{issue_id}.json"],
       body=attributes.to_body(current),
     ),
   )

@@ -23,7 +23,7 @@ pub fn AttachmentScope::equal(Self, Self) -> Bool
 pub fn AttachmentScope::not_equal(Self, Self) -> Bool
 pub fn AttachmentScope::to_repr(Self) -> @debug.Repr
 
-#derive(Eq, @debug.Debug, @json.FromJson)
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Match {
   id : Int32
   title : String
@@ -37,10 +37,9 @@ pub fn Match::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDeco
 pub fn Match::not_equal(Self, Self) -> Bool
 pub fn Match::to_json(Self) -> @json.Json
 pub fn Match::to_repr(Self) -> @debug.Repr
-pub impl @json.ToJson for Match
 
 #derive(Eq, @debug.Debug)
-pub(all) struct Query {
+pub struct Query {
   q : String
   scope : String?
   all_words : Bool?
@@ -56,6 +55,7 @@ pub(all) struct Query {
   attachments : AttachmentScope?
 }
 pub fn Query::equal(Self, Self) -> Bool
+pub fn Query::new(q~ : String, scope? : String, all_words? : Bool, titles_only? : Bool, open_issues? : Bool, issues? : Bool, news? : Bool, documents? : Bool, changesets? : Bool, wiki_pages? : Bool, messages? : Bool, projects? : Bool, attachments? : AttachmentScope) -> Self
 pub fn Query::not_equal(Self, Self) -> Bool
 pub fn Query::to_repr(Self) -> @debug.Repr
 

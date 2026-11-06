@@ -31,6 +31,14 @@ test "a transport error has status 0" {
 }
 
 ///|
+test "a request the SDK refused to send has status 0" {
+  assert_eq(
+    text_of(failure_of(InvalidArgument(message="a tag name must not be empty"))),
+    "{\"status\":0,\"errors\":[\"a tag name must not be empty\"]}",
+  )
+}
+
+///|
 test "a decode error has status 0 and keeps its message" {
   assert_eq(
     text_of(failure_of(Decode(message="The server answered, but no"))),

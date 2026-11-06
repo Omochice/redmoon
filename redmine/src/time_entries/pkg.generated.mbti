@@ -22,7 +22,7 @@ pub async fn update(@redmine.Redmine, Int32, Update) -> Unit raise @redmine.Redm
 
 // Types and methods
 #derive(Eq, @debug.Debug, @json.ToJson)
-pub(all) struct Create {
+pub struct Create {
   hours : Double
   issue_id : Int32?
   project_id : Int32?
@@ -31,6 +31,7 @@ pub(all) struct Create {
   comments : String?
 }
 pub fn Create::equal(Self, Self) -> Bool
+pub fn Create::new(hours~ : Double, issue_id? : Int32, project_id? : Int32, spent_on? : String, activity_id? : Int32, comments? : String) -> Self
 pub fn Create::not_equal(Self, Self) -> Bool
 pub fn Create::to_json(Self) -> @json.Json
 pub fn Create::to_repr(Self) -> @debug.Repr
@@ -39,7 +40,7 @@ pub fn Create::to_repr(Self) -> @debug.Repr
 pub(all) struct CustomField {
   id : Int32
   name : String
-  value : @json.Json?
+  value : @redmine.CustomFieldValue?
 }
 pub fn CustomField::equal(Self, Self) -> Bool
 pub fn CustomField::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
@@ -78,7 +79,7 @@ pub fn Issue::to_json(Self) -> @json.Json
 pub fn Issue::to_repr(Self) -> @debug.Repr
 
 #derive(Eq, @debug.Debug)
-pub(all) struct ListQuery {
+pub struct ListQuery {
   project_id : Int32?
   user_id : Int32?
   spent_on : String?
@@ -86,21 +87,22 @@ pub(all) struct ListQuery {
   to : String?
 }
 pub fn ListQuery::equal(Self, Self) -> Bool
+pub fn ListQuery::new(project_id? : Int32, user_id? : Int32, spent_on? : String, from? : String, to? : String) -> Self
 pub fn ListQuery::not_equal(Self, Self) -> Bool
 pub fn ListQuery::to_repr(Self) -> @debug.Repr
 
-#derive(Eq, @debug.Debug, @json.ToJson)
-pub(all) struct Update {
+#derive(Eq, @debug.Debug)
+pub struct Update {
   hours : Double?
-  issue_id : Int32?
+  issue_id : @redmine.Clearable[Int32]?
   project_id : Int32?
   spent_on : String?
   activity_id : Int32?
-  comments : String?
+  comments : @redmine.Clearable[String]?
 }
 pub fn Update::equal(Self, Self) -> Bool
+pub fn Update::new(hours? : Double, issue_id? : @redmine.Clearable[Int32], project_id? : Int32, spent_on? : String, activity_id? : Int32, comments? : @redmine.Clearable[String]) -> Self
 pub fn Update::not_equal(Self, Self) -> Bool
-pub fn Update::to_json(Self) -> @json.Json
 pub fn Update::to_repr(Self) -> @debug.Repr
 
 // Type aliases

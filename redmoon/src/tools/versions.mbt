@@ -92,14 +92,17 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
           wiki_page_title.as_member(),
         ],
         v => {
-          VersionAction::Create(v.get(project_id), {
-            name: v.get(create_name),
-            description: v.get(description),
-            status: v.get(status),
-            due_date: v.get(due_date),
-            sharing: v.get(sharing),
-            wiki_page_title: v.get(wiki_page_title),
-          })
+          VersionAction::Create(
+            v.get(project_id),
+            @versions.Create::new(
+              name=v.get(create_name),
+              description?=v.get(description),
+              status?=v.get(status),
+              due_date?=v.get(due_date),
+              sharing?=v.get(sharing),
+              wiki_page_title?=v.get(wiki_page_title),
+            ),
+          )
         },
       ),
     ),
@@ -116,14 +119,23 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
           wiki_page_title.as_member(),
         ],
         v => {
-          VersionAction::Update(v.get(id), {
-            name: v.get(name),
-            description: v.get(description),
-            status: v.get(status),
-            due_date: v.get(due_date),
-            sharing: v.get(sharing),
-            wiki_page_title: v.get(wiki_page_title),
-          })
+          VersionAction::Update(
+            v.get(id),
+            @versions.Update::new(
+              name?=v.get(name),
+              description?=v
+                .get(description)
+                .map(value => @redmine.Clearable::Set(value)),
+              status?=v.get(status),
+              due_date?=v
+                .get(due_date)
+                .map(value => @redmine.Clearable::Set(value)),
+              sharing?=v.get(sharing),
+              wiki_page_title?=v
+                .get(wiki_page_title)
+                .map(value => @redmine.Clearable::Set(value)),
+            ),
+          )
         },
       ),
     ),

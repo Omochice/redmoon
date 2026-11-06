@@ -48,22 +48,38 @@ fn search_input() -> @schema.Schema[@search.Query] {
       projects.as_member(),
       attachments.as_member(),
     ],
-    v => @search.Query::{
-      q: v.get(q),
-      scope: v.get(scope),
-      all_words: v.get(all_words),
-      titles_only: v.get(titles_only),
-      open_issues: v.get(open_issues),
-      issues: v.get(issues),
-      news: v.get(news),
-      documents: v.get(documents),
-      changesets: v.get(changesets),
-      wiki_pages: v.get(wiki_pages),
-      messages: v.get(messages),
-      projects: v.get(projects),
-      attachments: v.get(attachments),
+    v => {
+      @search.Query::new(
+        q=v.get(q),
+        scope?=v.get(scope),
+        all_words?=v.get(all_words),
+        titles_only?=v.get(titles_only),
+        open_issues?=v.get(open_issues),
+        issues?=v.get(issues),
+        news?=v.get(news),
+        documents?=v.get(documents),
+        changesets?=v.get(changesets),
+        wiki_pages?=v.get(wiki_pages),
+        messages?=v.get(messages),
+        projects?=v.get(projects),
+        attachments?=v.get(attachments),
+      )
     },
   )
+}
+
+///|
+/// The tool output has always written an absent description as `null`, while the SDK leaves an absent field out,
+/// so the match is spelled here rather than encoded by the SDK.
+fn match_json(found : @search.Match) -> Json {
+  {
+    "id": found.id,
+    "title": found.title,
+    "type": found.kind,
+    "url": found.url,
+    "description": found.description.map(Json::string).unwrap_or(Json::null()),
+    "datetime": found.datetime,
+  }
 }
 
 ///|
@@ -76,6 +92,8 @@ pub fn search_tool(port : &SearchPort) -> @mcp.Tool {
       "Requires `q`; narrow with `scope` and the per-resource flags.",
     ]),
     input=@schema.keyed([("search", search_input())]),
-    handler=async fn(query) { respond(() => port.search(query)) },
+    handler=async fn(query) {
+      respond(() => port.search(query).map(match_json))
+    },
   )
 }

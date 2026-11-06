@@ -1,50 +1,10 @@
 ///|
-/// The value of an issue custom field: one string, or several for a multi-value field.
-#derive(Eq, Debug)
-pub(all) enum CustomFieldValue {
-  Single(String)
-  Multiple(Array[String])
-}
-
-///|
-pub extend CustomFieldValue with Eq::{equal, not_equal}
-
-///|
-pub extend CustomFieldValue with @debug.Debug::{to_repr}
-
-///|
-pub extend CustomFieldValue with @json.FromJson::{from_json}
-
-///|
-pub impl @json.FromJson for CustomFieldValue with fn from_json(json, path) {
-  match json {
-    String(value) => Single(value)
-    Array(_) => Multiple(@json.from_json(json, path~))
-    _ =>
-      raise @json.JsonDecodeError(
-        (path, "CustomFieldValue::from_json: expected string or array"),
-      )
-  }
-}
-
-///|
-pub extend CustomFieldValue with ToJson::{to_json}
-
-///|
-pub impl ToJson for CustomFieldValue with fn to_json(self) {
-  match self {
-    Single(value) => Json(value)
-    Multiple(values) => Json(values)
-  }
-}
-
-///|
 /// A custom field as it appears on an issue.
 #derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct CustomField {
   id : Int32
   name : String
-  value : CustomFieldValue?
+  value : @redmine.CustomFieldValue?
   multiple : Bool?
 }
 
@@ -123,12 +83,13 @@ pub extend Child with @debug.Debug::{to_repr}
 
 ///|
 /// A relation between issues, as listed by `include=relations`.
+/// The relation type is the closed set `@relations.Type` spells, so a relation type added by a plugin fails to decode as it does in `@relations`.
 #derive(FromJson, ToJson, Eq, Debug)
 pub(all) struct Relation {
   id : Int32?
   issue_id : Int32?
   issue_to_id : Int32?
-  relation_type : String?
+  relation_type : @relations.Type?
   delay : Int32?
 }
 

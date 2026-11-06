@@ -2,7 +2,8 @@
 /// Failure of a Redmine call.
 /// `Response` is a non-2xx answer carrying Redmine's own messages;
 /// `Decode` is a 2xx answer whose body could not be read as the expected JSON;
-/// `Transport` is any other failure without an HTTP status (connection, TLS, an unusable endpoint).
+/// `Transport` is any other failure without an HTTP status (connection, TLS, an unusable endpoint);
+/// `InvalidArgument` is a request the SDK refused to send because an argument could not be sent as asked.
 /// No case holds request headers, the request URL, or the API key.
 ///
 /// ```mbt check
@@ -11,7 +12,8 @@
 ///     match error {
 ///       Response(status=404, ..) => "not found"
 ///       Response(status~, errors~) => "\{status}: \{errors.join(", ")}"
-///       Decode(message~) | Transport(message~) => message
+///       Decode(message~) | Transport(message~) | InvalidArgument(message~) =>
+///         message
 ///     }
 ///   }
 ///
@@ -27,6 +29,7 @@ pub(all) suberror RedmineError {
   Response(status~ : Int32, errors~ : Array[String])
   Decode(message~ : String)
   Transport(message~ : String)
+  InvalidArgument(message~ : String)
 }
 
 ///|

@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub async fn list(@redmine.Redmine) -> Array[Query] raise @redmine.RedmineError
+pub async fn list(@redmine.Redmine, limit? : Int32) -> Array[Query] raise @redmine.RedmineError
 
 // Errors
 

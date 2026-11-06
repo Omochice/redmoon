@@ -279,6 +279,7 @@ test "a shown issue decodes every include" {
   )
   assert_eq(issue.attachments.unwrap()[0].filesize, 12)
   assert_eq(issue.relations.unwrap()[0].delay, None)
+  assert_eq(issue.relations.unwrap()[0].relation_type, Some(Relates))
   assert_eq(issue.children.unwrap()[0].subject, "c")
   let journal = issue.journals.unwrap()[0]
   assert_eq(journal.notes, Some("hello"))

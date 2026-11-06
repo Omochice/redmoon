@@ -47,11 +47,14 @@ fn agile_input(mode : Mode) -> @schema.Schema[AgileAction] {
           position.as_member(),
         ],
         v => {
-          AgileAction::Update(v.get(issue_id), {
-            story_points: v.get(story_points),
-            agile_sprint_id: v.get(agile_sprint_id),
-            position: v.get(position),
-          })
+          AgileAction::Update(
+            v.get(issue_id),
+            @agile.Update::new(
+              story_points?=v.get(story_points),
+              agile_sprint_id?=v.get(agile_sprint_id),
+              position?=v.get(position),
+            ),
+          )
         },
       ),
     ),

@@ -8,14 +8,16 @@ async test "versions go through create, list, show, update and delete" {
     ] {
     let name = "redmoon version \{@async.now()}"
     let created = redmine
-      |> @versions.create(project, {
-        name,
-        description: Some("made by a test"),
-        status: Some(Open),
-        due_date: Some("2030-01-31"),
-        sharing: Some(Descendants),
-        wiki_page_title: None,
-      })
+      |> @versions.create(
+        project,
+        @versions.Create::new(
+          name~,
+          description="made by a test",
+          status=Open,
+          due_date="2030-01-31",
+          sharing=Descendants,
+        ),
+      )
     defer redmine |> @versions.delete(created.id)
     assert_eq(created.name, name)
     assert_eq(created.due_date, Some("2030-01-31"))
@@ -24,14 +26,10 @@ async test "versions go through create, list, show, update and delete" {
       (redmine |> @versions.list(project)).any(fn(v) { v.id == created.id }),
     )
     redmine
-    |> @versions.update(created.id, {
-      name: None,
-      description: Some("changed"),
-      status: Some(Locked),
-      due_date: None,
-      sharing: None,
-      wiki_page_title: None,
-    })
+    |> @versions.update(
+      created.id,
+      @versions.Update::new(description=Set("changed"), status=Locked),
+    )
     let shown = redmine |> @versions.show(created.id)
     assert_eq(shown.description, Some("changed"))
     assert_eq(shown.status, Locked)

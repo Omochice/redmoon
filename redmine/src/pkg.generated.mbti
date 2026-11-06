@@ -23,6 +23,7 @@ pub(all) suberror RedmineError {
   Response(status~ : Int32, errors~ : Array[String])
   Decode(message~ : String)
   Transport(message~ : String)
+  InvalidArgument(message~ : String)
 }
 pub fn RedmineError::to_json(Self) -> @json.Json
 pub fn RedmineError::to_repr(Self) -> @debug.Repr
@@ -35,7 +36,21 @@ pub(all) enum Clearable[T] {
 }
 pub fn[T : Eq] Clearable::equal(Self[T], Self[T]) -> Bool
 pub fn[T : Eq] Clearable::not_equal(Self[T], Self[T]) -> Bool
+pub fn[T] Clearable::to_member(Self[T]?, clear? : @json.Json, set~ : (T) -> @json.Json) -> @json.Json?
 pub fn[T : @debug.Debug] Clearable::to_repr(Self[T]) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) enum CustomFieldValue {
+  Single(String)
+  Multiple(Array[String])
+}
+pub fn CustomFieldValue::equal(Self, Self) -> Bool
+pub fn CustomFieldValue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CustomFieldValue::not_equal(Self, Self) -> Bool
+pub fn CustomFieldValue::to_json(Self) -> @json.Json
+pub fn CustomFieldValue::to_repr(Self) -> @debug.Repr
+pub impl @json.FromJson for CustomFieldValue
+pub impl @json.ToJson for CustomFieldValue
 
 #derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct IdName {

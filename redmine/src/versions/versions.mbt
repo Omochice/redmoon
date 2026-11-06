@@ -30,11 +30,17 @@ pub impl ToJson for Status with fn to_json(self) -> Json {
 
 ///|
 pub impl @json.FromJson for Status with fn from_json(json, path) {
-  match json {
+  guard json is String(wire) else {
+    raise @json.JsonDecodeError((path, "Status::from_json: expected string"))
+  }
+  match wire {
     "open" => Open
     "locked" => Locked
     "closed" => Closed
-    _ => raise @json.JsonDecodeError((path, "unknown version status"))
+    _ =>
+      raise @json.JsonDecodeError(
+        (path, "Status::from_json: unknown version status `\{wire}`"),
+      )
   }
 }
 
@@ -74,13 +80,19 @@ pub impl ToJson for Sharing with fn to_json(self) -> Json {
 
 ///|
 pub impl @json.FromJson for Sharing with fn from_json(json, path) {
-  match json {
+  guard json is String(wire) else {
+    raise @json.JsonDecodeError((path, "Sharing::from_json: expected string"))
+  }
+  match wire {
     "none" => None
     "descendants" => Descendants
     "hierarchy" => Hierarchy
     "tree" => Tree
     "system" => System
-    _ => raise @json.JsonDecodeError((path, "unknown version sharing"))
+    _ =>
+      raise @json.JsonDecodeError(
+        (path, "Sharing::from_json: unknown version sharing `\{wire}`"),
+      )
   }
 }
 
@@ -114,22 +126,8 @@ pub extend Version with @debug.Debug::{to_repr}
 
 ///|
 /// Attributes of a version to create; `due_date` is `YYYY-MM-DD`.
-///
-/// ```mbt check
-/// test {
-///   let create : @versions.Create = {
-///     name: "1.0",
-///     description: None,
-///     status: Some(Open),
-///     due_date: Some("2026-12-31"),
-///     sharing: None,
-///     wiki_page_title: None,
-///   }
-///   assert_eq(create.status, Some(@versions.Status::Open))
-/// }
-/// ```
 #derive(Eq, Debug)
-pub(all) struct Create {
+pub struct Create {
   name : String
   description : String?
   status : Status?
@@ -145,15 +143,41 @@ pub extend Create with Eq::{equal, not_equal}
 pub extend Create with @debug.Debug::{to_repr}
 
 ///|
+/// The attributes of a version to create; only `name` must be given.
+///
+/// ```mbt check
+/// test {
+///   let create = @versions.Create::new(
+///     name="1.0",
+///     status=Open,
+///     due_date="2026-12-31",
+///   )
+///   assert_eq(create.status, Some(@versions.Status::Open))
+///   assert_true(create.description is None)
+/// }
+/// ```
+pub fn Create::new(
+  name~ : String,
+  description? : String,
+  status? : Status,
+  due_date? : String,
+  sharing? : Sharing,
+  wiki_page_title? : String,
+) -> Create {
+  { name, description, status, due_date, sharing, wiki_page_title, }
+}
+
+///|
 /// Attributes of a version to change; fields left `None` are not sent.
+/// `Clear` empties the description, the due date, or the wiki page title; `due_date` is `YYYY-MM-DD`.
 #derive(Eq, Debug)
-pub(all) struct Update {
+pub struct Update {
   name : String?
-  description : String?
+  description : @redmine.Clearable[String]?
   status : Status?
-  due_date : String?
+  due_date : @redmine.Clearable[String]?
   sharing : Sharing?
-  wiki_page_title : String?
+  wiki_page_title : @redmine.Clearable[String]?
 }
 
 ///|
@@ -161,6 +185,28 @@ pub extend Update with Eq::{equal, not_equal}
 
 ///|
 pub extend Update with @debug.Debug::{to_repr}
+
+///|
+/// The attributes of a version to change; only the fields given are touched.
+///
+/// ```mbt check
+/// test {
+///   let update = @versions.Update::new(status=Closed, due_date=Clear)
+///   assert_eq(update.status, Some(@versions.Status::Closed))
+///   assert_eq(update.due_date, Some(@redmine.Clearable::Clear))
+///   assert_true(update.name is None)
+/// }
+/// ```
+pub fn Update::new(
+  name? : String,
+  description? : @redmine.Clearable[String],
+  status? : Status,
+  due_date? : @redmine.Clearable[String],
+  sharing? : Sharing,
+  wiki_page_title? : @redmine.Clearable[String],
+) -> Update {
+  { name, description, status, due_date, sharing, wiki_page_title, }
+}
 
 ///|
 /// Lists the versions of `project`; Redmine answers them all in one response.
@@ -205,8 +251,7 @@ pub async fn show(
   redmine : @redmine.Redmine,
   id : Int32,
 ) -> Version raise @redmine.RedmineError {
-  let json = redmine
-    |> @redmine.send(Get, ["versions", id.to_string() + ".json"])
+  let json = redmine |> @redmine.send(Get, ["versions", "\{id}.json"])
   @decode.decode_field(json, "version")
 }
 
@@ -222,14 +267,10 @@ pub async fn show(
 ///     api_key="...",
 ///   )
 ///   let version = redmine
-///     |> @versions.create(Identifier("demo"), {
-///       name: "1.0",
-///       description: None,
-///       status: None,
-///       due_date: Some("2026-12-31"),
-///       sharing: None,
-///       wiki_page_title: None,
-///     })
+///     |> @versions.create(
+///       Identifier("demo"),
+///       @versions.Create::new(name="1.0", due_date="2026-12-31"),
+///     )
 ///   ignore(version)
 /// }
 /// ```
@@ -242,14 +283,7 @@ pub async fn create(
     |> @redmine.send(
       Post,
       ["projects", project.segment(), "versions.json"],
-      body=version_body(
-        Some(attributes.name),
-        attributes.description,
-        attributes.status,
-        attributes.due_date,
-        attributes.sharing,
-        attributes.wiki_page_title,
-      ),
+      body=attributes.to_body(),
     )
   @decode.decode_field(json, "version")
 }
@@ -265,15 +299,7 @@ pub async fn create(
 ///     endpoint="https://redmine.example.com",
 ///     api_key="...",
 ///   )
-///   redmine
-///   |> @versions.update(3, {
-///     name: None,
-///     description: None,
-///     status: Some(Closed),
-///     due_date: None,
-///     sharing: None,
-///     wiki_page_title: None,
-///   })
+///   redmine |> @versions.update(3, @versions.Update::new(status=Closed))
 /// }
 /// ```
 pub async fn update(
@@ -283,18 +309,7 @@ pub async fn update(
 ) -> Unit raise @redmine.RedmineError {
   ignore(
     redmine
-    |> @redmine.send(
-      Put,
-      ["versions", id.to_string() + ".json"],
-      body=version_body(
-        attributes.name,
-        attributes.description,
-        attributes.status,
-        attributes.due_date,
-        attributes.sharing,
-        attributes.wiki_page_title,
-      ),
-    ),
+    |> @redmine.send(Put, ["versions", "\{id}.json"], body=attributes.to_body()),
   )
 }
 
@@ -316,27 +331,40 @@ pub async fn delete(
   redmine : @redmine.Redmine,
   id : Int32,
 ) -> Unit raise @redmine.RedmineError {
-  ignore(
-    redmine |> @redmine.send(Delete, ["versions", id.to_string() + ".json"]),
-  )
+  ignore(redmine |> @redmine.send(Delete, ["versions", "\{id}.json"]))
 }
 
 ///|
-fn version_body(
-  name : String?,
-  description : String?,
-  status : Status?,
-  due_date : String?,
-  sharing : Sharing?,
-  wiki_page_title : String?,
-) -> Json {
+fn Create::to_body(self : Create) -> Json {
   let version = @wire.present_members([
-    ("name", name.map(ToJson::to_json)),
-    ("description", description.map(ToJson::to_json)),
-    ("status", status.map(ToJson::to_json)),
-    ("due_date", due_date.map(ToJson::to_json)),
-    ("sharing", sharing.map(ToJson::to_json)),
-    ("wiki_page_title", wiki_page_title.map(ToJson::to_json)),
+    ("name", Some(Json(self.name))),
+    ("description", self.description.map(ToJson::to_json)),
+    ("status", self.status.map(ToJson::to_json)),
+    ("due_date", self.due_date.map(ToJson::to_json)),
+    ("sharing", self.sharing.map(ToJson::to_json)),
+    ("wiki_page_title", self.wiki_page_title.map(ToJson::to_json)),
+  ])
+  Json::object({ "version": version })
+}
+
+///|
+fn Update::to_body(self : Update) -> Json {
+  let version = @wire.present_members([
+    ("name", self.name.map(ToJson::to_json)),
+    (
+      "description",
+      @redmine.Clearable::to_member(self.description, set=ToJson::to_json),
+    ),
+    ("status", self.status.map(ToJson::to_json)),
+    (
+      "due_date",
+      @redmine.Clearable::to_member(self.due_date, set=ToJson::to_json),
+    ),
+    ("sharing", self.sharing.map(ToJson::to_json)),
+    (
+      "wiki_page_title",
+      @redmine.Clearable::to_member(self.wiki_page_title, set=ToJson::to_json),
+    ),
   ])
   Json::object({ "version": version })
 }

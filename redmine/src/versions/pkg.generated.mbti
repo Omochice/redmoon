@@ -22,7 +22,7 @@ pub async fn update(@redmine.Redmine, Int32, Update) -> Unit raise @redmine.Redm
 
 // Types and methods
 #derive(Eq, @debug.Debug)
-pub(all) struct Create {
+pub struct Create {
   name : String
   description : String?
   status : Status?
@@ -31,6 +31,7 @@ pub(all) struct Create {
   wiki_page_title : String?
 }
 pub fn Create::equal(Self, Self) -> Bool
+pub fn Create::new(name~ : String, description? : String, status? : Status, due_date? : String, sharing? : Sharing, wiki_page_title? : String) -> Self
 pub fn Create::not_equal(Self, Self) -> Bool
 pub fn Create::to_repr(Self) -> @debug.Repr
 
@@ -65,15 +66,16 @@ pub impl @json.FromJson for Status
 pub impl @json.ToJson for Status
 
 #derive(Eq, @debug.Debug)
-pub(all) struct Update {
+pub struct Update {
   name : String?
-  description : String?
+  description : @redmine.Clearable[String]?
   status : Status?
-  due_date : String?
+  due_date : @redmine.Clearable[String]?
   sharing : Sharing?
-  wiki_page_title : String?
+  wiki_page_title : @redmine.Clearable[String]?
 }
 pub fn Update::equal(Self, Self) -> Bool
+pub fn Update::new(name? : String, description? : @redmine.Clearable[String], status? : Status, due_date? : @redmine.Clearable[String], sharing? : Sharing, wiki_page_title? : @redmine.Clearable[String]) -> Self
 pub fn Update::not_equal(Self, Self) -> Bool
 pub fn Update::to_repr(Self) -> @debug.Repr
 

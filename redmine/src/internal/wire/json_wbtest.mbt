@@ -1,5 +1,5 @@
 ///|
-test "strip_nulls removes null members at every depth" {
+test "null members are removed at every depth" {
   let json = @json.parse(
     "{\"a\":null,\"b\":1,\"c\":{\"d\":null,\"e\":{\"f\":null,\"g\":\"x\"}},\"h\":[{\"i\":null,\"j\":2}]}",
   )
@@ -12,7 +12,7 @@ test "strip_nulls removes null members at every depth" {
 }
 
 ///|
-test "strip_nulls keeps null array elements" {
+test "null array elements are kept" {
   inspect(
     strip_nulls(@json.parse("{\"a\":[null,1,null]}")).stringify(),
     content=(
@@ -22,7 +22,7 @@ test "strip_nulls keeps null array elements" {
 }
 
 ///|
-test "strip_nulls leaves scalars alone" {
+test "scalars are left alone when nulls are stripped" {
   inspect(strip_nulls(Json::null()).stringify(), content="null")
   inspect(strip_nulls(Json::number(1)).stringify(), content="1")
 }

@@ -8,7 +8,7 @@ test "time entry list query names only the filters that are set" {
     to: Some("2026-10-31"),
   }
   inspect(
-    @wire.encode_query(query.to_pairs()),
+    @wire.encode_query(query.to_query()),
     content="project_id=1&from=2026-10-01&to=2026-10-31",
   )
 }
@@ -22,7 +22,7 @@ test "time entry list query with no filters sends no parameters" {
     from: None,
     to: None,
   }
-  inspect(@wire.encode_query(query.to_pairs()), content="")
+  inspect(@wire.encode_query(query.to_query()), content="")
 }
 
 ///|
@@ -36,7 +36,7 @@ test "create body omits unset fields and wraps them in time_entry" {
     comments: None,
   }
   inspect(
-    entry_body(create).stringify(),
+    create.to_body().stringify(),
     content=(
       #|{"time_entry":{"hours":1.5,"project_id":1,"spent_on":"2026-10-10","activity_id":8}}
     ),
@@ -54,7 +54,7 @@ test "update body with only hours sends just that field" {
     comments: None,
   }
   inspect(
-    entry_body(update).stringify(),
+    update.to_body().stringify(),
     content=(
       #|{"time_entry":{"hours":2}}
     ),
@@ -74,4 +74,32 @@ test "a time entry response decodes with an issue and null comments" {
   assert_eq(entry.comments, None)
   assert_eq(entry.hours, 1.5)
   assert_eq(entry.custom_fields, None)
+}
+
+///|
+test "a time entry's custom field values decode as one string or several" {
+  let text =
+    #|{"time_entry":{"id":7,"project":{"id":1,"name":"Demo"},"user":{"id":1,"name":"Redmine Admin"},"activity":{"id":8,"name":"Design"},"hours":1.5,"spent_on":"2026-10-10","created_on":"2026-10-15T18:06:58Z","updated_on":"2026-10-15T18:06:58Z","custom_fields":[{"id":1,"name":"Billable","value":"1"},{"id":2,"name":"Tags","value":["a","b"]},{"id":3,"name":"Note","value":null}]}}
+  let json = @wire.strip_nulls(@json.parse(text))
+  let entry : Entry = @decode.decode_field(json, "time_entry") catch {
+    _ => abort("decode failed")
+  }
+  assert_eq(
+    entry.custom_fields,
+    Some([
+      { id: 1, name: "Billable", value: Some(Single("1")), },
+      { id: 2, name: "Tags", value: Some(Multiple(["a", "b"])), },
+      { id: 3, name: "Note", value: None, },
+    ]),
+  )
+}
+
+///|
+test "an update body sends null for a cleared issue or comments" {
+  inspect(
+    Update::new(issue_id=Clear, comments=Clear).to_body().stringify(),
+    content=(
+      #|{"time_entry":{"issue_id":null,"comments":null}}
+    ),
+  )
 }

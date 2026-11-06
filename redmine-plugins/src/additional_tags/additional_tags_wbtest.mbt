@@ -39,7 +39,8 @@ async fn FakeRecord::change(
 ///|
 fn message_of(error : @redmine.RedmineError) -> String {
   match error {
-    Decode(message~) | Transport(message~) => message
+    Decode(message~) | Transport(message~) | InvalidArgument(message~) =>
+      message
     Response(status~, errors~) => "\{status}: \{errors.join(", ")}"
   }
 }
@@ -64,7 +65,7 @@ test "no names, a blank name, or a name with a comma is refused" {
   ]
   for entry in cases {
     try validate(entry.0) catch {
-      Transport(message~) => assert_eq(message, entry.1)
+      InvalidArgument(message~) => assert_eq(message, entry.1)
       error => fail(message_of(error))
     } noraise {
       _ => fail("expected \{entry.1}")
@@ -138,7 +139,7 @@ async test "a write the plugin dropped is reported with the names it lost" {
 async test "invalid names are refused before the tags are read" {
   let record = FakeRecord::new(["alpha"])
   try record.change(Add, ["a,b"]) catch {
-    Transport(..) => ()
+    InvalidArgument(..) => ()
     error => fail(message_of(error))
   } noraise {
     _ => fail("expected the comma to be refused")

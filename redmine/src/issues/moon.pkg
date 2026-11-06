@@ -6,6 +6,7 @@ import {
   "omochice/redmine/internal/decode",
   "omochice/redmine/internal/paging",
   "omochice/redmine/internal/wire",
+  "omochice/redmine/relations",
 }
 
 import {

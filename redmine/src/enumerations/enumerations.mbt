@@ -88,6 +88,6 @@ async fn list(
   redmine : @redmine.Redmine,
   kind : String,
 ) -> Array[Enumeration] raise @redmine.RedmineError {
-  let json = redmine |> @redmine.send(Get, ["enumerations", kind + ".json"])
+  let json = redmine |> @redmine.send(Get, ["enumerations", "\{kind}.json"])
   @decode.decode_field(json, kind)
 }

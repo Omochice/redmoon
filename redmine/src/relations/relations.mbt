@@ -68,8 +68,6 @@ pub impl @json.FromJson for Type with fn from_json(json, path) {
 }
 
 ///|
-
-///|
 pub extend Type with ToJson::{to_json}
 
 ///|
