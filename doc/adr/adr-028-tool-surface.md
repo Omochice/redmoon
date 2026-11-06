@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted (refined by [ADR-034](./adr-034-design-evolution-from-adr-028.md))
 
 ## Context
 
