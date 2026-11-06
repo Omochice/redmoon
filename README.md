@@ -9,8 +9,7 @@ The API key is kept in the OS keyring rather than in the MCP client's configurat
 
 ## Usage
 
-Prebuilt binaries for `aarch64-apple-darwin` and `x86_64-unknown-linux-gnu` are attached to each [release](https://github.com/Omochice/redmoon/releases).
-There is no binary for Intel macOS, Linux arm64, or Windows at the moment.
+Prebuilt binaries for macOS, Linux, and Windows are attached to each [release](https://github.com/Omochice/redmoon/releases).
 
 ### login
 
