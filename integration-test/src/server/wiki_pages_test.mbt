@@ -19,7 +19,11 @@ async test "wiki pages go through the tool" {
   let listed = call_tool(tools, "redmine_wiki_pages", {
     "list": { "project_id": "demo" },
   })
-  assert_true(listed.text.contains(title.replace_all(old=" ", new="_")))
+  assert_eq(listed.is_error, false, msg=listed.text)
+  assert_true(
+    listed.text.contains(title.replace_all(old=" ", new="_")),
+    msg=listed.text,
+  )
   let missing = call_tool(tools, "redmine_wiki_pages", {
     "show": { "project_id": "demo", "title": "No such \{title}" },
   })
