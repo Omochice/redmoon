@@ -7,7 +7,13 @@ permissions:
   contents: read
 
 jobs:
+  toolchain:
+    permissions:
+      contents: read
+    uses: $/.github/workflows/toolchain.yaml
+
   build:
+    needs: toolchain
     strategy:
       fail-fast: false
       matrix:
@@ -16,35 +22,63 @@ jobs:
             runner: macos-15
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            ext: .exe
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      MOONBIT_INSTALL_VERSION: ${{ needs.toolchain.outputs.version }}
     steps:
+      - name: Disable auto CRLF
+        if: runner.os == 'Windows'
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      - uses: $/.github/actions/setup-nix
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        if: runner.os == 'Windows'
+      - uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
+          version: 3.53.1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install MoonBit (Unix installer)
+        if: runner.os != 'Windows'
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install MoonBit (Windows installer)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+          irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
+          "$env:USERPROFILE\.moon\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - name: Print the toolchain version
+        run: moon version --all
       - name: Stamp the build information
-        run: nix develop --command task build-info:stamp
-
+        run: task build-info:stamp
       - name: Build the executable
-        run: nix develop --command task build
-
+        run: task build
       - name: Stage the executable under the asset name
         run: |
           mkdir -p dist
-          cp _build/redmoon/bin/redmoon "dist/redmoon-${{ matrix.target }}"
-
+          cp _build/native/release/build/omochice/redmoon/cmd/redmoon/redmoon.exe \
+            "dist/redmoon-${{ matrix.target }}${{ matrix.ext }}"
+      - name: Strip the debug information
+        if: runner.os != 'Windows'
+        run: strip -S "dist/redmoon-${{ matrix.target }}"
       - name: Smoke-run the artifact
-        run: ./dist/redmoon-${{ matrix.target }} --help
-
+        run: ./dist/redmoon-${{ matrix.target }}${{ matrix.ext }} --help
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: redmoon-${{ matrix.target }}
-          path: dist/redmoon-${{ matrix.target }}
+          path: dist/redmoon-${{ matrix.target }}${{ matrix.ext }}
           if-no-files-found: error

@@ -509,7 +509,7 @@ async test "LocalFile saves, refuses to overwrite and bounds the size" {
     let files = LocalFile::new()
     let path = "\{dir}/out.bin"
     let written = files.save(path, @io.MemoryReader(w => w.write(b"abc")), 3L)
-    assert_true(written.has_suffix("/out.bin"))
+    assert_eq(written, @fs.realpath(path))
     assert_eq(@fs.read_file(path).binary(), b"abc")
     let existing = file_error_message(async fn() {
       let reader = @io.MemoryReader(w => w.write(b"zzz"))

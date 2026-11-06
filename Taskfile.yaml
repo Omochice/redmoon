@@ -76,7 +76,13 @@ tasks:
       - moon fmt
 
   build:
-    desc: Build the release executable as the flake package and link it at _build/redmoon
+    desc: Build the release executable with the installed toolchain
+    deps: [registry]
+    cmds:
+      - moon build --target native --release redmoon/src/cmd/redmoon
+
+  build:flake:
+    desc: Build the executable as the flake package and link it at _build/redmoon
     cmds:
       - nix build .#redmoon --out-link _build/redmoon
 
