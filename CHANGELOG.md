@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.0.0](https://github.com/Omochice/redmoon/compare/v0.5.0...v1.0.0) (2026-11-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* every exhaustive match on RedmineError has to handle the new InvalidArgument case, and the additional_tags functions raise it instead of Transport for an invalid tag name.
+* the include value allowedStatuses and the period values thisWeek, lastWeek, lastTwoWeeks, thisMonth, lastMonth, thisYear, nextWeek, nextMonth are renamed to their snake_case form.
+
+### Features
+
+* describe every tool field and state the operation-key hint the same way ([#64](https://github.com/Omochice/redmoon/issues/64)) ([a02f5f1](https://github.com/Omochice/redmoon/commit/a02f5f1e02f8fc1d5b3eaecb3763a5275e6b65d4))
+* find wiki pages by tag with redmine_tags ([#53](https://github.com/Omochice/redmoon/issues/53)) ([2aed425](https://github.com/Omochice/redmoon/commit/2aed42502e06a06ccfb87949f26c5afb39a0c171))
+* name every tool value in snake_case like the keys ([#69](https://github.com/Omochice/redmoon/issues/69)) ([556c778](https://github.com/Omochice/redmoon/commit/556c778c404423e4b580fc4b73a003f19429e8f0))
+* shape every Redmine SDK request the same way and add InvalidArgument ([#63](https://github.com/Omochice/redmoon/issues/63)) ([5f449ec](https://github.com/Omochice/redmoon/commit/5f449ecc7dc1064a76bfcff231d772be124d085f))
+* tag issues through the Additional Tags plugin ([#52](https://github.com/Omochice/redmoon/issues/52)) ([1bcb623](https://github.com/Omochice/redmoon/commit/1bcb623f67539923a8309140154b821b7f31c012))
+
+
+### Bug Fixes
+
+* advertise the Redmine rules on wiki text, version, issue and time entry fields ([#66](https://github.com/Omochice/redmoon/issues/66)) ([6fba7ad](https://github.com/Omochice/redmoon/commit/6fba7ada057f4b6e6e2834d64fb3600e093f77cc))
+* word every keyring failure for its platform and type the CLI errors ([#65](https://github.com/Omochice/redmoon/issues/65)) ([b54ec2a](https://github.com/Omochice/redmoon/commit/b54ec2adb69e34297fe09ce20032ce21294d31e6))
+
 ## [0.5.0](https://github.com/Omochice/redmoon/compare/v0.4.0...v0.5.0) (2026-11-02)
 
 
