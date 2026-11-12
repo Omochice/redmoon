@@ -104,7 +104,7 @@ pub fn relations_tool(port : &RelationPort, mode : Mode) -> @mcp.Tool {
         Show(id) => respond(() => port.show_relation(id))
         Create(issue_id, issue_to_id, relation_type, delay) =>
           respond(() => {
-            port.create_relation(issue_id, issue_to_id, relation_type, delay)
+            port.create_relation(issue_id, issue_to_id~, relation_type~, delay?)
           })
         Delete(id) => respond_ok(() => port.delete_relation(id))
       }

@@ -130,7 +130,7 @@ pub impl MembershipPort for @redmine.Redmine
 pub(open) trait RelationPort {
   async fn list_relations(Self, Int32) -> Array[@relations.Relation] raise @redmine.RedmineError
   async fn show_relation(Self, Int32) -> @relations.Relation raise @redmine.RedmineError
-  async fn create_relation(Self, Int32, Int32, @relations.Type, Int32?) -> @relations.Relation raise @redmine.RedmineError
+  async fn create_relation(Self, Int32, issue_to_id~ : Int32, relation_type~ : @relations.Type, delay? : Int32) -> @relations.Relation raise @redmine.RedmineError
   async fn delete_relation(Self, Int32) -> Unit raise @redmine.RedmineError
 }
 pub impl RelationPort for @redmine.Redmine
