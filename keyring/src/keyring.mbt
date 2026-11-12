@@ -4,7 +4,7 @@
 /// ```mbt check
 /// #skip("touches the OS credential store")
 /// test {
-///   @keyring.set("my-app", "alice", "secret") catch {
+///   @keyring.set(service="my-app", account="alice", secret="secret") catch {
 ///     NoStore(message) => println(message)
 ///     Refused(code) => println("store refused the write: \{code}")
 ///   }
@@ -121,13 +121,13 @@ fn decode(bytes : Bytes) -> String raise KeyringError {
 /// ```mbt check
 /// #skip("touches the OS credential store")
 /// test {
-///   match @keyring.get("my-app", "alice") {
+///   match @keyring.get(service="my-app", account="alice") {
 ///     Some(token) => ignore(token)
 ///     None => ()
 ///   }
 /// }
 /// ```
-pub fn get(service : String, account : String) -> String? raise KeyringError {
+pub fn get(service~ : String, account~ : String) -> String? raise KeyringError {
   let status = ffi_get(@utf8.encode(service), @utf8.encode(account))
   if status == not_found {
     return None
@@ -149,13 +149,13 @@ pub fn get(service : String, account : String) -> String? raise KeyringError {
 /// ```mbt check
 /// #skip("touches the OS credential store")
 /// test {
-///   @keyring.set("my-app", "alice", "secret")
+///   @keyring.set(service="my-app", account="alice", secret="secret")
 /// }
 /// ```
 pub fn set(
-  service : String,
-  account : String,
-  secret : String,
+  service~ : String,
+  account~ : String,
+  secret~ : String,
 ) -> Unit raise KeyringError {
   if secret.contains("\u{0}") {
     raise Refused(INTERNAL)
@@ -174,10 +174,10 @@ pub fn set(
 /// ```mbt check
 /// #skip("touches the OS credential store")
 /// test {
-///   @keyring.delete("my-app", "alice")
+///   @keyring.delete(service="my-app", account="alice")
 /// }
 /// ```
-pub fn delete(service : String, account : String) -> Unit raise KeyringError {
+pub fn delete(service~ : String, account~ : String) -> Unit raise KeyringError {
   let status = ffi_delete(@utf8.encode(service), @utf8.encode(account))
   // Every C file reports an absent entry as not found so the fold into success
   // exists once, here, instead of once per platform.

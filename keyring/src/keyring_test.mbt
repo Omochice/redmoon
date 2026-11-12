@@ -12,14 +12,14 @@ fn store_test_service() -> String? {
 test "set, get, list and delete round-trip a secret" {
   guard store_test_service() is Some(service) else { return }
   let account = "alice"
-  errdefer (@keyring.delete(service, account) catch { _ => () })
-  @keyring.set(service, account, "s3cret-ü")
-  assert_eq(@keyring.get(service, account), Some("s3cret-ü"))
-  @keyring.set(service, account, "replaced")
-  assert_eq(@keyring.get(service, account), Some("replaced"))
+  errdefer (@keyring.delete(service~, account~) catch { _ => () })
+  @keyring.set(service~, account~, secret="s3cret-ü")
+  assert_eq(@keyring.get(service~, account~), Some("s3cret-ü"))
+  @keyring.set(service~, account~, secret="replaced")
+  assert_eq(@keyring.get(service~, account~), Some("replaced"))
   assert_eq(@keyring.list(service), [account])
-  @keyring.delete(service, account)
-  assert_eq(@keyring.get(service, account), None)
+  @keyring.delete(service~, account~)
+  assert_eq(@keyring.get(service~, account~), None)
   assert_eq(@keyring.list(service), [])
 }
 
@@ -27,14 +27,14 @@ test "set, get, list and delete round-trip a secret" {
 test "a refused NUL write leaves the stored secret as it was" {
   guard store_test_service() is Some(service) else { return }
   let account = "alice"
-  errdefer (@keyring.delete(service, account) catch { _ => () })
-  @keyring.set(service, account, "original")
-  try @keyring.set(service, account, "abc\u{0}def") catch {
+  errdefer (@keyring.delete(service~, account~) catch { _ => () })
+  @keyring.set(service~, account~, secret="original")
+  try @keyring.set(service~, account~, secret="abc\u{0}def") catch {
     Refused(_) => ()
     _ => fail("raised a different error")
   } noraise {
     _ => fail("a secret containing NUL was accepted")
   }
-  assert_eq(@keyring.get(service, account), Some("original"))
-  @keyring.delete(service, account)
+  assert_eq(@keyring.get(service~, account~), Some("original"))
+  @keyring.delete(service~, account~)
 }
