@@ -155,9 +155,9 @@ pub fn wiki_pages_tool(
           respond_saving_text(
             files,
             page.to_json(),
-            "text",
-            page.text,
-            text_path,
+            field="text",
+            text=page.text,
+            path?=text_path,
           )
         }
         Create(project, title, text, comments, parent_title) =>
