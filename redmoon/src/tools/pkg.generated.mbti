@@ -170,9 +170,9 @@ pub impl VersionPort for @redmine.Redmine
 
 pub(open) trait WikiPagePort {
   async fn list_wiki_pages(Self, @redmine.ProjectRef) -> Array[@wiki.PageSummary] raise @redmine.RedmineError
-  async fn show_wiki_page(Self, @redmine.ProjectRef, String, Int32?) -> @wiki.Page raise @redmine.RedmineError
-  async fn create_wiki_page(Self, @redmine.ProjectRef, String, String, String?, String?) -> Unit raise @redmine.RedmineError
-  async fn update_wiki_page(Self, @redmine.ProjectRef, String, String, String?, Int32?, String?) -> Unit raise @redmine.RedmineError
+  async fn show_wiki_page(Self, @redmine.ProjectRef, String, version? : Int32) -> @wiki.Page raise @redmine.RedmineError
+  async fn create_wiki_page(Self, @redmine.ProjectRef, String, text~ : String, comments? : String, parent_title? : String) -> Unit raise @redmine.RedmineError
+  async fn update_wiki_page(Self, @redmine.ProjectRef, String, text~ : String, comments? : String, version? : Int32, parent_title? : String) -> Unit raise @redmine.RedmineError
   async fn delete_wiki_page(Self, @redmine.ProjectRef, String) -> Unit raise @redmine.RedmineError
 }
 pub impl WikiPagePort for @redmine.Redmine

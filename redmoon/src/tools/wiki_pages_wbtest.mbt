@@ -47,7 +47,7 @@ impl WikiPagePort for FakeWikiPages with fn show_wiki_page(
   self,
   project,
   title,
-  version,
+  version?,
 ) {
   self.record(
     "show \{project_label(project)} \{title} \{wiki_option_label(version)}",
@@ -69,9 +69,9 @@ impl WikiPagePort for FakeWikiPages with fn create_wiki_page(
   self,
   project,
   title,
-  text,
-  comments,
-  parent_title,
+  text~,
+  comments?,
+  parent_title?,
 ) {
   self.record(
     "create \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(parent_title)}",
@@ -83,10 +83,10 @@ impl WikiPagePort for FakeWikiPages with fn update_wiki_page(
   self,
   project,
   title,
-  text,
-  comments,
-  version,
-  parent_title,
+  text~,
+  comments?,
+  version?,
+  parent_title?,
 ) {
   self.record(
     "update \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(version)} \{wiki_option_label(parent_title)}",

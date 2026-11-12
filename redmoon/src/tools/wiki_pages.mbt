@@ -149,7 +149,7 @@ pub fn wiki_pages_tool(
       match action {
         List(project) => respond(() => port.list_wiki_pages(project))
         Show(project, title, version, text_path) => {
-          let page = port.show_wiki_page(project, title, version) catch {
+          let page = port.show_wiki_page(project, title, version?) catch {
             error => return failure_of(error)
           }
           respond_saving_text(
@@ -162,12 +162,23 @@ pub fn wiki_pages_tool(
         }
         Create(project, title, text, comments, parent_title) =>
           respond_ok(() => {
-            port.create_wiki_page(project, title, text, comments, parent_title)
+            port.create_wiki_page(
+              project,
+              title,
+              text~,
+              comments?,
+              parent_title?,
+            )
           })
         Update(project, title, text, comments, version, parent_title) =>
           respond_ok(() => {
             port.update_wiki_page(
-              project, title, text, comments, version, parent_title,
+              project,
+              title,
+              text~,
+              comments?,
+              version?,
+              parent_title?,
             )
           })
         Delete(project, title) =>
