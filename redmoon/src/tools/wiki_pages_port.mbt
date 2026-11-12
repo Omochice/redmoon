@@ -57,7 +57,7 @@ pub impl WikiPagePort for @redmine.Redmine with fn create_wiki_page(
   comments,
   parent_title,
 ) {
-  self |> @wiki.create(project, title, text, comments?, parent_title?)
+  self |> @wiki.create(project, title, text~, comments?, parent_title?)
 }
 
 ///|
@@ -70,7 +70,8 @@ pub impl WikiPagePort for @redmine.Redmine with fn update_wiki_page(
   version,
   parent_title,
 ) {
-  self |> @wiki.update(project, title, text, comments?, version?, parent_title?)
+  self
+  |> @wiki.update(project, title, text~, comments?, version?, parent_title?)
 }
 
 ///|

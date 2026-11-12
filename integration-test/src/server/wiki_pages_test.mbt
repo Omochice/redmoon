@@ -37,7 +37,7 @@ async test "a wiki text saved by show and sent back from the file is stored unch
   let project = @redmine.ProjectRef::Identifier("demo")
   let title = "Redmoon_round_trip_\{@async.now()}"
   let content = "h1. Heading\n\nfirst line\nsecond line\n"
-  redmine |> @wiki.create(project, title, content)
+  redmine |> @wiki.create(project, title, text=content)
   defer ((redmine |> @wiki.delete(project, title)) catch { _ => () })
   let stored = (redmine |> @wiki.show(project, title)).text
   let tools = [@tools.wiki_pages_tool(redmine, @tools.LocalFile::new(), Full)]

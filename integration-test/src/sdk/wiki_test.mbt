@@ -13,7 +13,7 @@ async test "wiki pages go through create, list, show, update and delete" {
       @redmine.ProjectRef::Identifier("demo"),
       @redmine.ProjectRef::Id(1),
     ] {
-    redmine |> @wiki.create(project, title, "first", comments="created")
+    redmine |> @wiki.create(project, title, text="first", comments="created")
     defer redmine |> @wiki.delete(project, title)
     assert_true(
       (redmine |> @wiki.list(project)).any(fn(page) {
@@ -23,11 +23,11 @@ async test "wiki pages go through create, list, show, update and delete" {
     let page = redmine |> @wiki.show(project, title)
     assert_eq(page.text, "first")
     assert_eq(page.version, 1)
-    redmine |> @wiki.update(project, title, "second", version=1)
+    redmine |> @wiki.update(project, title, text="second", version=1)
     assert_eq((redmine |> @wiki.show(project, title)).text, "second")
     let old = redmine |> @wiki.show(project, title, version=1)
     assert_eq(old.text, "first")
-    try redmine |> @wiki.update(project, title, "stale", version=1) catch {
+    try redmine |> @wiki.update(project, title, text="stale", version=1) catch {
       Response(status~, ..) => assert_eq(status, 409)
       _ => fail("expected Response")
     } noraise {
@@ -55,7 +55,7 @@ async test "a title with dots and spaces is shown by the title it was created wi
   let redmine = @livetest.redmine()
   let project = @redmine.ProjectRef::Identifier("demo")
   let title = "Release v1.0 \{wiki_unique_title("round")}"
-  redmine |> @wiki.create(project, title, "body")
+  redmine |> @wiki.create(project, title, text="body")
   defer redmine |> @wiki.delete(project, title)
   assert_eq((redmine |> @wiki.show(project, title)).text, "body")
   let stored = title.replace_all(old=" ", new="_").replace_all(old=".", new="")

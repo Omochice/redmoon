@@ -134,7 +134,7 @@ pub async fn show(
 ///   |> @wiki.create(
 ///     Identifier("demo"),
 ///     "Getting started",
-///     "h1. Getting started",
+///     text="h1. Getting started",
 ///     comments="First draft",
 ///   )
 /// }
@@ -143,7 +143,7 @@ pub async fn create(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
   title : String,
-  text : String,
+  text~ : String,
   comments? : String,
   parent_title? : String,
 ) -> Unit raise @redmine.RedmineError {
@@ -173,7 +173,7 @@ pub async fn create(
 ///   |> @wiki.update(
 ///     Identifier("demo"),
 ///     "Getting started",
-///     "h1. Getting started\n\nInstall the SDK.",
+///     text="h1. Getting started\n\nInstall the SDK.",
 ///     version=3,
 ///   )
 /// }
@@ -182,7 +182,7 @@ pub async fn update(
   redmine : @redmine.Redmine,
   project : @redmine.ProjectRef,
   title : String,
-  text : String,
+  text~ : String,
   comments? : String,
   version? : Int32,
   parent_title? : String,
