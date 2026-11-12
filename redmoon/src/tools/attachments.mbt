@@ -156,9 +156,9 @@ async fn attach_file(
   files : &FilePort,
   issue_id : Int32,
   path : String,
-  filename : String?,
-  description : String?,
-  notes : String?,
+  filename? : String,
+  description? : String,
+  notes? : String,
 ) -> @mcp.ToolResult {
   let content = files.open(path) catch {
     FileError(message~) => return local_failure([message])
@@ -202,7 +202,15 @@ pub fn attachments_tool(
         Download(id, path, max_size) =>
           download_attachment(port, files, id, path, max_size)
         Attach(issue_id, path, filename, description, notes) =>
-          attach_file(port, files, issue_id, path, filename, description, notes)
+          attach_file(
+            port,
+            files,
+            issue_id,
+            path,
+            filename?,
+            description?,
+            notes?,
+          )
       }
     },
   )
