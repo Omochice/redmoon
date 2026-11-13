@@ -8,7 +8,7 @@ version = "1.0.0"
 license = "Zlib"
 
 import {
-  "moonbitlang/async@0.22.7",
+  "moonbitlang/async@0.22.9",
   // x-release-please-start-version
   "omochice/schema@1.0.0",
   // x-release-please-end
