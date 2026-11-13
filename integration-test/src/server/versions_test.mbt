@@ -16,7 +16,9 @@ async test "versions go through the tool" {
     fail("no id in \{created.text}")
   }
   let id = id.to_int()
-  defer ignore(call_tool(tools, "redmine_versions", { "delete": { "id": id } }))
+  defer @async.protect_from_cancel(() => {
+    ignore(call_tool(tools, "redmine_versions", { "delete": { "id": id } }))
+  })
   let updated = call_tool(tools, "redmine_versions", {
     "update": { "id": id, "status": "locked" },
   })

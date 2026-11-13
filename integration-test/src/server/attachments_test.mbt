@@ -18,7 +18,7 @@ async test "attach, show and download through the tool" {
         subject="attachments live \{@env.now()}",
       ),
     )
-  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
+  defer @livetest.delete_probe_issue(redmine, issue.id)
   let tools = [@tools.attachments_tool(redmine, @tools.LocalFile::new(), Full)]
   with_scratch_dir(async fn(dir) {
     let source = "\{dir}/source.bin"

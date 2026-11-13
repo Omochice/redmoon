@@ -18,7 +18,9 @@ async test "versions go through create, list, show, update and delete" {
           sharing=Descendants,
         ),
       )
-    defer redmine |> @versions.delete(created.id)
+    defer @async.protect_from_cancel(() => {
+      redmine |> @versions.delete(created.id)
+    })
     assert_eq(created.name, name)
     assert_eq(created.due_date, Some("2030-01-31"))
     assert_eq(created.sharing, Descendants)
