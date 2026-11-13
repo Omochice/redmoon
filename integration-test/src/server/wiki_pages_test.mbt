@@ -7,7 +7,7 @@ async test "wiki pages go through the tool" {
     "create": { "project_id": "demo", "title": title, "text": "first" },
   })
   assert_eq(created.text, "{\"ok\":true}")
-  defer @async.protect_from_cancel(() => {
+  defer @livetest.cleanup(() => {
     ignore(
       call_tool(tools, "redmine_wiki_pages", {
         "delete": { "project_id": "demo", "title": title },
