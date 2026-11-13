@@ -37,7 +37,7 @@ async fn write_bounded(
 /// Runs from a `defer` because cancellation is a signal that `catch` cannot see.
 /// Best-effort, so a failed removal cannot hide the error that explains why the
 /// download stopped.
-async fn discard(file : @fs.File, path : String) -> Unit noraise {
+async fn discard(file : @fs.File, path : String) -> Unit noraise + nocancel {
   file.close()
   @fs.remove(path) catch {
     _ => ()
