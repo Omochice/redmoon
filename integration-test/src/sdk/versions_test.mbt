@@ -18,8 +18,10 @@ async test "versions go through create, list, show, update and delete" {
           sharing=Descendants,
         ),
       )
-    defer @async.protect_from_cancel(() => {
+    defer (@async.protect_from_cancel(() => {
       redmine |> @versions.delete(created.id)
+    }) catch {
+      _ => ()
     })
     assert_eq(created.name, name)
     assert_eq(created.due_date, Some("2030-01-31"))
@@ -36,6 +38,13 @@ async test "versions go through create, list, show, update and delete" {
     assert_eq(shown.description, Some("changed"))
     assert_eq(shown.status, Locked)
     assert_eq(shown.name, name)
+    redmine |> @versions.delete(created.id)
+    try redmine |> @versions.show(created.id) catch {
+      Response(status~, ..) => assert_eq(status, 404)
+      _ => fail("expected Response")
+    } noraise {
+      _ => fail("the deleted version is still shown")
+    }
   }
 }
 

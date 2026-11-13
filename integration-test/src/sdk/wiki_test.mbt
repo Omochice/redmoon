@@ -4,6 +4,19 @@ fn wiki_unique_title(prefix : String) -> String {
 }
 
 ///|
+/// Shielded and best-effort for the same reasons as `@livetest.delete_probe_issue`,
+/// and built on the SDK because only it knows how Redmine converts a title.
+async fn delete_probe_page(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
+  title : String,
+) -> Unit noraise + nocancel {
+  @async.protect_from_cancel(() => redmine |> @wiki.delete(project, title)) catch {
+    _ => ()
+  }
+}
+
+///|
 async test "wiki pages go through create, list, show, update and delete" {
   let redmine = @livetest.redmine()
   let title = wiki_unique_title("Redmoon wiki")
@@ -14,9 +27,7 @@ async test "wiki pages go through create, list, show, update and delete" {
       @redmine.ProjectRef::Id(1),
     ] {
     redmine |> @wiki.create(project, title, text="first", comments="created")
-    defer @async.protect_from_cancel(() => {
-      redmine |> @wiki.delete(project, title)
-    })
+    defer delete_probe_page(redmine, project, title)
     assert_true(
       (redmine |> @wiki.list(project)).any(fn(page) {
         page.title.to_lower() == stored.to_lower()
@@ -34,6 +45,13 @@ async test "wiki pages go through create, list, show, update and delete" {
       _ => fail("expected Response")
     } noraise {
       _ => fail("expected a conflict")
+    }
+    redmine |> @wiki.delete(project, title)
+    try redmine |> @wiki.show(project, title) catch {
+      Response(status~, ..) => assert_eq(status, 404)
+      _ => fail("expected Response")
+    } noraise {
+      _ => fail("the deleted page is still shown")
     }
   }
 }
@@ -58,7 +76,7 @@ async test "a title with dots and spaces is shown by the title it was created wi
   let project = @redmine.ProjectRef::Identifier("demo")
   let title = "Release v1.0 \{wiki_unique_title("round")}"
   redmine |> @wiki.create(project, title, text="body")
-  defer @async.protect_from_cancel(() => redmine |> @wiki.delete(project, title))
+  defer delete_probe_page(redmine, project, title)
   assert_eq((redmine |> @wiki.show(project, title)).text, "body")
   let stored = title.replace_all(old=" ", new="_").replace_all(old=".", new="")
   assert_true(

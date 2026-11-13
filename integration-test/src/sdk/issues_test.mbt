@@ -16,15 +16,14 @@ async test "issues are created, listed, shown, updated, commented and deleted" {
       ),
     )
   let id = created.id
-  let outcome : Error? = try {
-    exercise_issue(redmine, created, subject)
-    None
-  } catch {
-    error => Some(error)
-  }
+  defer @livetest.delete_probe_issue(redmine, id)
+  exercise_issue(redmine, created, subject)
   redmine |> @issues.delete(id)
-  if outcome is Some(error) {
-    raise error
+  try redmine |> @issues.show(id) catch {
+    @redmine.Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("the deleted issue is still shown")
   }
 }
 
