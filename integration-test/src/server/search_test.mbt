@@ -12,18 +12,10 @@ async test "a search finds an issue created for the test" {
         subject~,
       ),
     )
-  let outcome : Error? = try {
-    let called = call_tool([@tools.search_tool(redmine)], "redmine_search", {
-      "search": { "q": subject, "issues": true },
-    })
-    assert_eq(called.is_error, false)
-    assert_true(called.text.contains(subject))
-    None
-  } catch {
-    error => Some(error)
-  }
-  redmine |> @issues.delete(created.id)
-  if outcome is Some(error) {
-    raise error
-  }
+  defer @livetest.delete_probe_issue(redmine, created.id)
+  let called = call_tool([@tools.search_tool(redmine)], "redmine_search", {
+    "search": { "q": subject, "issues": true },
+  })
+  assert_eq(called.is_error, false)
+  assert_true(called.text.contains(subject))
 }
