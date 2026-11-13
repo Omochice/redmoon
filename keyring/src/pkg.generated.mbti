@@ -4,13 +4,13 @@ package "omochice/keyring"
 // Values
 pub const INTERNAL : Int32 = 1000000003
 
-pub fn delete(String, String) -> Unit raise KeyringError
+pub fn delete(service~ : String, account~ : String) -> Unit raise KeyringError
 
-pub fn get(String, String) -> String? raise KeyringError
+pub fn get(service~ : String, account~ : String) -> String? raise KeyringError
 
 pub fn list(String) -> Array[String] raise KeyringError
 
-pub fn set(String, String, String) -> Unit raise KeyringError
+pub fn set(service~ : String, account~ : String, secret~ : String) -> Unit raise KeyringError
 
 // Errors
 pub suberror KeyringError {

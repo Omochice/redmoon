@@ -6,9 +6,9 @@ pub(open) trait RelationPort {
   async fn create_relation(
     Self,
     issue_id : Int32,
-    issue_to_id : Int32,
-    relation_type : @relations.Type,
-    delay : Int32?,
+    issue_to_id~ : Int32,
+    relation_type~ : @relations.Type,
+    delay? : Int32,
   ) -> @relations.Relation raise @redmine.RedmineError
   async fn delete_relation(Self, id : Int32) -> Unit raise @redmine.RedmineError
 }
@@ -30,9 +30,9 @@ pub impl RelationPort for @redmine.Redmine with fn show_relation(self, id) {
 pub impl RelationPort for @redmine.Redmine with fn create_relation(
   self,
   issue_id,
-  issue_to_id,
-  relation_type,
-  delay,
+  issue_to_id~,
+  relation_type~,
+  delay?,
 ) {
   self |> @relations.create(issue_id, issue_to_id~, relation_type~, delay?)
 }

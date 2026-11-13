@@ -17,7 +17,7 @@ pub async fn run_login(
   if secret == "" {
     raise Message("no API key was provided")
   }
-  store.set(account, secret)
+  store.set(account~, secret~)
   account
 }
 
@@ -31,7 +31,7 @@ pub fn run_logout(
   store : &KeyringPort,
 ) -> String raise CliError {
   let account = canonicalize_endpoint(endpoint)
-  store.delete(account)
+  store.delete(account~)
   account
 }
 
@@ -65,7 +65,7 @@ pub fn resolve_api_key(
   store : &KeyringPort,
 ) -> Credential raise CliError {
   let account = canonicalize_endpoint(endpoint)
-  match store.get(account) {
+  match store.get(account~) {
     Some(api_key) => { endpoint: account, api_key, }
     None =>
       raise Message(

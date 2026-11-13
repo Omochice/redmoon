@@ -56,11 +56,11 @@ pub fn Invocation::to_repr(Self) -> @debug.Repr
 
 pub struct OsKeyring {
 }
-pub fn OsKeyring::delete(Self, String) -> Unit raise CliError
-pub fn OsKeyring::get(Self, String) -> String? raise CliError
+pub fn OsKeyring::delete(Self, account~ : String) -> Unit raise CliError
+pub fn OsKeyring::get(Self, account~ : String) -> String? raise CliError
 pub fn OsKeyring::list(Self) -> Array[String] raise CliError
 pub fn OsKeyring::new() -> Self
-pub fn OsKeyring::set(Self, String, String) -> Unit raise CliError
+pub fn OsKeyring::set(Self, account~ : String, secret~ : String) -> Unit raise CliError
 pub impl KeyringPort for OsKeyring
 
 #derive(Eq, @debug.Debug)
@@ -77,8 +77,8 @@ pub fn Plugin::to_repr(Self) -> @debug.Repr
 
 // Traits
 pub(open) trait KeyringPort {
-  fn get(Self, String) -> String? raise CliError
-  fn set(Self, String, String) -> Unit raise CliError
-  fn delete(Self, String) -> Unit raise CliError
+  fn get(Self, account~ : String) -> String? raise CliError
+  fn set(Self, account~ : String, secret~ : String) -> Unit raise CliError
+  fn delete(Self, account~ : String) -> Unit raise CliError
   fn list(Self) -> Array[String] raise CliError
 }

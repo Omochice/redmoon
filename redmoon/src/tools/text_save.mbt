@@ -16,8 +16,8 @@ fn save_path(field : String) -> @schema.Field[String?] {
 /// in memory and no limit should refuse it.
 async fn save_text(
   files : &FilePort,
-  path : String,
-  text : String,
+  path~ : String,
+  text~ : String,
 ) -> String raise FileError {
   let bytes = @utf8.encode(text.replace_all(old="\r\n", new="\n"))
   let reader = @io.MemoryReader(w => w.write(bytes))
@@ -26,7 +26,7 @@ async fn save_text(
 }
 
 ///|
-fn with_saved_path(value : Json, field : String, written : String) -> Json {
+fn with_saved_path(value : Json, field~ : String, written~ : String) -> Json {
   guard value is Object(fields) else { return value }
   fields.remove(field)
   fields[field + "_path"] = Json::string(written)
@@ -37,13 +37,13 @@ fn with_saved_path(value : Json, field : String, written : String) -> Json {
 async fn respond_saving_text(
   files : &FilePort,
   value : Json,
-  field : String,
-  text : String,
-  path : String?,
+  field~ : String,
+  text~ : String,
+  path? : String,
 ) -> @mcp.ToolResult {
   guard path is Some(path) else { return success(value) }
-  let written = save_text(files, path, text) catch {
+  let written = save_text(files, path~, text~) catch {
     FileError(message~) => return local_failure([message])
   }
-  success(with_saved_path(value, field, written))
+  success(with_saved_path(value, field~, written~))
 }

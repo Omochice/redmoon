@@ -45,22 +45,22 @@ fn describe(error : @keyring.KeyringError, account : String?) -> CliError {
 }
 
 ///|
-pub impl KeyringPort for OsKeyring with fn get(_, account) {
-  @keyring.get(SERVICE, account) catch {
+pub impl KeyringPort for OsKeyring with fn get(_, account~) {
+  @keyring.get(service=SERVICE, account~) catch {
     error => raise describe(error, Some(account))
   }
 }
 
 ///|
-pub impl KeyringPort for OsKeyring with fn set(_, account, secret) {
-  @keyring.set(SERVICE, account, secret) catch {
+pub impl KeyringPort for OsKeyring with fn set(_, account~, secret~) {
+  @keyring.set(service=SERVICE, account~, secret~) catch {
     error => raise describe(error, Some(account))
   }
 }
 
 ///|
-pub impl KeyringPort for OsKeyring with fn delete(_, account) {
-  @keyring.delete(SERVICE, account) catch {
+pub impl KeyringPort for OsKeyring with fn delete(_, account~) {
+  @keyring.delete(service=SERVICE, account~) catch {
     error => raise describe(error, Some(account))
   }
 }

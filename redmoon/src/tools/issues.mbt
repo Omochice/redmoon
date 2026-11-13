@@ -551,9 +551,9 @@ pub fn issues_tool(
           respond_saving_text(
             files,
             issue.to_json(),
-            "description",
-            description,
-            description_path,
+            field="description",
+            text=description,
+            path?=description_path,
           )
         }
         Create(issue) => respond(() => port.create_issue(issue))

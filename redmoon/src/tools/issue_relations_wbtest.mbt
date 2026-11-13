@@ -49,9 +49,9 @@ impl RelationPort for FakeRelations with fn show_relation(self, id) {
 impl RelationPort for FakeRelations with fn create_relation(
   self,
   issue_id,
-  issue_to_id,
-  relation_type,
-  delay,
+  issue_to_id~,
+  relation_type~,
+  delay?,
 ) {
   self.record("create \{issue_id}")
   self.creates.push((issue_id, issue_to_id, relation_type, delay))
