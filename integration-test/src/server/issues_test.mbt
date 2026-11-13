@@ -29,17 +29,10 @@ async test "issues are created, shown, updated, commented and deleted through th
     fail("no id in \{created.text}")
   }
   let id = id.to_int()
-  let outcome : Error? = try {
-    exercise_live_issue(tools, id, subject)
-    None
-  } catch {
-    error => Some(error)
-  }
+  defer @livetest.delete_probe_issue(redmine, id)
+  exercise_live_issue(tools, id, subject)
   let deleted = call_tool(tools, "redmine_issues", { "delete": { "id": id } })
   assert_eq(deleted.text, "{\"ok\":true}")
-  if outcome is Some(error) {
-    raise error
-  }
   let gone = call_tool(tools, "redmine_issues", { "show": { "id": id } })
   assert_eq(gone.is_error, true)
   assert_true(gone.text.contains("\"status\":404"))

@@ -58,18 +58,24 @@ pub async fn create_probe_issue(
 }
 
 ///|
+/// Removes what a test created in Redmine, from the test's `defer`.
+/// Gives up after ten seconds and swallows errors,
+/// so the cleanup can neither hang the test nor hide its assertion failure.
+pub async fn cleanup(f : async () -> Unit) -> Unit noraise + nocancel {
+  @async.protect_from_cancel(() => @async.with_timeout(cleanup_timeout_ms, f)) catch {
+    _ => ()
+  }
+}
+
+///|
+let cleanup_timeout_ms = 10_000
+
+///|
 /// Deletes the probe issue `id`; tests call it from `defer` so that a failed assertion
 /// does not leave the issue behind.
-/// Shielded from cancellation, since a cancelled test would otherwise cancel its own cleanup.
-/// Best-effort, because an error raised from `defer` replaces the assertion failure
-/// that explains why the test stopped.
 pub async fn delete_probe_issue(
   redmine : @redmine.Redmine,
   id : Int32,
 ) -> Unit noraise + nocancel {
-  @async.protect_from_cancel(() => {
-    ignore(@redmine.send(redmine, Delete, ["issues", "\{id}.json"]))
-  }) catch {
-    _ => ()
-  }
+  cleanup(() => ignore(@redmine.send(redmine, Delete, ["issues", "\{id}.json"])))
 }

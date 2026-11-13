@@ -7,7 +7,7 @@ async test "wiki pages go through the tool" {
     "create": { "project_id": "demo", "title": title, "text": "first" },
   })
   assert_eq(created.text, "{\"ok\":true}")
-  defer @async.protect_from_cancel(() => {
+  defer @livetest.cleanup(() => {
     ignore(
       call_tool(tools, "redmine_wiki_pages", {
         "delete": { "project_id": "demo", "title": title },
@@ -40,11 +40,7 @@ async test "a wiki text saved by show and sent back from the file is stored unch
   let title = "Redmoon_round_trip_\{@async.now()}"
   let content = "h1. Heading\n\nfirst line\nsecond line\n"
   redmine |> @wiki.create(project, title, text=content)
-  defer @async.protect_from_cancel(() => {
-    (redmine |> @wiki.delete(project, title)) catch {
-      _ => ()
-    }
-  })
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
   let stored = (redmine |> @wiki.show(project, title)).text
   let tools = [@tools.wiki_pages_tool(redmine, @tools.LocalFile::new(), Full)]
   with_scratch_dir(async fn(dir) {

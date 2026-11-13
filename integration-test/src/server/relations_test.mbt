@@ -22,18 +22,10 @@ async test "a relation is created, listed, shown and deleted through the tool" {
         subject="\{subject}-b",
       ),
     )
+  defer @livetest.delete_probe_issue(redmine, first.id)
+  defer @livetest.delete_probe_issue(redmine, second.id)
   let tools = [@tools.relations_tool(redmine, Full)]
-  let outcome : Error? = try {
-    exercise_relation(tools, first.id, second.id)
-    None
-  } catch {
-    error => Some(error)
-  }
-  redmine |> @issues.delete(first.id)
-  redmine |> @issues.delete(second.id)
-  if outcome is Some(error) {
-    raise error
-  }
+  exercise_relation(tools, first.id, second.id)
 }
 
 ///|

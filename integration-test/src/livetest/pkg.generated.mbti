@@ -10,6 +10,8 @@ pub fn as_member() -> @redmine.Redmine raise
 
 pub fn as_tagger() -> @redmine.Redmine raise
 
+pub async fn cleanup(async () -> Unit) -> Unit noraise + nocancel
+
 pub async fn create_probe_issue(@redmine.Redmine, String, description? : String) -> Int32
 
 pub async fn delete_probe_issue(@redmine.Redmine, Int32) -> Unit noraise + nocancel
