@@ -12,7 +12,7 @@ pub fn as_tagger() -> @redmine.Redmine raise
 
 pub async fn create_probe_issue(@redmine.Redmine, String, description? : String) -> Int32
 
-pub async fn delete_probe_issue(@redmine.Redmine, Int32) -> Unit raise @redmine.RedmineError
+pub async fn delete_probe_issue(@redmine.Redmine, Int32) -> Unit nocancel
 
 pub fn redmine() -> @redmine.Redmine raise
 

@@ -72,7 +72,9 @@ async test "a tagged wiki page is found through the tool in any case" {
       "wiki_page": { "text": "probe", "tag_list": ["redmoon-probe-tool-wiki"] },
     }),
   )
-  defer ignore(@redmine.send(redmine, Delete, page))
+  defer @async.protect_from_cancel(() => {
+    ignore(@redmine.send(redmine, Delete, page))
+  })
   let found = call(tags_server(redmine), "redmine_tags", {
     "list_wiki_pages": {
       "project_id": "demo",

@@ -172,7 +172,9 @@ async test "an issue is created with a required custom field and its multi-value
     fail("no id in \{created.text}")
   }
   let id = id.to_int()
-  defer ignore(call_tool(tools, "redmine_issues", { "delete": { "id": id } }))
+  defer @async.protect_from_cancel(() => {
+    ignore(call_tool(tools, "redmine_issues", { "delete": { "id": id } }))
+  })
   assert_eq(shown_custom_value(body, severity), "high")
   assert_eq(shown_custom_value(body, platforms), ["linux", "macos"])
   let emptied = call_tool(tools, "redmine_issues", {
@@ -226,7 +228,11 @@ async test "an issue description is read from description_path" {
         subject="description_path live \{@env.now()}",
       ),
     )
-  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
+  defer @async.protect_from_cancel(() => {
+    (redmine |> @issues.delete(issue.id)) catch {
+      _ => ()
+    }
+  })
   let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
   with_scratch_dir(async fn(dir) {
     let path = "\{dir}/description.md"
@@ -257,7 +263,11 @@ async test "a description saved by show and sent back from the file is stored un
         description=content,
       ),
     )
-  defer ((redmine |> @issues.delete(issue.id)) catch { _ => () })
+  defer @async.protect_from_cancel(() => {
+    (redmine |> @issues.delete(issue.id)) catch {
+      _ => ()
+    }
+  })
   let stored = (redmine |> @issues.show(issue.id)).description
   let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Full)]
   with_scratch_dir(async fn(dir) {

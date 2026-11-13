@@ -108,7 +108,9 @@ async test "a tagged wiki page is found by its tag in any case, by an administra
       "wiki_page": { "text": "probe", "tag_list": ["redmoon-probe-wiki"] },
     }),
   )
-  defer ignore(@redmine.send(redmine, Delete, page))
+  defer @async.protect_from_cancel(() => {
+    ignore(@redmine.send(redmine, Delete, page))
+  })
   let found = redmine
     |> @additional_tags.list_wiki_pages(
       Identifier("demo"),

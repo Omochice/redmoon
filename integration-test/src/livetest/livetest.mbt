@@ -60,9 +60,12 @@ pub async fn create_probe_issue(
 ///|
 /// Deletes the probe issue `id`; tests call it from `defer` so that a failed assertion
 /// does not leave the issue behind.
+/// Shielded from cancellation, since a cancelled test would otherwise cancel its own cleanup.
 pub async fn delete_probe_issue(
   redmine : @redmine.Redmine,
   id : Int32,
-) -> Unit raise @redmine.RedmineError {
-  ignore(@redmine.send(redmine, Delete, ["issues", "\{id}.json"]))
+) -> Unit nocancel {
+  @async.protect_from_cancel(() => {
+    ignore(@redmine.send(redmine, Delete, ["issues", "\{id}.json"]))
+  })
 }

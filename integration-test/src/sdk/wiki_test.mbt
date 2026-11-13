@@ -14,7 +14,9 @@ async test "wiki pages go through create, list, show, update and delete" {
       @redmine.ProjectRef::Id(1),
     ] {
     redmine |> @wiki.create(project, title, text="first", comments="created")
-    defer redmine |> @wiki.delete(project, title)
+    defer @async.protect_from_cancel(() => {
+      redmine |> @wiki.delete(project, title)
+    })
     assert_true(
       (redmine |> @wiki.list(project)).any(fn(page) {
         page.title.to_lower() == stored.to_lower()
@@ -56,7 +58,7 @@ async test "a title with dots and spaces is shown by the title it was created wi
   let project = @redmine.ProjectRef::Identifier("demo")
   let title = "Release v1.0 \{wiki_unique_title("round")}"
   redmine |> @wiki.create(project, title, text="body")
-  defer redmine |> @wiki.delete(project, title)
+  defer @async.protect_from_cancel(() => redmine |> @wiki.delete(project, title))
   assert_eq((redmine |> @wiki.show(project, title)).text, "body")
   let stored = title.replace_all(old=" ", new="_").replace_all(old=".", new="")
   assert_true(
