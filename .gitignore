@@ -61,6 +61,9 @@ redmoon/src/build/version_json.mbt
 # Ignore automatically generated direnv output
 .direnv
 
+# Ignore personal direnv additions
+.envrc.local
+
 # Ignore NixOS interactive test driver history
 **/.nixos-test-history
 
