@@ -160,6 +160,8 @@ pub async fn create(
 ///|
 /// Replaces the text of the wiki page `title`.
 /// With `version`, Redmine answers 409 when the page has changed since that version.
+/// When `text` is the current text, Redmine only attaches `uploads`,
+/// so the version stays, `comments` is dropped, and `version` is not checked.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
@@ -186,13 +188,14 @@ pub async fn update(
   comments? : String,
   version? : Int32,
   parent_title? : String,
+  uploads? : Array[@attachments.UploadToken],
 ) -> Unit raise @redmine.RedmineError {
   ignore(
     redmine
     |> @redmine.send(
       Put,
       page_segments(project, title),
-      body=page_body(text, comments?, version?, parent_title?),
+      body=page_body(text, comments?, version?, parent_title?, uploads?),
     ),
   )
 }
@@ -261,12 +264,14 @@ fn page_body(
   comments? : String,
   version? : Int32,
   parent_title? : String,
+  uploads? : Array[@attachments.UploadToken],
 ) -> Json {
   let page = @wire.present_members([
     ("text", Some(Json(text))),
     ("comments", comments.map(ToJson::to_json)),
     ("version", version.map(ToJson::to_json)),
     ("parent_title", parent_title.map(title => Json(wiki_title_segment(title)))),
+    ("uploads", uploads.map(ToJson::to_json)),
   ])
   Json::object({ "wiki_page": page })
 }
