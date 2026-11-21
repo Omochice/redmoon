@@ -8,7 +8,7 @@ version = "1.0.0"
 license = "Zlib"
 
 import {
-  "moonbitlang/async@0.22.9",
+  "moonbitlang/async@0.22.10",
 }
 
 preferred_target = "native"
