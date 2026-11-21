@@ -8,10 +8,10 @@ Accepted
 
 [ADR-001](./adr-001-five-module-moonbit-workspace.md) keeps every SDK as its own module in this repository, joined by `moon.work`, so that each can be published alone while a change across an SDK and the application stays one commit.
 
-In practice the modules were released together with the application.
-release-please kept one version for the whole repository and wrote it into every module manifest, so `omochice/schema`, `omochice/mcp`, and `omochice/keyring` carried the version of redmoon whether or not they had changed.
+Other MCP servers are to keep their API keys in the OS credential store the same way redmoon does, and they need `mcp` and `schema` as well.
+`schema`, `mcp`, and `keyring` know nothing of Redmine, yet they were developed and released as part of redmoon: release-please kept one version for the whole repository and wrote it into every module manifest, so each carried the version of redmoon whether or not it had changed.
+Another server would therefore depend on a library that redmoon owns and releases, or redmoon would depend on one that the other server owns.
 
-`schema`, `mcp`, and `keyring` know nothing of Redmine.
 They now live in the [moonmoon](https://github.com/Omochice/moonmoon) repository, which versions and releases each module on its own, and they are published to mooncakes as `Omochice/schema`, `Omochice/mcp`, and `Omochice/keyring`.
 Their sources there are the same as the ones this repository held.
 
@@ -33,7 +33,8 @@ redmoon and the integration tests import the published modules from mooncakes.
 
 #### Rationale
 
-The three modules change for reasons of their own, and none of those reasons is Redmine, so a separate repository gives each its own version and release, which ADR-001 aimed for and the shared release did not deliver.
+A library repository that every server depends on keeps the servers independent of each other, which is simpler to handle than one server depending on another for code that is not about either.
+It also gives each module its own version and release, which ADR-001 aimed for and the shared release did not deliver.
 `redmine` and `redmine-plugins` stay because they change together with the tools that expose them, which is the case the workspace was chosen for.
 
 ### 2. Their versions are pinned by hand, apart from the redmoon release
@@ -73,8 +74,9 @@ Whether `redmine` and `redmine-plugins` also move out is left open until they ar
 
 ### Positive
 
-1. **Each library is released when it changes**, instead of with every redmoon release.
-2. **This repository holds only what is about Redmine**, so its CI and release cover only redmoon and its Redmine SDKs.
+1. **Another MCP server keeps its API key in the OS credential store** with the same libraries, without depending on redmoon.
+2. **Each library is released when it changes**, instead of with every redmoon release.
+3. **This repository holds only what is about Redmine**, so its CI and release cover only redmoon and its Redmine SDKs.
 
 ### Negative
 
