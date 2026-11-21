@@ -160,7 +160,11 @@ test "create body carries every optional field" {
       { id: 2, value: Multiple(["b", "c"]), },
     ],
     uploads=[
-      UploadToken::new("tok", filename="f.txt", content_type="text/plain"),
+      @attachments.UploadToken::new(
+        "tok",
+        filename="f.txt",
+        content_type="text/plain",
+      ),
     ],
   ).to_body()
   assert_eq(
@@ -188,7 +192,7 @@ test "update body sends plain fields as given" {
     priority_id=3,
     tracker_id=1,
     custom_fields=[{ id: 1, value: Single("a"), }],
-    uploads=[UploadToken::new("tok", description="d")],
+    uploads=[@attachments.UploadToken::new("tok", description="d")],
   ).to_body()
   assert_eq(
     body.stringify(),

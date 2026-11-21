@@ -59,3 +59,57 @@ async test "attach, show and download through the tool" {
     assert_false(@fs.exists(small))
   })
 }
+
+///|
+async test "attach a file to a wiki page through the tool" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = "Redmoon tool attach \{@env.now()}"
+  redmine |> @wiki.create(project, title, text="h1. Shots")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let tools = [@tools.attachments_tool(redmine, @tools.LocalFile::new(), Full)]
+  with_scratch_dir(async fn(dir) {
+    let source = "\{dir}/shot.png"
+    let content = b"\x89PNG live wiki attachment"
+    @fs.write_file(source, content)
+    let attached = call_tool(tools, "redmine_attachments", {
+      "attach": { "project_id": "demo", "title": title, "path": source },
+    })
+    assert_eq(attached.is_error, false)
+    assert_eq(
+      attached.text,
+      "{\"project_id\":\"demo\",\"title\":\"\{title}\",\"filename\":\"shot.png\",\"filesize\":\{content.length()}}",
+    )
+    let page = redmine |> @wiki.show(project, title, include_attachments=true)
+    assert_eq(page.text, "h1. Shots")
+    assert_eq(page.version, 1)
+    assert_eq(
+      page.attachments.map(list => list.map(a => a.filename)),
+      Some(["shot.png"]),
+    )
+  })
+}
+
+///|
+async test "attach to a missing wiki page answers 404 through the tool and creates nothing" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = "Redmoon tool missing \{@env.now()}"
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let tools = [@tools.attachments_tool(redmine, @tools.LocalFile::new(), Full)]
+  with_scratch_dir(async fn(dir) {
+    let source = "\{dir}/note.txt"
+    @fs.write_file(source, b"note")
+    let attached = call_tool(tools, "redmine_attachments", {
+      "attach": { "project_id": "demo", "title": title, "path": source },
+    })
+    assert_eq(attached.is_error, true)
+    assert_true(attached.text.contains("\"status\":404"))
+  })
+  try redmine |> @wiki.show(project, title) catch {
+    Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("attach created the page")
+  }
+}
