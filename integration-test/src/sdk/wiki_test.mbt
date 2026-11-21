@@ -72,3 +72,35 @@ async test "a title with dots and spaces is shown by the title it was created wi
     }),
   )
 }
+
+///|
+async fn wiki_upload(
+  redmine : @redmine.Redmine,
+  filename : String,
+) -> @attachments.UploadToken {
+  let content = b"wiki attachment"
+  let reader = @io.MemoryReader(w => w.write(content))
+  let token = redmine
+    |> @attachments.upload(reader, content.length().to_int64(), filename~)
+  @attachments.UploadToken::new(token, filename~)
+}
+
+///|
+async test "show lists the attachments of a page only when asked" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki include")
+  redmine |> @wiki.create(project, title, text="body")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let filename = "wiki-include-\{@env.now()}.txt"
+  redmine
+  |> @wiki.update(project, title, text="body", uploads=[
+    wiki_upload(redmine, filename),
+  ])
+  assert_eq((redmine |> @wiki.show(project, title)).attachments, None)
+  let page = redmine |> @wiki.show(project, title, include_attachments=true)
+  assert_eq(
+    page.attachments.map(list => list.map(a => a.filename)),
+    Some([filename]),
+  )
+}
