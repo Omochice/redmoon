@@ -84,3 +84,14 @@ test "the attachments of a wiki page carry the full metadata" {
   assert_eq(attachment.content_type, Some("text/plain"))
   assert_eq(attachment.author, { id: 1, name: "Redmine Admin", })
 }
+
+///|
+test "wiki page body carries uploads after the text fields" {
+  let body = page_body("t", version=4, uploads=[
+    @attachments.UploadToken::new("tok", filename="shot.png"),
+  ])
+  assert_eq(
+    body.stringify(),
+    "{\"wiki_page\":{\"text\":\"t\",\"version\":4,\"uploads\":[{\"token\":\"tok\",\"filename\":\"shot.png\"}]}}",
+  )
+}

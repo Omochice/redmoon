@@ -17,7 +17,7 @@ pub async fn list(@redmine.Redmine, @redmine.ProjectRef) -> Array[PageSummary] r
 
 pub async fn show(@redmine.Redmine, @redmine.ProjectRef, String, version? : Int32) -> Page raise @redmine.RedmineError
 
-pub async fn update(@redmine.Redmine, @redmine.ProjectRef, String, text~ : String, comments? : String, version? : Int32, parent_title? : String) -> Unit raise @redmine.RedmineError
+pub async fn update(@redmine.Redmine, @redmine.ProjectRef, String, text~ : String, comments? : String, version? : Int32, parent_title? : String, uploads? : Array[@attachments.UploadToken]) -> Unit raise @redmine.RedmineError
 
 // Errors
 
