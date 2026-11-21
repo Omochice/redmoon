@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub async fn attach(@redmine.Redmine, @redmine.ProjectRef, String, Array[@attachments.UploadToken]) -> Unit raise @redmine.RedmineError
+
 pub async fn create(@redmine.Redmine, @redmine.ProjectRef, String, text~ : String, comments? : String, parent_title? : String) -> Unit raise @redmine.RedmineError
 
 pub async fn delete(@redmine.Redmine, @redmine.ProjectRef, String) -> Unit raise @redmine.RedmineError

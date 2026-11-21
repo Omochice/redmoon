@@ -104,3 +104,44 @@ async test "show lists the attachments of a page only when asked" {
     Some([filename]),
   )
 }
+
+///|
+async test "attach adds the uploads without changing the text or the version" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki attach")
+  let text = "h1. Page\r\n\r\n日本語の本文\r\n"
+  redmine |> @wiki.create(project, title, text~, comments="created")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let filename = "wiki-attach-\{@env.now()}.png"
+  redmine |> @wiki.attach(project, title, [wiki_upload(redmine, filename)])
+  let page = redmine |> @wiki.show(project, title, include_attachments=true)
+  assert_eq(page.text, text)
+  assert_eq(page.version, 1)
+  assert_eq(page.comments, Some("created"))
+  assert_eq(
+    page.attachments.map(list => list.map(a => a.filename)),
+    Some([filename]),
+  )
+}
+
+///|
+async test "attaching to a missing wiki page raises 404 and creates nothing" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki missing")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let upload = wiki_upload(redmine, "wiki-missing-\{@env.now()}.txt")
+  try redmine |> @wiki.attach(project, title, [upload]) catch {
+    Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("expected a missing page")
+  }
+  try redmine |> @wiki.show(project, title) catch {
+    Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("attach created the page")
+  }
+}
