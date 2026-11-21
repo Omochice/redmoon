@@ -47,6 +47,19 @@ pub fn ByteSize::to_repr(Self) -> @debug.Repr
 pub impl @json.FromJson for ByteSize
 pub impl @json.ToJson for ByteSize
 
+#derive(Eq, @debug.Debug, @json.ToJson)
+pub(all) struct UploadToken {
+  token : String
+  filename : String?
+  description : String?
+  content_type : String?
+}
+pub fn UploadToken::equal(Self, Self) -> Bool
+pub fn UploadToken::new(String, filename? : String, description? : String, content_type? : String) -> Self
+pub fn UploadToken::not_equal(Self, Self) -> Bool
+pub fn UploadToken::to_json(Self) -> @json.Json
+pub fn UploadToken::to_repr(Self) -> @debug.Repr
+
 // Type aliases
 
 // Traits

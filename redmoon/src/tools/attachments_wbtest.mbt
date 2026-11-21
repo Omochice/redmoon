@@ -331,7 +331,7 @@ async test "attach uploads the file and updates the issue" {
   assert_eq(
     update.uploads,
     Some([
-      @issues.UploadToken::new(
+      @attachments.UploadToken::new(
         "token-1",
         filename="renamed.bin",
         description="d",

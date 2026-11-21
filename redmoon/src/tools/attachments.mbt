@@ -171,7 +171,7 @@ async fn attach_file(
   port.attach_uploads(
     issue_id,
     @issues.Update::new(notes?, uploads=[
-      @issues.UploadToken::new(token, filename=name, description?),
+      @attachments.UploadToken::new(token, filename=name, description?),
     ]),
   ) catch {
     error => return failure_of(error)
