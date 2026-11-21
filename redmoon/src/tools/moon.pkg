@@ -2,7 +2,7 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/async/io",
   "moonbitlang/core/encoding/utf8",
-  "omochice/mcp",
+  "Omochice/mcp",
   "omochice/redmine",
   "omochice/redmine/attachments",
   "omochice/redmine/enumerations",
@@ -18,7 +18,7 @@ import {
   "omochice/redmine-plugins/agile",
   "omochice/redmine-plugins/issue_templates",
   "omochice/redmoon/build",
-  "omochice/schema",
+  "Omochice/schema",
 }
 
 import {

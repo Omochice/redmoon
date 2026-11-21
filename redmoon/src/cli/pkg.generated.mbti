@@ -2,8 +2,8 @@
 package "omochice/redmoon/cli"
 
 import {
+  "Omochice/mcp",
   "moonbitlang/core/debug",
-  "omochice/mcp",
   "omochice/redmine",
   "omochice/redmoon/tools",
 }

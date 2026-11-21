@@ -103,11 +103,11 @@
     "mooncake-index": {
       "flake": false,
       "locked": {
-        "lastModified": 1794765298,
-        "narHash": "sha256-jIEyJFO0ZJw8tVKz6HiLDV9cy3vtYIiFnbyO4ldO664=",
+        "lastModified": 1795282418,
+        "narHash": "sha256-ejNVU4jVOmcPYn4kQ8ofjtieHANpBp3QLvm7wcAMQCo=",
         "ref": "refs/heads/main",
-        "rev": "ecaf51c122fd5ee1ebe7d3ffde006184865156df",
-        "revCount": 24277,
+        "rev": "391215e477fb242468f20087103501d004a3c5bb",
+        "revCount": 25392,
         "type": "git",
         "url": "https://mooncakes.io/git/index"
       },

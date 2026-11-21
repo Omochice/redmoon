@@ -3,7 +3,6 @@ coverage:
     - _build/coverage/cobertura.xml
   exclude:
     - integration-test/**
-    - mcp/src/example/**
     - redmoon/src/cmd/**
 testExecutionTime:
   steps:
