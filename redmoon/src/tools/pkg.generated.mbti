@@ -2,8 +2,9 @@
 package "omochice/redmoon/tools"
 
 import {
+  "Omochice/mcp",
+  "Omochice/schema",
   "moonbitlang/async/io",
-  "omochice/mcp",
   "omochice/redmine",
   "omochice/redmine-plugins/additional_tags",
   "omochice/redmine-plugins/agile",
@@ -19,7 +20,6 @@ import {
   "omochice/redmine/versions",
   "omochice/redmine/wiki",
   "omochice/redmoon/build",
-  "omochice/schema",
 }
 
 // Values

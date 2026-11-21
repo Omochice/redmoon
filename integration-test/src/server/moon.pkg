@@ -5,7 +5,7 @@ import {
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "omochice/integration-test/livetest",
-  "omochice/mcp",
+  "Omochice/mcp",
   "omochice/redmine",
   "omochice/redmine/enumerations",
   "omochice/redmine/issues",

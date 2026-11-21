@@ -1,8 +1,8 @@
 import {
   "moonbitlang/core/argparse",
   "moonbitlang/core/debug",
-  "omochice/keyring",
-  "omochice/mcp",
+  "Omochice/keyring",
+  "Omochice/mcp",
   "omochice/redmine",
   "omochice/redmoon/build",
   "omochice/redmoon/tools",
@@ -13,7 +13,7 @@ import {
   "moonbitlang/async/io",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "omochice/mcp",
+  "Omochice/mcp",
   "omochice/redmine",
 } for "test"
 

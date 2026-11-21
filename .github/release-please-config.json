@@ -11,12 +11,9 @@
           "jsonpath": "$.version"
         },
         { "type": "generic", "path": "integration-test/moon.mod" },
-        { "type": "generic", "path": "keyring/moon.mod" },
-        { "type": "generic", "path": "mcp/moon.mod" },
         { "type": "generic", "path": "redmine/moon.mod" },
         { "type": "generic", "path": "redmine-plugins/moon.mod" },
-        { "type": "generic", "path": "redmoon/moon.mod" },
-        { "type": "generic", "path": "schema/moon.mod" }
+        { "type": "generic", "path": "redmoon/moon.mod" }
       ],
       "initial-version": "0.1.0",
       "draft": true,
