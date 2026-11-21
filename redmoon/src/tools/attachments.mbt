@@ -2,7 +2,15 @@
 priv enum AttachmentAction {
   Show(Int32)
   Download(Int32, String, Int64)
-  Attach(Int32, String, String?, String?, String?)
+  Attach(AttachTarget, String, String?, String?)
+}
+
+///|
+/// `notes` belongs to the issue target alone,
+/// because Redmine drops a comment when a wiki page's text is unchanged.
+priv enum AttachTarget {
+  Issue(Int32, String?)
+  WikiPage(@redmine.ProjectRef, String)
 }
 
 ///|
@@ -67,27 +75,46 @@ fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       "Comment to add to the issue in the same history entry as the attachment.",
     ),
   )
+  let project_id = @schema.required("project_id", project_ref())
+  let title = @schema.required("title", wiki_title())
+  let to_issue = @schema.record(
+    [
+      issue_id.as_member(),
+      path.as_member(),
+      filename.as_member(),
+      description.as_member(),
+      notes.as_member(),
+    ],
+    v => {
+      Attach(
+        Issue(v.get(issue_id), v.get(notes)),
+        v.get(path),
+        v.get(filename),
+        v.get(description),
+      )
+    },
+  )
+  let to_wiki_page = @schema.record(
+    [
+      project_id.as_member(),
+      title.as_member(),
+      path.as_member(),
+      filename.as_member(),
+      description.as_member(),
+    ],
+    v => {
+      Attach(
+        WikiPage(v.get(project_id), v.get(title)),
+        v.get(path),
+        v.get(filename),
+        v.get(description),
+      )
+    },
+  )
   let write = [
     (
       "attach",
-      @schema.record(
-        [
-          issue_id.as_member(),
-          path.as_member(),
-          filename.as_member(),
-          description.as_member(),
-          notes.as_member(),
-        ],
-        v => {
-          Attach(
-            v.get(issue_id),
-            v.get(path),
-            v.get(filename),
-            v.get(description),
-            v.get(notes),
-          )
-        },
-      ),
+      @schema.by_key([("issue_id", to_issue), ("project_id", to_wiki_page)]),
     ),
   ]
   actions(mode, read~, write~)
@@ -105,7 +132,9 @@ fn attachments_description(mode : Mode) -> String {
     Readonly => reads
     Full =>
       [
-        ..reads, "`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first.",
+        ..reads, "`attach` adds a local file to an existing issue or wiki page: it takes `path`, the local file to send (absolute is recommended), and either `issue_id` or `project_id` with `title`.",
+        "`notes` adds a comment in the same history entry, for an issue only. To attach a file to a new issue or page, create it with `redmine_issues` or `redmine_wiki_pages` first.",
+        "To show an attached image in a wiki page, reference it from the page text by its filename, e.g. `!image.png!` in Textile, and update the text with `redmine_wiki_pages`.",
       ]
   }
   describe_tool(lines)
@@ -154,11 +183,10 @@ async fn download_attachment(
 async fn attach_file(
   port : &AttachmentPort,
   files : &FilePort,
-  issue_id : Int32,
+  target : AttachTarget,
   path : String,
   filename? : String,
   description? : String,
-  notes? : String,
 ) -> @mcp.ToolResult {
   let content = files.open(path) catch {
     FileError(message~) => return local_failure([message])
@@ -168,20 +196,39 @@ async fn attach_file(
   let token = port.upload_file(content.reader, content.size, name) catch {
     error => return failure_of(error)
   }
-  port.attach_uploads(
-    issue_id,
-    @issues.Update::new(notes?, uploads=[
-      @attachments.UploadToken::new(token, filename=name, description?),
-    ]),
-  ) catch {
-    error => return failure_of(error)
-  }
-  let answer : Json = {
-    "issue_id": issue_id,
-    "filename": name,
-    "filesize": Json::number(content.size.to_double()),
+  let uploads = [
+    @attachments.UploadToken::new(token, filename=name, description?),
+  ]
+  let filesize = Json::number(content.size.to_double())
+  let answer : Json = match target {
+    Issue(issue_id, notes) => {
+      port.attach_uploads(issue_id, @issues.Update::new(notes?, uploads~)) catch {
+        error => return failure_of(error)
+      }
+      { "issue_id": issue_id, "filename": name, "filesize": filesize }
+    }
+    WikiPage(project, title) => {
+      port.attach_wiki_uploads(project, title, uploads) catch {
+        error => return failure_of(error)
+      }
+      {
+        "project_id": project_json(project),
+        "title": title,
+        "filename": name,
+        "filesize": filesize,
+      }
+    }
   }
   success(answer)
+}
+
+///|
+/// Echoes the project as the caller named it, so the answer can be passed back to `redmine_wiki_pages`.
+fn project_json(project : @redmine.ProjectRef) -> Json {
+  match project {
+    Id(id) => Json::number(id.to_double())
+    Identifier(identifier) => Json(identifier)
+  }
 }
 
 ///|
@@ -201,16 +248,8 @@ pub fn attachments_tool(
         Show(id) => respond(() => port.show_attachment(id))
         Download(id, path, max_size) =>
           download_attachment(port, files, id, path, max_size)
-        Attach(issue_id, path, filename, description, notes) =>
-          attach_file(
-            port,
-            files,
-            issue_id,
-            path,
-            filename?,
-            description?,
-            notes?,
-          )
+        Attach(target, path, filename, description) =>
+          attach_file(port, files, target, path, filename?, description?)
       }
     },
   )
