@@ -68,7 +68,10 @@ fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       "Name the attachment is shown under; the last segment of `path` by default.",
     ),
   )
-  let description = @schema.optional("description", @schema.string())
+  let description = @schema.optional(
+    "description",
+    @schema.string(max_length=255),
+  )
   let notes = @schema.optional(
     "notes",
     @schema.string().describe(

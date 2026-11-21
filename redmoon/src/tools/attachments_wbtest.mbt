@@ -522,6 +522,38 @@ async test "attach takes exactly one complete target" {
 }
 
 ///|
+/// Redmine answers 204 for a description it cannot store and attaches nothing, so the limit is checked before the upload.
+async test "attach refuses a description over 255 characters before uploading" {
+  let port = FakeAttachments::new()
+  let tools = attachments_tools(port, FakeFiles::new())
+  let too_long = "a".repeat(256)
+  let targets : Array[Json] = [
+    { "issue_id": 3, "path": "a", "description": too_long },
+    {
+      "project_id": "demo",
+      "title": "Home",
+      "path": "a",
+      "description": too_long,
+    },
+  ]
+  for target in targets {
+    let called = call_tool(tools, "redmine_attachments", { "attach": target })
+    assert_eq(called.is_error, true)
+    assert_eq(
+      called.text,
+      "{\"status\":0,\"errors\":[\"invalid arguments: attach.description: must be at most 255 characters\"]}",
+    )
+  }
+  assert_eq(port.uploads.length(), 0)
+  let longest = "a".repeat(255)
+  let called = call_tool(tools, "redmine_attachments", {
+    "attach": { "issue_id": 3, "path": "a", "description": longest },
+  })
+  assert_eq(called.is_error, false)
+  assert_eq(port.uploads.length(), 1)
+}
+
+///|
 async test "arguments are validated" {
   let tools = attachments_tools(FakeAttachments::new(), FakeFiles::new())
   let cases : Array[Json] = [
@@ -604,7 +636,8 @@ async test "tools/list advertises each mode" {
   inspect(
     full.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\n`attach` adds a local file to an existing issue or wiki page: it takes `path`, the local file to send (absolute is recommended), and either `issue_id` or `project_id` with `title`.\n`notes` adds a comment in the same history entry, for an issue only. To attach a file to a new issue or page, create it with `redmine_issues` or `redmine_wiki_pages` first.\nTo show an attached image in a wiki page, reference it from the page text by its filename, e.g. `!image.png!` in Textile, and update the text with `redmine_wiki_pages`.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false},"attach":{"anyOf":[{"type":"object","properties":{"issue_id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"},"notes":{"type":"string","description":"Comment to add to the issue in the same history entry as the attachment."}},"required":["issue_id","path"],"additionalProperties":false},{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"}},"required":["project_id","title","path"],"additionalProperties":false}]}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\n`attach` adds a local file to an existing issue or wiki page: it takes `path`, the local file to send (absolute is recommended), and either `issue_id` or `project_id` with `title`.\n`notes` adds a comment in the same history entry, for an issue only. To attach a file to a new issue or page, create it with `redmine_issues` or `redmine_wiki_pages` first.\nTo show an attached image in a wiki page, reference it from the page text by its filename, e.g. `!image.png!` in Textile, and update the text with `redmine_wiki_pages`.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false},"attach":{"anyOf":[{"type":"object","properties":{"issue_id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string","maxLength":255},"notes":{"type":"string","description":"Comment to add to the issue in the same history entry as the attachment."}},"required":["issue_id","path"],"additionalProperties":false},{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string","maxLength":255}},"required":["project_id","title","path"],"additionalProperties":false}]}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+
     ),
   )
   inspect(
