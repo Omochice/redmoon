@@ -92,6 +92,7 @@ pub async fn list(
 
 ///|
 /// Shows a wiki page, at `version` when given and at the latest otherwise.
+/// `attachments` is `None` unless `include_attachments` is set, because Redmine lists them only on request.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
@@ -113,9 +114,15 @@ pub async fn show(
   project : @redmine.ProjectRef,
   title : String,
   version? : Int32,
+  include_attachments~ : Bool = false,
 ) -> Page raise @redmine.RedmineError {
+  let query = if include_attachments {
+    [("include", "attachments")]
+  } else {
+    []
+  }
   let json = redmine
-    |> @redmine.send(Get, page_segments(project, title, version?))
+    |> @redmine.send(Get, page_segments(project, title, version?), query~)
   @decode.decode_field(json, "wiki_page")
 }
 

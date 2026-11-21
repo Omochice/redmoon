@@ -72,3 +72,59 @@ async test "a title with dots and spaces is shown by the title it was created wi
     }),
   )
 }
+
+///|
+async fn wiki_upload(
+  redmine : @redmine.Redmine,
+  filename : String,
+) -> @attachments.UploadToken {
+  let content = b"wiki attachment"
+  let reader = @io.MemoryReader(w => w.write(content))
+  let token = redmine
+    |> @attachments.upload(reader, content.length().to_int64(), filename~)
+  @attachments.UploadToken::new(token, filename~)
+}
+
+///|
+async fn page_with_attachment(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
+  title : String,
+  filename : String,
+) -> Unit {
+  redmine |> @wiki.create(project, title, text="body")
+  redmine
+  |> @wiki.update(project, title, text="body", uploads=[
+    wiki_upload(redmine, filename),
+  ])
+}
+
+///|
+async test "show leaves out the attachments of a page unless asked" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki no include")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  page_with_attachment(
+    redmine,
+    project,
+    title,
+    "wiki-no-include-\{@env.now()}.txt",
+  )
+  assert_eq((redmine |> @wiki.show(project, title)).attachments, None)
+}
+
+///|
+async test "show lists the attachments of a page when asked" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki include")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let filename = "wiki-include-\{@env.now()}.txt"
+  page_with_attachment(redmine, project, title, filename)
+  let page = redmine |> @wiki.show(project, title, include_attachments=true)
+  assert_eq(
+    page.attachments.map(list => list.map(a => a.filename)),
+    Some([filename]),
+  )
+}
