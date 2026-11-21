@@ -6,6 +6,10 @@ struct FakeAttachments {
   content_type : String?
   uploads : Array[(Int64, String)]
   updates : Array[(Int32, @issues.Update)]
+  wiki_failure : @redmine.RedmineError?
+  wiki_uploads : Array[
+    (@redmine.ProjectRef, String, Array[@attachments.UploadToken]),
+  ]
 }
 
 ///|
@@ -14,6 +18,7 @@ fn FakeAttachments::new(
   content~ : Bytes = b"hello",
   declared_size~ : Int64 = 5,
   content_type~ : String = "text/plain",
+  wiki_failure? : @redmine.RedmineError,
 ) -> FakeAttachments {
   {
     failure,
@@ -22,6 +27,8 @@ fn FakeAttachments::new(
     content_type: Some(content_type),
     uploads: [],
     updates: [],
+    wiki_failure,
+    wiki_uploads: [],
   }
 }
 
@@ -94,6 +101,20 @@ impl AttachmentPort for FakeAttachments with fn attach_uploads(
 ) {
   self.check()
   self.updates.push((issue_id, update))
+}
+
+///|
+impl AttachmentPort for FakeAttachments with fn attach_wiki_uploads(
+  self,
+  project,
+  title,
+  uploads,
+) {
+  self.check()
+  if self.wiki_failure is Some(error) {
+    raise error
+  }
+  self.wiki_uploads.push((project, title, uploads))
 }
 
 ///|
@@ -383,6 +404,151 @@ async test "attach reports a Redmine failure and still closes the file" {
 }
 
 ///|
+async test "attach to a wiki page answers the target as given" {
+  let called = call_tool(
+    attachments_tools(FakeAttachments::new(), FakeFiles::new()),
+    "redmine_attachments",
+    {
+      "attach": {
+        "project_id": "demo",
+        "title": "Release notes",
+        "path": "/tmp/dir/shot.png",
+        "filename": "screen.png",
+      },
+    },
+  )
+  assert_eq(called.is_error, false)
+  assert_eq(
+    called.text,
+    "{\"project_id\":\"demo\",\"title\":\"Release notes\",\"filename\":\"screen.png\",\"filesize\":5}",
+  )
+}
+
+///|
+async test "attach uploads the file and attaches its token to the wiki page" {
+  let port = FakeAttachments::new()
+  ignore(
+    call_tool(
+      attachments_tools(port, FakeFiles::new()),
+      "redmine_attachments",
+      {
+        "attach": {
+          "project_id": "demo",
+          "title": "Release notes",
+          "path": "/tmp/dir/shot.png",
+          "filename": "screen.png",
+          "description": "d",
+        },
+      },
+    ),
+  )
+  assert_eq(port.uploads, [(5L, "screen.png")])
+  assert_eq(port.updates.length(), 0)
+  assert_eq(port.wiki_uploads, [
+    (
+      @redmine.ProjectRef::Identifier("demo"),
+      "Release notes",
+      [
+        @attachments.UploadToken::new(
+          "token-1",
+          filename="screen.png",
+          description="d",
+        ),
+      ],
+    ),
+  ])
+}
+
+///|
+async test "attach to a wiki page answers a numeric project_id as a number" {
+  let called = call_tool(
+    attachments_tools(FakeAttachments::new(), FakeFiles::new()),
+    "redmine_attachments",
+    { "attach": { "project_id": 1, "title": "Home", "path": "a/b.txt" } },
+  )
+  assert_eq(
+    called.text,
+    "{\"project_id\":1,\"title\":\"Home\",\"filename\":\"b.txt\",\"filesize\":5}",
+  )
+}
+
+///|
+async test "attach sends a numeric project_id to Redmine as an id" {
+  let port = FakeAttachments::new()
+  ignore(
+    call_tool(
+      attachments_tools(port, FakeFiles::new()),
+      "redmine_attachments",
+      { "attach": { "project_id": 1, "title": "Home", "path": "a/b.txt" } },
+    ),
+  )
+  assert_eq(port.wiki_uploads[0].0, @redmine.ProjectRef::Id(1))
+}
+
+///|
+async test "attach reports a missing wiki page and still closes the file" {
+  let files = FakeFiles::new()
+  let called = call_tool(
+    attachments_tools(
+      FakeAttachments::new(
+        wiki_failure=Response(status=404, errors=["Not found"]),
+      ),
+      files,
+    ),
+    "redmine_attachments",
+    { "attach": { "project_id": "demo", "title": "Missing", "path": "f" } },
+  )
+  assert_eq(called.is_error, true)
+  assert_eq(called.text, "{\"status\":404,\"errors\":[\"Not found\"]}")
+  assert_eq(files.closed, 1)
+}
+
+///|
+async test "attach takes exactly one complete target" {
+  let port = FakeAttachments::new()
+  let tools = attachments_tools(port, FakeFiles::new())
+  let cases : Array[Json] = [
+    { "attach": { "path": "a" } },
+    { "attach": { "title": "Home", "path": "a" } },
+    { "attach": { "project_id": "demo", "path": "a" } },
+    { "attach": { "issue_id": 3, "title": "Home", "path": "a" } },
+    { "attach": { "issue_id": 3, "project_id": "demo", "path": "a" } },
+    {
+      "attach": {
+        "project_id": "demo",
+        "title": "Home",
+        "path": "a",
+        "notes": "n",
+      },
+    },
+    {
+      "attach": {
+        "project_id": "demo",
+        "title": "Home",
+        "path": "a",
+        "comments": "c",
+      },
+    },
+  ]
+  let messages = []
+  for arguments in cases {
+    let called = call_tool(tools, "redmine_attachments", arguments)
+    assert_eq(called.is_error, true)
+    messages.push(called.text)
+  }
+  assert_eq(messages, [
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach: expected one of the keys `issue_id` and `project_id`\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach: expected one of the keys `issue_id` and `project_id`\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach.title: is required\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach.title: unknown field\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach.project_id: unknown field\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach.notes: unknown field\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach.comments: unknown field\"]}",
+  ])
+  assert_eq(port.uploads.length(), 0)
+}
+
+///|
 async test "arguments are validated" {
   let tools = attachments_tools(FakeAttachments::new(), FakeFiles::new())
   let cases : Array[Json] = [
@@ -410,7 +576,7 @@ async test "arguments are validated" {
     "{\"status\":0,\"errors\":[\"invalid arguments: download.maxSize: unknown field\"]}",
     "{\"status\":0,\"errors\":[\"invalid arguments: attach.path: must not be blank\"]}",
     "{\"status\":0,\"errors\":[\"invalid arguments: attach.filename: must not be blank\"]}",
-    "{\"status\":0,\"errors\":[\"invalid arguments: attach.issue_id: is required\"]}",
+    "{\"status\":0,\"errors\":[\"invalid arguments: attach: expected one of the keys `issue_id` and `project_id`\"]}",
   ])
 }
 
@@ -465,7 +631,7 @@ async test "tools/list advertises each mode" {
   inspect(
     full.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\n`attach` adds a local file to an issue: it takes `path`, the local file to send (absolute is recommended), and `issue_id`, the existing issue to add it to; `notes` adds a comment in the same history entry. To attach a file to a new issue, create the issue with `redmine_issues` first.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false},"attach":{"type":"object","properties":{"issue_id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"},"notes":{"type":"string","description":"Comment to add to the issue in the same history entry as the attachment."}},"required":["issue_id","path"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_attachments","description":"Reads Redmine attachments: `show` returns the metadata of one attachment, and `download` saves its content to a local file.\nCall `show` first to inspect `filesize` and `content_type`, since the content is never returned inline.\n`download` takes `path`, the destination file path to write (absolute is recommended); it never overwrites a file that already exists, and answers with the path it wrote plus the filename, content type, and size.\n`max_size` bounds how many bytes may be written, 500 MiB by default; pass a smaller limit when the attachment should be refused above it, reading `filesize` from `show` to choose one.\n`attach` adds a local file to an existing issue or wiki page: it takes `path`, the local file to send (absolute is recommended), and either `issue_id` or `project_id` with `title`.\n`notes` adds a comment in the same history entry, for an issue only. To attach a file to a new issue or page, create it with `redmine_issues` or `redmine_wiki_pages` first.\nTo show an attached image in a wiki page, reference it from the page text by its filename, e.g. `!image.png!` in Textile, and update the text with `redmine_wiki_pages`.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"download":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist."},"max_size":{"type":"integer","minimum":1,"description":"Maximum number of bytes to write, 524288000 (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.","default":524288000}},"required":["id","path"],"additionalProperties":false},"attach":{"anyOf":[{"type":"object","properties":{"issue_id":{"type":"integer","minimum":1},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"},"notes":{"type":"string","description":"Comment to add to the issue in the same history entry as the attachment."}},"required":["issue_id","path"],"additionalProperties":false},{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"title":{"type":"string","pattern":"\\S","description":"Wiki page title. When taken from a URL, percent-decode it first; Redmine stores spaces as underscores, so either form of a multi-word title works."},"path":{"type":"string","pattern":"\\S","description":"Local file to attach. An absolute path is recommended, because a relative one resolves against the working directory of the server process."},"filename":{"type":"string","pattern":"\\S","description":"Name the attachment is shown under; the last segment of `path` by default."},"description":{"type":"string"}},"required":["project_id","title","path"],"additionalProperties":false}]}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
   inspect(
@@ -582,6 +748,11 @@ impl AttachmentPort for StalledDownload with fn upload_file(_, _, _, _) {
 
 ///|
 impl AttachmentPort for StalledDownload with fn attach_uploads(_, _, _) {
+  abort("unused")
+}
+
+///|
+impl AttachmentPort for StalledDownload with fn attach_wiki_uploads(_, _, _, _) {
   abort("unused")
 }
 

@@ -15,6 +15,12 @@ pub(open) trait AttachmentPort {
     filename : String,
   ) -> String raise @redmine.RedmineError
   async fn attach_uploads(Self, issue_id : Int32, update : @issues.Update) -> Unit raise @redmine.RedmineError
+  async fn attach_wiki_uploads(
+    Self,
+    project : @redmine.ProjectRef,
+    title : String,
+    uploads : Array[@attachments.UploadToken],
+  ) -> Unit raise @redmine.RedmineError
 }
 
 ///|
@@ -48,4 +54,14 @@ pub impl AttachmentPort for @redmine.Redmine with fn attach_uploads(
   update,
 ) {
   self |> @issues.update(issue_id, update)
+}
+
+///|
+pub impl AttachmentPort for @redmine.Redmine with fn attach_wiki_uploads(
+  self,
+  project,
+  title,
+  uploads,
+) {
+  self |> @wiki.attach(project, title, uploads)
 }
