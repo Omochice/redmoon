@@ -1,7 +1,6 @@
 coverage:
   paths:
     - _build/coverage/cobertura.xml
-    - _build/coverage/keyring.xml
   exclude:
     - integration-test/**
     - mcp/src/example/**
