@@ -208,6 +208,38 @@ pub async fn update(
 }
 
 ///|
+/// Attaches `uploads` to the existing wiki page `title`, leaving its text and version as they are.
+/// The page is shown first because a PUT to a missing page would create it, so a missing page raises the 404 instead.
+/// The shown version is sent back, so an edit made in between raises 409 rather than being overwritten.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @wiki.attach(Identifier("demo"), "Getting started", [
+///     @attachments.UploadToken::new(
+///       "7167.ed1ccdb093229ca1bd0b043618d88743",
+///       filename="screenshot.png",
+///     ),
+///   ])
+/// }
+/// ```
+pub async fn attach(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
+  title : String,
+  uploads : Array[@attachments.UploadToken],
+) -> Unit raise @redmine.RedmineError {
+  let page = redmine |> show(project, title)
+  redmine
+  |> update(project, title, text=page.text, version=page.version, uploads~)
+}
+
+///|
 /// Deletes the wiki page `title`.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
