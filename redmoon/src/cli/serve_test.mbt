@@ -137,3 +137,78 @@ async test "the additional tags plugin adds its tool, without add and remove in 
     }
   }
 }
+
+///|
+async fn listed_operations(read_only : Bool) -> Array[(String, Array[String])] {
+  let redmine = @redmine.new(endpoint="http://localhost:3000", api_key="unused")
+  let responses = exchange(@cli.build_server(redmine, read_only, []), [
+    request(2, "tools/list", {}),
+  ])
+  guard responses[1] is { "result": { "tools": Array(tools), .. }, .. } else {
+    fail("no tools/list result")
+  }
+  tools.map(tool => {
+    guard tool
+      is {
+        "name": String(name),
+        "inputSchema": { "properties": Object(operations), .. },
+        ..
+      } else {
+      fail("a tool has no keyed schema: \{tool.stringify()}")
+    }
+    (name, operations.keys().collect())
+  })
+}
+
+///|
+/// Which operations are writes belongs to each tool's own tests,
+/// so this lists only the tools that take a mode.
+let moded_tools : Array[String] = [
+  "redmine_issues", "redmine_wiki_pages", "redmine_versions", "redmine_issue_relations",
+  "redmine_time_entries", "redmine_attachments",
+]
+
+///|
+async test "without plugins the server lists exactly the core tools in both modes" {
+  for read_only in [false, true] {
+    assert_eq(listed_operations(read_only).map(tool => tool.0), [
+      "redmine_issues", "redmine_wiki_pages", "redmine_versions", "redmine_issue_relations",
+      "redmine_search", "redmine_time_entries", "redmine_enumerations", "redmine_memberships",
+      "redmine_attachments", "redmoon_info",
+    ])
+  }
+}
+
+///|
+async test "in readonly mode each tool that takes a mode offers only some of its full operations" {
+  let full = listed_operations(false)
+  let limited = listed_operations(true)
+  for name in moded_tools {
+    guard full.search_by(tool => tool.0 == name) is Some(index) else {
+      fail("\{name} is not registered")
+    }
+    let (_, all) = full[index]
+    let (_, reads) = limited[index]
+    assert_true(
+      reads.length() < all.length(),
+      msg="\{name} offers every operation in readonly mode",
+    )
+    for operation in reads {
+      assert_true(
+        all.contains(operation),
+        msg="\{name} offers \{operation} only in readonly mode",
+      )
+    }
+  }
+}
+
+///|
+async test "a tool that takes no mode offers the same operations in both modes" {
+  let full = listed_operations(false)
+  let limited = listed_operations(true)
+  for index, tool in full {
+    if !moded_tools.contains(tool.0) {
+      assert_eq(limited[index], tool)
+    }
+  }
+}
