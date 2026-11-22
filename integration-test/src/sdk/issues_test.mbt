@@ -180,3 +180,34 @@ async test "listing issues by a project query without its project raises 404" {
     _ => fail("expected an error")
   }
 }
+
+///|
+async test "a refused create raises Response 422 with Redmine's messages naming the field" {
+  let redmine = @livetest.redmine()
+  try
+    redmine
+    |> @issues.create(
+      @issues.Create::new(
+        project_id=1,
+        tracker_id=1,
+        status_id=1,
+        priority_id=2,
+        subject="",
+      ),
+    )
+  catch {
+    @redmine.Response(status~, errors~) => {
+      assert_eq(status, 422)
+      assert_true(
+        errors.any(message => message.contains("Subject")),
+        msg=errors.join("; "),
+      )
+    }
+    _ => fail("expected Response")
+  } noraise {
+    leaked => {
+      @livetest.delete_probe_issue(redmine, leaked.id)
+      fail("an issue without a subject was created")
+    }
+  }
+}

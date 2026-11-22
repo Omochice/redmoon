@@ -61,3 +61,12 @@ async test "all_words false matches issues carrying only one of the words" {
     )
   assert_false(every_word.any(fn(r) { r.id == first || r.id == second }))
 }
+
+///|
+/// Without a limit the first page's `total_count` decides which pages follow,
+/// and Redmine answers a null count for a query it does not run.
+async test "a one-letter search returns no matches rather than failing" {
+  let redmine = @livetest.redmine()
+  let found = redmine |> @search.search(@search.Query::new(q="a", issues=true))
+  assert_eq(found, [])
+}
