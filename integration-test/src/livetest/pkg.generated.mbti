@@ -16,6 +16,8 @@ pub async fn create_probe_issue(@redmine.Redmine, String, description? : String)
 
 pub async fn delete_probe_issue(@redmine.Redmine, Int32) -> Unit noraise + nocancel
 
+pub async fn ensure_time_tracking(@redmine.Redmine) -> Unit
+
 pub fn redmine() -> @redmine.Redmine raise
 
 // Errors
