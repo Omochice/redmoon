@@ -50,3 +50,35 @@ test "only the default port is stripped, not trailing digits of the host" {
   assert_false(same_origin("http://10.0.0.80:80", "http://10.0.0.8:80"))
   assert_eq(normalize_origin("https://10.0.0.34:443"), "https://10.0.0.34")
 }
+
+///|
+test "only a redirect naming one new location is followed" {
+  let followed = [301, 302, 303, 307, 308]
+  for status in [200, 204, 300, 301, 302, 303, 304, 305, 306, 307, 308, 404] {
+    assert_eq(
+      is_redirect_status(status),
+      followed.contains(status),
+      msg="status \{status}",
+    )
+  }
+}
+
+///|
+test "a Location header with userinfo is refused" {
+  let current : Location = { origin: "https://r.example", target: "/a", }
+  assert_true(
+    resolve_location(current, "https://user:pw@evil.example/x") is None,
+  )
+  assert_true(resolve_location(current, "//user@evil.example/x") is None)
+}
+
+///|
+test "an empty Location header resolves to the current target, query included" {
+  let current : Location = {
+    origin: "http://r.example",
+    target: "/attachments/download/1/a.txt?k=v",
+  }
+  let resolved = resolve_location(current, "").unwrap()
+  assert_eq(resolved.origin, "http://r.example")
+  assert_eq(resolved.target, "/attachments/download/1/a.txt?k=v")
+}
