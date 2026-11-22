@@ -156,6 +156,36 @@ async test "update maps the supplied arguments and answers ok" {
 }
 
 ///|
+async test "update maps every argument, setting the ones Redmine can empty" {
+  let fake = FakeVersions::new()
+  let called = call_tool(versions_tools(fake), "redmine_versions", {
+    "update": {
+      "id": 7,
+      "name": "Sprint",
+      "description": "d",
+      "status": "locked",
+      "due_date": "2026-12-31",
+      "sharing": "tree",
+      "wiki_page_title": "Sprint plan",
+    },
+  })
+  assert_eq(called.text, "{\"ok\":true}")
+  assert_eq(fake.updated, [
+    (
+      7,
+      @versions.Update::new(
+        name="Sprint",
+        description=Set("d"),
+        status=Locked,
+        due_date=Set("2026-12-31"),
+        sharing=Tree,
+        wiki_page_title=Set("Sprint plan"),
+      ),
+    ),
+  ])
+}
+
+///|
 async test "versions: delete answers ok" {
   let fake = FakeVersions::new()
   let called = call_tool(versions_tools(fake), "redmine_versions", {
