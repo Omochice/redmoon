@@ -145,11 +145,19 @@ fn FakeFiles::new(
 }
 
 ///|
+/// Bounds the content as `LocalFile` does,
+/// so that a limit below the content fails here as it would on disk.
 impl FilePort for FakeFiles with fn save(self, path, reader, max_size) {
   if self.save_failure is Some(message) {
     raise FileError(message~)
   }
-  self.saved.push((path, drain(reader), max_size))
+  let content = drain(reader)
+  if content.length().to_int64() > max_size {
+    raise FileError(
+      message="content exceeds the max_size limit of \{max_size} bytes",
+    )
+  }
+  self.saved.push((path, content, max_size))
   "/abs/" + path
 }
 
