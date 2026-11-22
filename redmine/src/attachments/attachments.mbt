@@ -119,8 +119,7 @@ pub async fn download(
   consume : async (Attachment, &@io.Reader) -> Unit,
 ) -> Unit {
   let attachment = redmine |> show(id)
-  let mut location = content_location(redmine, attachment)
-  for followed = 0; followed <= MAX_REDIRECTS; followed = followed + 1 {
+  follow_redirects(content_location(redmine, attachment), async fn(location) {
     let client = @core.open_client(
       @redmine.connection(redmine),
       location.origin,
@@ -132,20 +131,14 @@ pub async fn download(
       fetch(client, location)
     }
     match next {
-      Some(next) => {
-        client.close()
-        location = next
-      }
+      Some(_) => client.close()
       None => {
         defer client.close()
         consume(attachment, client)
-        return
       }
     }
-  }
-  raise @redmine.Transport(
-    message="attachment download followed more than \{MAX_REDIRECTS} redirects",
-  )
+    next
+  })
 }
 
 ///|

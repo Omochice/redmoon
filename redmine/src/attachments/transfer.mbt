@@ -33,11 +33,35 @@ async fn fetch(
   } catch {
     error => raise @redmine.Transport(message="\{error}")
   }
-  let redirect = if @wire.is_redirect_status(response.code) {
-    response.headers.get("Location")
-  } else {
-    None
+  let read_body = async fn() noraise {
+    try {
+      match client.read_some(max_len=ERROR_BODY_LIMIT) {
+        Some(bytes) => @utf8.decode_lossy(bytes)
+        None => ""
+      }
+    } catch {
+      _ => ""
+    }
   }
+  next_location(
+    location,
+    response.code,
+    response.headers.get("Location"),
+    read_body,
+  )
+}
+
+///|
+/// Decides where an answer with `status` and the `Location` header `redirect` leads.
+/// `read_body` is a callback rather than the text itself,
+/// because reading a successful answer's body would take it away from the consumer.
+async fn next_location(
+  location : @wire.Location,
+  status : Int32,
+  redirect : String?,
+  read_body : async () -> String noraise,
+) -> @wire.Location? raise @redmine.RedmineError {
+  let redirect = if @wire.is_redirect_status(status) { redirect } else { None }
   if redirect is Some(target) {
     guard @wire.resolve_location(location, target) is Some(next) else {
       raise @redmine.Transport(
@@ -46,21 +70,29 @@ async fn fetch(
     }
     return Some(next)
   }
-  guard response.code >= 200 && response.code < 300 else {
-    let text = try {
-      match client.read_some(max_len=ERROR_BODY_LIMIT) {
-        Some(bytes) => @utf8.decode_lossy(bytes)
-        None => ""
-      }
-    } catch {
-      _ => ""
-    }
-    raise @redmine.Response(
-      status=response.code,
-      errors=@wire.errors_from_body(text),
-    )
+  guard status >= 200 && status < 300 else {
+    raise @redmine.Response(status~, errors=@wire.errors_from_body(read_body()))
   }
   None
+}
+
+///|
+/// Calls `attempt` on `start` and on each location it redirects to,
+/// until one answers with a body, giving up after `MAX_REDIRECTS` redirects.
+async fn follow_redirects(
+  start : @wire.Location,
+  attempt : async (@wire.Location) -> @wire.Location?,
+) -> Unit {
+  let mut location = start
+  for followed = 0; followed <= MAX_REDIRECTS; followed = followed + 1 {
+    match attempt(location) {
+      Some(next) => location = next
+      None => return
+    }
+  }
+  raise @redmine.Transport(
+    message="attachment download followed more than \{MAX_REDIRECTS} redirects",
+  )
 }
 
 ///|
