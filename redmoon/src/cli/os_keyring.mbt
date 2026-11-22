@@ -4,7 +4,7 @@
 pub const SERVICE : String = "redmoon"
 
 ///|
-/// The OS credential store, reached through `omochice/keyring`.
+/// The OS credential store, reached through `Omochice/keyring`.
 pub struct OsKeyring {}
 
 ///|

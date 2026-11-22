@@ -8,13 +8,13 @@ version = "1.0.0"
 license = "Zlib"
 
 import {
+  "Omochice/keyring@0.6.0",
+  "Omochice/mcp@0.6.0",
+  "Omochice/schema@0.6.0",
   "moonbitlang/async@0.22.9",
   // x-release-please-start-version
-  "omochice/keyring@1.0.0",
-  "omochice/mcp@1.0.0",
   "omochice/redmine@1.0.0",
   "omochice/redmine-plugins@1.0.0",
-  "omochice/schema@1.0.0",
   // x-release-please-end
 }
 
