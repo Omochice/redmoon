@@ -232,6 +232,36 @@ async test "update passes the id and only the changes given" {
 }
 
 ///|
+async test "update maps every argument onto the changes" {
+  let fake = FakeTimeEntries::new()
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
+    "update": {
+      "id": 7,
+      "hours": 2.25,
+      "issue_id": 3,
+      "project_id": 1,
+      "spent_on": "2026-08-01",
+      "activity_id": 9,
+      "comments": "wrote the port",
+    },
+  })
+  assert_eq(called.text, "{\"ok\":true}")
+  assert_eq(fake.updates, [
+    (
+      7,
+      @time_entries.Update::new(
+        hours=2.25,
+        issue_id=Set(3),
+        project_id=1,
+        spent_on="2026-08-01",
+        activity_id=9,
+        comments=Set("wrote the port"),
+      ),
+    ),
+  ])
+}
+
+///|
 async test "delete passes the id and answers ok" {
   let fake = FakeTimeEntries::new()
   let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
