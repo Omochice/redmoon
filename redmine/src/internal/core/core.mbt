@@ -28,6 +28,17 @@ pub async fn open_client(
   origin : String,
   accept? : String,
 ) -> @http.Client {
+  @http.Client(origin, headers=client_headers(conn, origin, accept?))
+}
+
+///|
+/// Kept apart from `open_client` so that which origin receives the API key can be tested
+/// without opening a connection.
+fn client_headers(
+  conn : Connection,
+  origin : String,
+  accept? : String,
+) -> Map[@http.CaseInsensitiveString, String] {
   let headers : Map[@http.CaseInsensitiveString, String] = Map([])
   if @wire.same_origin(origin, conn.endpoint.origin) {
     headers["X-Redmine-API-Key"] = conn.api_key
@@ -35,7 +46,7 @@ pub async fn open_client(
   if accept is Some(accept) {
     headers["Accept"] = accept
   }
-  @http.Client(origin, headers~)
+  headers
 }
 
 ///|
