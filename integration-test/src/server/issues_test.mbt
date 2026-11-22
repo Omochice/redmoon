@@ -45,15 +45,22 @@ async fn exercise_live_issue(
   subject : String,
 ) -> Unit {
   let listed = call_tool(tools, "redmine_issues", {
-    "list": {
-      "project_id": 1,
-      "status_id": "*",
-      "created_on": "today",
-      "limit": 100,
-    },
+    "list": { "project_id": 1, "status_id": "*", "created_on": "today" },
   })
   assert_eq(listed.is_error, false, msg=listed.text)
-  assert_true(listed.text.contains(subject))
+  guard @json.parse(listed.text) is Array(issues) else {
+    fail("not a listing: \{listed.text}")
+  }
+  assert_true(
+    issues.any(issue => {
+      issue is { "id": Number(found, ..), "subject": String(text), .. } &&
+      found.to_int() == id &&
+      text == subject
+    }),
+    msg=listed.text,
+  )
+  // The comment comes with field changes, because Redmine destroys a journal left with neither,
+  // and the erased note must stay readable.
   let updated = call_tool(tools, "redmine_issues", {
     "update": {
       "id": id,
@@ -66,12 +73,12 @@ async fn exercise_live_issue(
   let shown = call_tool(tools, "redmine_issues", {
     "show": { "id": id, "include": ["journals"] },
   })
-  assert_true(shown.text.contains(subject + "-edited"))
-  assert_false(shown.text.contains("\"start_date\":\"2026"))
-  guard @json.parse(shown.text)
-    is { "journals": [{ "id": Number(journal, ..), .. }, ..], .. } else {
+  guard @json.parse(shown.text) is Object(fields) &&
+    fields.get("journals") is Some([{ "id": Number(journal, ..), .. }, ..]) else {
     fail("no journal in \{shown.text}")
   }
+  assert_eq(fields.get("subject"), Some(Json::string(subject + "-edited")))
+  assert_eq(fields.get("start_date"), None, msg=shown.text)
   let edited = call_tool(tools, "redmine_issues", {
     "update_note": { "journal_id": journal.to_int(), "notes": "edited comment" },
   })
@@ -79,15 +86,48 @@ async fn exercise_live_issue(
   let again = call_tool(tools, "redmine_issues", {
     "show": { "id": id, "include": ["journals"] },
   })
-  assert_true(again.text.contains("edited comment"))
+  assert_eq(
+    shown_journal(again, journal.to_int()).get("notes"),
+    Some(Json::string("edited comment")),
+  )
   let hidden = call_tool(tools, "redmine_issues", {
     "update_note": { "journal_id": journal.to_int(), "private_notes": true },
   })
   assert_eq(hidden.text, "{\"ok\":true}")
+  let after_hide = call_tool(tools, "redmine_issues", {
+    "show": { "id": id, "include": ["journals"] },
+  })
+  assert_eq(
+    shown_journal(after_hide, journal.to_int()).get("private_notes"),
+    Some(Json::boolean(true)),
+  )
   let erased = call_tool(tools, "redmine_issues", {
     "delete_note": { "journal_id": journal.to_int() },
   })
   assert_eq(erased.text, "{\"ok\":true}")
+  let after_erase = call_tool(tools, "redmine_issues", {
+    "show": { "id": id, "include": ["journals"] },
+  })
+  assert_eq(
+    shown_journal(after_erase, journal.to_int()).get("notes"),
+    Some(Json::string("")),
+  )
+}
+
+///|
+/// The members of journal `id` in a `show` answer that includes journals.
+fn shown_journal(shown : Called, id : Int32) -> Map[String, Json] raise {
+  guard @json.parse(shown.text) is { "journals": Array(journals), .. } else {
+    fail("no journals in \{shown.text}")
+  }
+  for journal in journals {
+    if journal is Object(fields) &&
+      fields.get("id") is Some(Number(found, ..)) &&
+      found.to_int() == id {
+      return fields
+    }
+  }
+  fail("journal \{id} missing from \{shown.text}")
 }
 
 ///|
@@ -181,6 +221,11 @@ async test "an issue is created with a required custom field and its multi-value
 async test "issues are listed by a saved query through the tool" {
   let redmine = @livetest.redmine()
   let tools = [@tools.issues_tool(redmine, @tools.LocalFile::new(), Readonly)]
+  let probe = @livetest.create_probe_issue(
+    redmine,
+    "redmoon-saved-query-tool-\{@env.now()}",
+  )
+  defer @livetest.delete_probe_issue(redmine, probe)
   let queries = call_tool(tools, "redmine_issues", { "list_queries": {} })
   assert_eq(queries.is_error, false, msg=queries.text)
   guard @json.parse(queries.text) is Array(listed) &&
@@ -189,12 +234,18 @@ async test "issues are listed by a saved query through the tool" {
     fail("the seeded query is missing from \{queries.text}")
   }
   let called = call_tool(tools, "redmine_issues", {
-    "list": { "query_id": query_id.to_int(), "project_id": 1, "limit": 5 },
+    "list": { "query_id": query_id.to_int(), "project_id": 1 },
   })
   assert_eq(called.is_error, false, msg=called.text)
-  guard @json.parse(called.text) is Array(_) else {
+  guard @json.parse(called.text) is Array(listed) else {
     fail("not a listing: \{called.text}")
   }
+  assert_true(
+    listed.any(issue => {
+      issue is { "id": Number(found, ..), .. } && found.to_int() == probe
+    }),
+    msg=called.text,
+  )
   let unscoped = call_tool(tools, "redmine_issues", {
     "list": { "query_id": query_id.to_int() },
   })

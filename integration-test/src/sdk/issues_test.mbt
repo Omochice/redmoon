@@ -53,10 +53,11 @@ async fn exercise_issue(
   let none = redmine
     |> @issues.list(
       @issues.ListQuery::new(closed_on=Period(Any), status_id=All),
-      limit=100,
     )
   assert_false(none.any(fn(issue) { issue.id == id }))
 
+  // The comment comes with field changes, because Redmine destroys a journal left with neither,
+  // and the erased note must stay readable.
   redmine
   |> @issues.update(
     id,
@@ -97,7 +98,24 @@ async fn exercise_issue(
     .any(fn(j) { j.notes == Some("edited comment") }),
   )
   redmine |> @issues.update_journal(journal.id, private_notes=true)
+  assert_eq(shown_journal(redmine, id, journal.id).private_notes, true)
   redmine |> @issues.update_journal(journal.id, notes="")
+  assert_eq(shown_journal(redmine, id, journal.id).notes, Some(""))
+}
+
+///|
+/// Journal `journal` of issue `issue`, as a `show` with journals returns it.
+async fn shown_journal(
+  redmine : @redmine.Redmine,
+  issue : Int32,
+  journal : Int32,
+) -> @issues.Journal {
+  let shown = redmine |> @issues.show(issue, includes=[Journals])
+  guard shown.journals.unwrap().iter().find_first(j => j.id == journal)
+    is Some(found) else {
+    fail("journal \{journal} missing from issue \{issue}")
+  }
+  found
 }
 
 ///|
