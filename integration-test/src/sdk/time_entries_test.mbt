@@ -16,6 +16,7 @@ async test "a time entry is created, listed, shown, updated, and deleted" {
         comments="time entries integration test",
       ),
     )
+  defer @livetest.cleanup(() => redmine |> @time_entries.delete(created.id))
   assert_eq(created.hours, 1.5)
   assert_eq(created.project.id, 1)
   assert_eq(created.activity.id, activity_id)
