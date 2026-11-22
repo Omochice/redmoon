@@ -227,6 +227,10 @@ async test "versions: validation reports the exact message for each rule" {
       { "list": { "project_id": "a b" } },
       "invalid arguments: list.project_id: no alternative matched: expected an integer; must not contain whitespace",
     ),
+    (
+      { "list": { "project_id": "" } },
+      "invalid arguments: list.project_id: no alternative matched: expected an integer; must not contain whitespace",
+    ),
   ]
   for entry in cases {
     let called = call_tool(tools, "redmine_versions", entry.0)
