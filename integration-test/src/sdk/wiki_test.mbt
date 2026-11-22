@@ -72,3 +72,127 @@ async test "a title with dots and spaces is shown by the title it was created wi
     }),
   )
 }
+
+///|
+async fn wiki_upload(
+  redmine : @redmine.Redmine,
+  filename : String,
+) -> @attachments.UploadToken {
+  let content = b"wiki attachment"
+  let reader = @io.MemoryReader(w => w.write(content))
+  let token = redmine
+    |> @attachments.upload(reader, content.length().to_int64(), filename~)
+  @attachments.UploadToken::new(token, filename~)
+}
+
+///|
+async fn page_with_attachment(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
+  title : String,
+  filename : String,
+) -> Unit {
+  redmine |> @wiki.create(project, title, text="body")
+  redmine
+  |> @wiki.update(project, title, text="body", uploads=[
+    wiki_upload(redmine, filename),
+  ])
+}
+
+///|
+async test "show leaves out the attachments of a page unless asked" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki no include")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  page_with_attachment(
+    redmine,
+    project,
+    title,
+    "wiki-no-include-\{@env.now()}.txt",
+  )
+  assert_eq((redmine |> @wiki.show(project, title)).attachments, None)
+}
+
+///|
+async test "show lists the attachments of a page when asked" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki include")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let filename = "wiki-include-\{@env.now()}.txt"
+  page_with_attachment(redmine, project, title, filename)
+  let page = redmine |> @wiki.show(project, title, include_attachments=true)
+  assert_eq(
+    page.attachments.map(list => list.map(a => a.filename)),
+    Some([filename]),
+  )
+}
+
+///|
+async test "attach adds the uploads to the page" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki attach")
+  redmine |> @wiki.create(project, title, text="body")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let filename = "wiki-attach-\{@env.now()}.png"
+  redmine |> @wiki.attach(project, title, [wiki_upload(redmine, filename)])
+  let page = redmine |> @wiki.show(project, title, include_attachments=true)
+  assert_eq(
+    page.attachments.map(list => list.map(a => a.filename)),
+    Some([filename]),
+  )
+}
+
+///|
+async test "attach keeps the text, the version, and the comments of the page" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki keep")
+  let text = "h1. Page\r\n\r\n日本語の本文\r\n"
+  redmine |> @wiki.create(project, title, text~, comments="created")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  redmine
+  |> @wiki.attach(project, title, [
+    wiki_upload(redmine, "wiki-keep-\{@env.now()}.png"),
+  ])
+  let page = redmine |> @wiki.show(project, title)
+  assert_eq(
+    (page.text, page.version, page.comments),
+    (text, 1, Some("created")),
+  )
+}
+
+///|
+async test "attaching to a missing wiki page raises 404" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki missing")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let upload = wiki_upload(redmine, "wiki-missing-\{@env.now()}.txt")
+  try redmine |> @wiki.attach(project, title, [upload]) catch {
+    Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("expected a missing page")
+  }
+}
+
+///|
+async test "attaching to a missing wiki page does not create it" {
+  let redmine = @livetest.redmine()
+  let project = @redmine.ProjectRef::Identifier("demo")
+  let title = wiki_unique_title("Redmoon wiki not created")
+  defer @livetest.cleanup(() => redmine |> @wiki.delete(project, title))
+  let upload = wiki_upload(redmine, "wiki-not-created-\{@env.now()}.txt")
+  (redmine |> @wiki.attach(project, title, [upload])) catch {
+    _ => ()
+  }
+  try redmine |> @wiki.show(project, title) catch {
+    Response(status~, ..) => assert_eq(status, 404)
+    _ => fail("expected Response")
+  } noraise {
+    _ => fail("attach created the page")
+  }
+}

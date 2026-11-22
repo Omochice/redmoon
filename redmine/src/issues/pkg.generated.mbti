@@ -63,9 +63,9 @@ pub struct Create {
   start_date : String?
   due_date : String?
   custom_fields : Array[CustomFieldInput]?
-  uploads : Array[UploadToken]?
+  uploads : Array[@attachments.UploadToken]?
 }
-pub fn Create::new(project_id~ : Int32, tracker_id~ : Int32, status_id~ : Int32, priority_id~ : Int32, subject~ : String, description? : String, category_id? : Int32, fixed_version_id? : Int32, assigned_to_id? : Int32, parent_issue_id? : Int32, watcher_user_ids? : Array[Int32], is_private? : Bool, estimated_hours? : Double, start_date? : String, due_date? : String, custom_fields? : Array[CustomFieldInput], uploads? : Array[UploadToken]) -> Self
+pub fn Create::new(project_id~ : Int32, tracker_id~ : Int32, status_id~ : Int32, priority_id~ : Int32, subject~ : String, description? : String, category_id? : Int32, fixed_version_id? : Int32, assigned_to_id? : Int32, parent_issue_id? : Int32, watcher_user_ids? : Array[Int32], is_private? : Bool, estimated_hours? : Double, start_date? : String, due_date? : String, custom_fields? : Array[CustomFieldInput], uploads? : Array[@attachments.UploadToken]) -> Self
 
 #derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct CustomField {
@@ -319,23 +319,12 @@ pub struct Update {
   start_date : @redmine.Clearable[String]?
   due_date : @redmine.Clearable[String]?
   custom_fields : Array[CustomFieldInput]?
-  uploads : Array[UploadToken]?
+  uploads : Array[@attachments.UploadToken]?
 }
-pub fn Update::new(subject? : String, description? : String, notes? : String, private_notes? : Bool, done_ratio? : Int32, is_private? : Bool, estimated_hours? : Double, status_id? : Int32, priority_id? : Int32, tracker_id? : Int32, assigned_to_id? : @redmine.Clearable[Int32], category_id? : @redmine.Clearable[Int32], parent_issue_id? : @redmine.Clearable[Int32], fixed_version_id? : @redmine.Clearable[Int32], start_date? : @redmine.Clearable[String], due_date? : @redmine.Clearable[String], custom_fields? : Array[CustomFieldInput], uploads? : Array[UploadToken]) -> Self
-
-#derive(Eq, @debug.Debug)
-pub(all) struct UploadToken {
-  token : String
-  filename : String?
-  description : String?
-  content_type : String?
-}
-pub fn UploadToken::equal(Self, Self) -> Bool
-pub fn UploadToken::new(String, filename? : String, description? : String, content_type? : String) -> Self
-pub fn UploadToken::not_equal(Self, Self) -> Bool
-pub fn UploadToken::to_repr(Self) -> @debug.Repr
+pub fn Update::new(subject? : String, description? : String, notes? : String, private_notes? : Bool, done_ratio? : Int32, is_private? : Bool, estimated_hours? : Double, status_id? : Int32, priority_id? : Int32, tracker_id? : Int32, assigned_to_id? : @redmine.Clearable[Int32], category_id? : @redmine.Clearable[Int32], parent_issue_id? : @redmine.Clearable[Int32], fixed_version_id? : @redmine.Clearable[Int32], start_date? : @redmine.Clearable[String], due_date? : @redmine.Clearable[String], custom_fields? : Array[CustomFieldInput], uploads? : Array[@attachments.UploadToken]) -> Self
 
 // Type aliases
+pub using @attachments {type UploadToken}
 
 // Traits
 pub trait Selection {

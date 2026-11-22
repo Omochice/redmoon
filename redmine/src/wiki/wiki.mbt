@@ -92,6 +92,7 @@ pub async fn list(
 
 ///|
 /// Shows a wiki page, at `version` when given and at the latest otherwise.
+/// `attachments` is `None` unless `include_attachments` is set, because Redmine lists them only on request.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
@@ -113,9 +114,15 @@ pub async fn show(
   project : @redmine.ProjectRef,
   title : String,
   version? : Int32,
+  include_attachments~ : Bool = false,
 ) -> Page raise @redmine.RedmineError {
+  let query = if include_attachments {
+    [("include", "attachments")]
+  } else {
+    []
+  }
   let json = redmine
-    |> @redmine.send(Get, page_segments(project, title, version?))
+    |> @redmine.send(Get, page_segments(project, title, version?), query~)
   @decode.decode_field(json, "wiki_page")
 }
 
@@ -160,6 +167,8 @@ pub async fn create(
 ///|
 /// Replaces the text of the wiki page `title`.
 /// With `version`, Redmine answers 409 when the page has changed since that version.
+/// When `text` is the current text, Redmine only attaches `uploads`,
+/// so the version stays, `comments` is dropped, and `version` is not checked.
 /// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 ///
 /// ```mbt check
@@ -186,15 +195,48 @@ pub async fn update(
   comments? : String,
   version? : Int32,
   parent_title? : String,
+  uploads? : Array[@attachments.UploadToken],
 ) -> Unit raise @redmine.RedmineError {
   ignore(
     redmine
     |> @redmine.send(
       Put,
       page_segments(project, title),
-      body=page_body(text, comments?, version?, parent_title?),
+      body=page_body(text, comments?, version?, parent_title?, uploads?),
     ),
   )
+}
+
+///|
+/// Attaches `uploads` to the existing wiki page `title`, leaving its text and version as they are.
+/// The page is shown first because a PUT to a missing page would create it, so a missing page raises the 404 instead.
+/// The shown version is sent back, so an edit made in between raises 409 rather than being overwritten.
+///
+/// ```mbt check
+/// #skip("needs a live Redmine")
+/// async test {
+///   let redmine = @redmine.new(
+///     endpoint="https://redmine.example.com",
+///     api_key="...",
+///   )
+///   redmine
+///   |> @wiki.attach(Identifier("demo"), "Getting started", [
+///     @attachments.UploadToken::new(
+///       "7167.ed1ccdb093229ca1bd0b043618d88743",
+///       filename="screenshot.png",
+///     ),
+///   ])
+/// }
+/// ```
+pub async fn attach(
+  redmine : @redmine.Redmine,
+  project : @redmine.ProjectRef,
+  title : String,
+  uploads : Array[@attachments.UploadToken],
+) -> Unit raise @redmine.RedmineError {
+  let page = redmine |> show(project, title)
+  redmine
+  |> update(project, title, text=page.text, version=page.version, uploads~)
 }
 
 ///|
@@ -261,12 +303,14 @@ fn page_body(
   comments? : String,
   version? : Int32,
   parent_title? : String,
+  uploads? : Array[@attachments.UploadToken],
 ) -> Json {
   let page = @wire.present_members([
     ("text", Some(Json(text))),
     ("comments", comments.map(ToJson::to_json)),
     ("version", version.map(ToJson::to_json)),
     ("parent_title", parent_title.map(title => Json(wiki_title_segment(title)))),
+    ("uploads", uploads.map(ToJson::to_json)),
   ])
   Json::object({ "wiki_page": page })
 }

@@ -1,42 +1,16 @@
 ///|
-/// A file uploaded beforehand, to attach to an issue.
-#derive(Eq, Debug)
-pub(all) struct UploadToken {
-  token : String
-  filename : String?
-  description : String?
-  content_type : String?
-}
-
-///|
-pub extend UploadToken with Eq::{equal, not_equal}
-
-///|
-pub extend UploadToken with @debug.Debug::{to_repr}
-
-///|
-/// A token as `@attachments.upload` returns it, with the optional file details.
+/// Kept under `@issues` because SDK users name it from here since 1.0.0.
 ///
 /// ```mbt check
 /// test {
 ///   let token = @issues.UploadToken::new("7167.ed1ccdb093229ca1bd0b043618d88743")
-///   assert_eq(token.filename, None)
-///   let named = @issues.UploadToken::new(
-///     "7168.0f3c",
-///     filename="report.pdf",
-///     content_type="application/pdf",
+///   assert_eq(
+///     token,
+///     @attachments.UploadToken::new("7167.ed1ccdb093229ca1bd0b043618d88743"),
 ///   )
-///   assert_eq(named.filename, Some("report.pdf"))
 /// }
 /// ```
-pub fn UploadToken::new(
-  token : String,
-  filename? : String,
-  description? : String,
-  content_type? : String,
-) -> UploadToken {
-  { token, filename, description, content_type, }
-}
+pub using @attachments {type UploadToken}
 
 ///|
 /// A custom field value to write.
@@ -71,7 +45,7 @@ pub struct Create {
   start_date : String?
   due_date : String?
   custom_fields : Array[CustomFieldInput]?
-  uploads : Array[UploadToken]?
+  uploads : Array[@attachments.UploadToken]?
 }
 
 ///|
@@ -109,7 +83,7 @@ pub fn Create::new(
   start_date? : String,
   due_date? : String,
   custom_fields? : Array[CustomFieldInput],
-  uploads? : Array[UploadToken],
+  uploads? : Array[@attachments.UploadToken],
 ) -> Create {
   {
     project_id,
@@ -154,7 +128,7 @@ pub struct Update {
   start_date : @redmine.Clearable[String]?
   due_date : @redmine.Clearable[String]?
   custom_fields : Array[CustomFieldInput]?
-  uploads : Array[UploadToken]?
+  uploads : Array[@attachments.UploadToken]?
 }
 
 ///|
@@ -190,7 +164,7 @@ pub fn Update::new(
   start_date? : @redmine.Clearable[String],
   due_date? : @redmine.Clearable[String],
   custom_fields? : Array[CustomFieldInput],
-  uploads? : Array[UploadToken],
+  uploads? : Array[@attachments.UploadToken],
 ) -> Update {
   {
     subject,
@@ -215,16 +189,6 @@ pub fn Update::new(
 }
 
 ///|
-fn UploadToken::to_json_object(self : UploadToken) -> Json {
-  @wire.present_members([
-    ("token", Some(Json(self.token))),
-    ("filename", self.filename.map(ToJson::to_json)),
-    ("description", self.description.map(ToJson::to_json)),
-    ("content_type", self.content_type.map(ToJson::to_json)),
-  ])
-}
-
-///|
 fn CustomFieldInput::to_json_object(self : CustomFieldInput) -> Json {
   Json::object({ "id": ToJson::to_json(self.id), "value": self.value.to_json() })
 }
@@ -235,8 +199,8 @@ fn custom_fields_member(fields : Array[CustomFieldInput]?) -> Json? {
 }
 
 ///|
-fn uploads_member(uploads : Array[UploadToken]?) -> Json? {
-  uploads.map(uploads => Json::array(uploads.map(UploadToken::to_json_object)))
+fn uploads_member(uploads : Array[@attachments.UploadToken]?) -> Json? {
+  uploads.map(uploads => Json::array(uploads.map(ToJson::to_json)))
 }
 
 ///|
