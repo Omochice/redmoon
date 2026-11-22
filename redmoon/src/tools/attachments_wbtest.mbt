@@ -6,6 +6,7 @@ struct FakeAttachments {
   content_type : String?
   uploads : Array[(Int64, String)]
   updates : Array[(Int32, @issues.Update)]
+  update_failure : @redmine.RedmineError?
   wiki_failure : @redmine.RedmineError?
   wiki_uploads : Array[
     (@redmine.ProjectRef, String, Array[@attachments.UploadToken]),
@@ -18,6 +19,7 @@ fn FakeAttachments::new(
   content~ : Bytes = b"hello",
   declared_size~ : Int64 = 5,
   content_type~ : String = "text/plain",
+  update_failure? : @redmine.RedmineError,
   wiki_failure? : @redmine.RedmineError,
 ) -> FakeAttachments {
   {
@@ -27,6 +29,7 @@ fn FakeAttachments::new(
     content_type: Some(content_type),
     uploads: [],
     updates: [],
+    update_failure,
     wiki_failure,
     wiki_uploads: [],
   }
@@ -100,6 +103,9 @@ impl AttachmentPort for FakeAttachments with fn attach_uploads(
   update,
 ) {
   self.check()
+  if self.update_failure is Some(error) {
+    raise error
+  }
   self.updates.push((issue_id, update))
 }
 
@@ -508,6 +514,24 @@ async test "attach reports a missing wiki page and still closes the file" {
   )
   assert_eq(called.is_error, true)
   assert_eq(called.text, "{\"status\":404,\"errors\":[\"Not found\"]}")
+  assert_eq(files.closed, 1)
+}
+
+///|
+async test "attach reports a failure to attach an uploaded file to the issue" {
+  let port = FakeAttachments::new(
+    update_failure=Response(status=403, errors=["Forbidden"]),
+  )
+  let files = FakeFiles::new()
+  let called = call_tool(
+    attachments_tools(port, files),
+    "redmine_attachments",
+    { "attach": { "issue_id": 3, "path": "f" } },
+  )
+  assert_eq(called.is_error, true)
+  assert_eq(called.text, "{\"status\":403,\"errors\":[\"Forbidden\"]}")
+  assert_eq(port.uploads, [(5L, "f")])
+  assert_eq(port.updates.length(), 0)
   assert_eq(files.closed, 1)
 }
 
