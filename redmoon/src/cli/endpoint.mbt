@@ -8,8 +8,10 @@ fn default_port(scheme : String) -> String? {
 }
 
 ///|
-fn invalid_endpoint(endpoint : String) -> CliError {
-  Message("invalid endpoint URL: \{endpoint}")
+/// Never names the endpoint,
+/// because a URL too malformed to parse may still carry a password or a token.
+fn invalid_endpoint() -> CliError {
+  Message("invalid endpoint URL: expected http(s)://host[:port][/path]")
 }
 
 ///|
@@ -19,7 +21,7 @@ fn invalid_endpoint(endpoint : String) -> CliError {
 /// # Raises
 /// `Message` when `raw` carries credentials or is not an endpoint the SDK accepts.
 pub fn canonicalize_endpoint(raw : String) -> String raise CliError {
-  let invalid = invalid_endpoint(raw)
+  let invalid = invalid_endpoint()
   guard raw.find("://") is Some(scheme_end) else { raise invalid }
   let scheme = raw[:scheme_end].to_lower().to_owned()
   guard scheme != "" &&
