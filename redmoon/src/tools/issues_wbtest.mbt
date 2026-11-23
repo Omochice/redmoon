@@ -9,6 +9,7 @@ struct FakeIssues {
   mut deleted : Int32?
   mut journal : (Int32, String?, Bool?)?
   mut description : String?
+  mut calls : Int32
 }
 
 ///|
@@ -23,6 +24,7 @@ fn FakeIssues::new(failure? : @redmine.RedmineError) -> FakeIssues {
     deleted: None,
     journal: None,
     description: None,
+    calls: 0,
   }
 }
 
@@ -65,6 +67,7 @@ fn fake_issue(id : Int32, subject : String) -> @issues.Issue {
 
 ///|
 fn FakeIssues::check(self : FakeIssues) -> Unit raise @redmine.RedmineError {
+  self.calls += 1
   if self.failure is Some(error) {
     raise error
   }
@@ -169,14 +172,14 @@ async fn rejected(action : String, arguments : Json) -> String {
   let fake = FakeIssues::new()
   let called = call_issues(fake, single(action, arguments))
   assert_eq(called.is_error, true, msg="accepted \{arguments.stringify()}")
-  assert_true(
-    fake.listed is None &&
-    fake.listed_saved is None &&
-    fake.created is None &&
-    fake.updated is None &&
-    fake.journal is None,
-  )
+  assert_eq(fake.calls, 0, msg="reached the port with \{arguments.stringify()}")
   called.text
+}
+
+///|
+async fn rejected_at(action : String, arguments : Json, path : String) -> Unit {
+  let text = rejected(action, arguments)
+  assert_true(text.contains("invalid arguments: \{path}"), msg=text)
 }
 
 ///|
@@ -344,14 +347,14 @@ async test "list reads the status and assignee unions" {
   assert_eq(listed_with({ "status_id": "closed" }).status_id, Some(Closed))
   assert_eq(listed_with({ "status_id": "*" }).status_id, Some(All))
   assert_eq(listed_with({ "assigned_to_id": 9 }).assigned_to_id, Some(User(9)))
-  ignore(rejected("list", { "status_id": "pending" }))
-  ignore(rejected("list", { "assigned_to_id": "you" }))
-  ignore(rejected("list", { "project_id": 0 }))
+  rejected_at("list", { "status_id": "pending" }, "list.status_id")
+  rejected_at("list", { "assigned_to_id": "you" }, "list.assigned_to_id")
+  rejected_at("list", { "project_id": 0 }, "list.project_id")
 }
 
 ///|
 async test "list rejects an association only show can fetch" {
-  ignore(rejected("list", { "include": ["journals"] }))
+  rejected_at("list", { "include": ["journals"] }, "list.include")
 }
 
 ///|
@@ -394,9 +397,9 @@ async test "show without include asks for the bare issue" {
 
 ///|
 async test "show rejects an association Redmine does not have and a missing id" {
-  ignore(rejected("show", { "id": 1, "include": ["comments"] }))
-  ignore(rejected("show", { "include": ["journals"] }))
-  ignore(rejected("show", { "id": 0 }))
+  rejected_at("show", { "id": 1, "include": ["comments"] }, "show.include")
+  rejected_at("show", { "include": ["journals"] }, "show.id")
+  rejected_at("show", { "id": 0 }, "show.id")
 }
 
 ///|
@@ -481,7 +484,7 @@ async test "the future forms map to their own filters" {
 ///|
 async test "a date filter rejects anything but an ISO date" {
   for value in ["2026/07/01", "2026-02-30", "last week", "Today"] {
-    ignore(rejected("list", { "created_on": value }))
+    rejected_at("list", { "created_on": value }, "list.created_on")
   }
 }
 
@@ -498,7 +501,7 @@ async test "the :date_past fields reject future-looking filters" {
   ]
   for field in ["created_on", "updated_on", "closed_on"] {
     for value in future {
-      ignore(rejected("list", single(field, value)))
+      rejected_at("list", single(field, value), "list.\{field}")
     }
   }
   assert_eq(listed_with({ "due_date": "tomorrow" }).due_date, Some(Tomorrow))
@@ -518,9 +521,9 @@ async test "a range is a strict object that never drops a bound" {
     { "daysAgo": 1 },
   ]
   for value in malformed {
-    ignore(rejected("list", { "created_on": value }))
+    rejected_at("list", { "created_on": value }, "list.created_on")
   }
-  ignore(rejected("list", { "due_date": { "from": "tomorrow" } }))
+  rejected_at("list", { "due_date": { "from": "tomorrow" } }, "list.due_date")
 }
 
 ///|
@@ -668,26 +671,39 @@ async test "create requires its identifying fields" {
 
 ///|
 async test "create rejects a null fixed_version_id, since a new issue has no version to leave" {
-  ignore(
-    rejected("create", with_field(new_issue, "fixed_version_id", Json::null())),
+  rejected_at(
+    "create",
+    with_field(new_issue, "fixed_version_id", Json::null()),
+    "create.fixed_version_id",
   )
 }
 
 ///|
 async test "create rejects a null date, since a new issue has no date to clear" {
-  ignore(rejected("create", with_field(new_issue, "start_date", Json::null())))
-  ignore(rejected("create", with_field(new_issue, "due_date", Json::null())))
+  rejected_at(
+    "create",
+    with_field(new_issue, "start_date", Json::null()),
+    "create.start_date",
+  )
+  rejected_at(
+    "create",
+    with_field(new_issue, "due_date", Json::null()),
+    "create.due_date",
+  )
 }
 
 ///|
 async test "create rejects the filter forms of the date fields, which name no day to write" {
-  ignore(
-    rejected(
-      "create",
-      with_field(new_issue, "start_date", { "days_from_now": 3 }),
-    ),
+  rejected_at(
+    "create",
+    with_field(new_issue, "start_date", { "days_from_now": 3 }),
+    "create.start_date",
   )
-  ignore(rejected("create", with_field(new_issue, "due_date", "next_week")))
+  rejected_at(
+    "create",
+    with_field(new_issue, "due_date", "next_week"),
+    "create.due_date",
+  )
 }
 
 ///|
@@ -797,14 +813,18 @@ async test "update rejects null for the fields that cannot be emptied" {
     name in [
       "status_id", "priority_id", "tracker_id", "subject", "done_ratio", "custom_fields",
     ] {
-    ignore(rejected("update", new_update(name)))
+    rejected_at("update", new_update(name), "update.\{name}")
   }
 }
 
 ///|
 async test "update rejects the filter forms of the date fields, which name no day to write" {
-  ignore(rejected("update", { "id": 1, "start_date": { "days_from_now": 3 } }))
-  ignore(rejected("update", { "id": 1, "due_date": "next_week" }))
+  rejected_at(
+    "update",
+    { "id": 1, "start_date": { "days_from_now": 3 } },
+    "update.start_date",
+  )
+  rejected_at("update", { "id": 1, "due_date": "next_week" }, "update.due_date")
 }
 
 ///|

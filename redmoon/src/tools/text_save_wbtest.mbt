@@ -131,3 +131,18 @@ async test "show saves each CRLF line break as LF and keeps a lone CR" {
   guard files.saved is [(_, content, _)] else { fail("expected one save") }
   assert_eq(content, b"one\ntwo\rthree\n\n")
 }
+
+///|
+async test "show saves a description whose UTF-8 bytes outnumber its characters" {
+  let fake = FakeIssues::new()
+  fake.description = Some("日本語\r\nの説明\r\n")
+  let files = FakeFiles::new()
+  let called = call_issues(
+    fake,
+    { "show": { "id": 4, "description_path": "out/issue-4.md" } },
+    files~,
+  )
+  assert_eq(called.is_error, false, msg=called.text)
+  guard files.saved is [(_, content, _)] else { fail("expected one save") }
+  assert_eq(content, @utf8.encode("日本語\nの説明\n"))
+}
