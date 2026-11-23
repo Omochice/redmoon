@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/async",
   "omochice/redmoon/cli",
   "omochice/redmoon/tty",
 }
