@@ -94,7 +94,6 @@ pub async fn run_serve(
   ) catch {
     // `resolve_api_key` already ran this endpoint through the same SDK check,
     // so this cannot fail.
-    // The handler exists only to turn the SDK error into a CLI one.
     _ => raise invalid_endpoint()
   }
   build_server(redmine, read_only, plugins).serve_stdio() catch {
