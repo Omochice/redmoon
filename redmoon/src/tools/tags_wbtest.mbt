@@ -1,48 +1,36 @@
 ///|
 struct FakeTags {
-  calls : Array[String]
+  log : CallLog
   listed_issues : Array[(Array[String], Int32?, @issues.StatusFilter?, Int32?)]
   listed_wiki_pages : Array[(@redmine.ProjectRef, String)]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeTags::new(failure? : @redmine.RedmineError) -> FakeTags {
-  { calls: [], listed_issues: [], listed_wiki_pages: [], failure, }
-}
-
-///|
-fn FakeTags::record(
-  self : FakeTags,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), listed_issues: [], listed_wiki_pages: [], }
 }
 
 ///|
 impl TagPort for FakeTags with fn show_issue_tags(self, issue_id) {
-  self.record("show \{issue_id}")
+  self.log.record("show \{issue_id}")
   ["alpha", "beta"]
 }
 
 ///|
 impl TagPort for FakeTags with fn add_issue_tags(self, issue_id, names) {
-  self.record("add \{issue_id} \{names.join(",")}")
+  self.log.record("add \{issue_id} \{names.join(",")}")
   ["alpha", "beta", ..names]
 }
 
 ///|
 impl TagPort for FakeTags with fn remove_issue_tags(self, issue_id, names) {
-  self.record("remove \{issue_id} \{names.join(",")}")
+  self.log.record("remove \{issue_id} \{names.join(",")}")
   ["alpha", "beta"].filter(name => !names.contains(name))
 }
 
 ///|
 impl TagPort for FakeTags with fn list_issue_tags(self) {
-  self.record("list")
+  self.log.record("list")
   [{ name: "alpha", count: 2, }, { name: "beta", count: 1, }]
 }
 
@@ -54,7 +42,7 @@ impl TagPort for FakeTags with fn list_tagged_issues(
   status_id,
   limit,
 ) {
-  self.record("list_issues")
+  self.log.record("list_issues")
   self.listed_issues.push((names, project_id, status_id, limit))
   [fake_issue(1, "first")]
 }
@@ -72,7 +60,7 @@ fn fake_wiki_page() -> @wiki.PageSummary {
 
 ///|
 impl TagPort for FakeTags with fn list_tagged_wiki_pages(self, project, name) {
-  self.record("list_wiki_pages")
+  self.log.record("list_wiki_pages")
   self.listed_wiki_pages.push((project, name))
   [fake_wiki_page()]
 }
@@ -90,7 +78,7 @@ async test "show answers the issue's tag names" {
   })
   assert_eq(called.is_error, false)
   assert_eq(called.text, "[\"alpha\",\"beta\"]")
-  assert_eq(fake.calls, ["show 42"])
+  assert_eq(fake.log.calls, ["show 42"])
 }
 
 ///|
@@ -106,7 +94,7 @@ async test "add and remove pass the names and answer the names after the write" 
   })
   assert_eq(removed.is_error, false)
   assert_eq(removed.text, "[\"alpha\"]")
-  assert_eq(fake.calls, ["add 42 needs-review", "remove 42 beta"])
+  assert_eq(fake.log.calls, ["add 42 needs-review", "remove 42 beta"])
 }
 
 ///|
@@ -118,7 +106,7 @@ async test "list answers the catalogue with the number of issues per tag" {
     called.text,
     "[{\"name\":\"alpha\",\"count\":2},{\"name\":\"beta\",\"count\":1}]",
   )
-  assert_eq(fake.calls, ["list"])
+  assert_eq(fake.log.calls, ["list"])
 }
 
 ///|
@@ -255,7 +243,7 @@ async test "readonly mode makes add and remove unknown" {
       "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `\{action}`, one of `show`, `list`, `list_issues` and `list_wiki_pages`\"]}",
     )
   }
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|

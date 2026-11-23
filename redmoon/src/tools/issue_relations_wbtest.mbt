@@ -1,25 +1,13 @@
 ///|
 struct FakeRelations {
-  calls : Array[String]
+  log : CallLog
   creates : Array[(Int32, Int32, @relations.Type, Int32?)]
   deletes : Array[Int32]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeRelations::new(failure? : @redmine.RedmineError) -> FakeRelations {
-  { calls: [], creates: [], deletes: [], failure, }
-}
-
-///|
-fn FakeRelations::record(
-  self : FakeRelations,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), creates: [], deletes: [], }
 }
 
 ///|
@@ -35,13 +23,13 @@ fn fake_relation(
 
 ///|
 impl RelationPort for FakeRelations with fn list_relations(self, issue_id) {
-  self.record("list \{issue_id}")
+  self.log.record("list \{issue_id}")
   [fake_relation(7, issue_id, 2, Blocks, None)]
 }
 
 ///|
 impl RelationPort for FakeRelations with fn show_relation(self, id) {
-  self.record("show \{id}")
+  self.log.record("show \{id}")
   fake_relation(id, 1, 2, Relates, None)
 }
 
@@ -53,14 +41,14 @@ impl RelationPort for FakeRelations with fn create_relation(
   relation_type~,
   delay?,
 ) {
-  self.record("create \{issue_id}")
+  self.log.record("create \{issue_id}")
   self.creates.push((issue_id, issue_to_id, relation_type, delay))
   fake_relation(100, issue_id, issue_to_id, relation_type, delay)
 }
 
 ///|
 impl RelationPort for FakeRelations with fn delete_relation(self, id) {
-  self.record("delete \{id}")
+  self.log.record("delete \{id}")
   self.deletes.push(id)
 }
 

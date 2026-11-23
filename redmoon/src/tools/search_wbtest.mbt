@@ -1,30 +1,18 @@
 ///|
 struct FakeSearch {
-  calls : Array[String]
+  log : CallLog
   queries : Array[@search.Query]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeSearch::new(failure? : @redmine.RedmineError) -> FakeSearch {
-  { calls: [], queries: [], failure, }
-}
-
-///|
-fn FakeSearch::record(
-  self : FakeSearch,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), queries: [], }
 }
 
 ///|
 impl SearchPort for FakeSearch with fn search(self, query) {
   self.queries.push(query)
-  self.record("search \{query.q}")
+  self.log.record("search \{query.q}")
   [
     {
       id: 5,

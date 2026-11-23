@@ -1,35 +1,22 @@
 ///|
 struct FakeTimeEntries {
-  calls : Array[String]
+  log : CallLog
   lists : Array[@time_entries.ListQuery]
   shows : Array[Int32]
   creates : Array[@time_entries.Create]
   updates : Array[(Int32, @time_entries.Update)]
   deletes : Array[Int32]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeTimeEntries::new(failure? : @redmine.RedmineError) -> FakeTimeEntries {
   {
-    calls: [],
+    log: CallLog::new(failure?),
     lists: [],
     shows: [],
     creates: [],
     updates: [],
     deletes: [],
-    failure,
-  }
-}
-
-///|
-fn FakeTimeEntries::record(
-  self : FakeTimeEntries,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
   }
 }
 
@@ -52,14 +39,14 @@ fn fake_time_entry(id : Int32) -> @time_entries.Entry {
 
 ///|
 impl TimeEntryPort for FakeTimeEntries with fn list_time_entries(self, query) {
-  self.record("list")
+  self.log.record("list")
   self.lists.push(query)
   [fake_time_entry(1)]
 }
 
 ///|
 impl TimeEntryPort for FakeTimeEntries with fn show_time_entry(self, id) {
-  self.record("show \{id}")
+  self.log.record("show \{id}")
   self.shows.push(id)
   fake_time_entry(id)
 }
@@ -69,7 +56,7 @@ impl TimeEntryPort for FakeTimeEntries with fn create_time_entry(
   self,
   time_entry,
 ) {
-  self.record("create")
+  self.log.record("create")
   self.creates.push(time_entry)
   fake_time_entry(2)
 }
@@ -80,13 +67,13 @@ impl TimeEntryPort for FakeTimeEntries with fn update_time_entry(
   id,
   time_entry,
 ) {
-  self.record("update \{id}")
+  self.log.record("update \{id}")
   self.updates.push((id, time_entry))
 }
 
 ///|
 impl TimeEntryPort for FakeTimeEntries with fn delete_time_entry(self, id) {
-  self.record("delete \{id}")
+  self.log.record("delete \{id}")
   self.deletes.push(id)
 }
 

@@ -1,23 +1,11 @@
 ///|
 struct FakeWikiPages {
-  calls : Array[String]
-  failure : @redmine.RedmineError?
+  log : CallLog
 }
 
 ///|
 fn FakeWikiPages::new(failure? : @redmine.RedmineError) -> FakeWikiPages {
-  { calls: [], failure, }
-}
-
-///|
-fn FakeWikiPages::record(
-  self : FakeWikiPages,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), }
 }
 
 ///|
@@ -30,7 +18,7 @@ fn[T : Show] wiki_option_label(value : T?) -> String {
 
 ///|
 impl WikiPagePort for FakeWikiPages with fn list_wiki_pages(self, project) {
-  self.record("list \{project_label(project)}")
+  self.log.record("list \{project_label(project)}")
   [
     {
       title: "Home",
@@ -49,7 +37,7 @@ impl WikiPagePort for FakeWikiPages with fn show_wiki_page(
   title,
   version?,
 ) {
-  self.record(
+  self.log.record(
     "show \{project_label(project)} \{title} \{wiki_option_label(version)}",
   )
   {
@@ -73,7 +61,7 @@ impl WikiPagePort for FakeWikiPages with fn create_wiki_page(
   comments?,
   parent_title?,
 ) {
-  self.record(
+  self.log.record(
     "create \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(parent_title)}",
   )
 }
@@ -88,7 +76,7 @@ impl WikiPagePort for FakeWikiPages with fn update_wiki_page(
   version?,
   parent_title?,
 ) {
-  self.record(
+  self.log.record(
     "update \{project_label(project)} \{title} \{text} \{wiki_option_label(comments)} \{wiki_option_label(version)} \{wiki_option_label(parent_title)}",
   )
 }
@@ -99,7 +87,7 @@ impl WikiPagePort for FakeWikiPages with fn delete_wiki_page(
   project,
   title,
 ) {
-  self.record("delete \{project_label(project)} \{title}")
+  self.log.record("delete \{project_label(project)} \{title}")
 }
 
 ///|
@@ -132,7 +120,9 @@ async test "list and show pass the project, the title, and the version" {
       "show": { "project_id": 1, "title": "My Page", "version": 3 },
     }),
   )
-  assert_eq(fake.calls, ["list demo", "show 1 My Page -", "show 1 My Page 3"])
+  assert_eq(fake.log.calls, [
+    "list demo", "show 1 My Page -", "show 1 My Page 3",
+  ])
 }
 
 ///|
@@ -165,7 +155,7 @@ async test "create and update answer ok and pass every argument" {
     },
   })
   assert_eq(updated.text, "{\"ok\":true}")
-  assert_eq(fake.calls, [
+  assert_eq(fake.log.calls, [
     "create demo Page body why Root", "create demo Page body - -", "update 1 Page new c 4 P",
   ])
 }
@@ -177,7 +167,7 @@ async test "wiki: delete answers ok" {
     "delete": { "project_id": "demo", "title": "Page" },
   })
   assert_eq(deleted.text, "{\"ok\":true}")
-  assert_eq(fake.calls, ["delete demo Page"])
+  assert_eq(fake.log.calls, ["delete demo Page"])
 }
 
 ///|
@@ -202,7 +192,7 @@ async test "a blank title is rejected for every action that takes one" {
       "{\"status\":0,\"errors\":[\"invalid arguments: \{entry.0}.title: must not be blank\"]}",
     )
   }
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|
@@ -227,7 +217,7 @@ async test "a blank text is rejected on create and update, since Redmine refuses
       )
     }
   }
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|
@@ -268,7 +258,7 @@ async test "wiki: readonly mode makes the write actions unknown" {
     called.text,
     "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
   )
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|

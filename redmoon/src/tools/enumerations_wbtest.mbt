@@ -1,23 +1,11 @@
 ///|
 struct FakeEnumerations {
-  calls : Array[String]
-  failure : @redmine.RedmineError?
+  log : CallLog
 }
 
 ///|
 fn FakeEnumerations::new(failure? : @redmine.RedmineError) -> FakeEnumerations {
-  { calls: [], failure, }
-}
-
-///|
-fn FakeEnumerations::record(
-  self : FakeEnumerations,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), }
 }
 
 ///|
@@ -29,19 +17,19 @@ fn fake_enumeration(id : Int32, name : String) -> @enumerations.Enumeration {
 impl EnumerationPort for FakeEnumerations with fn list_time_entry_activities(
   self,
 ) {
-  self.record("list_time_entry_activities")
+  self.log.record("list_time_entry_activities")
   [fake_enumeration(9, "Design"), fake_enumeration(10, "Development")]
 }
 
 ///|
 impl EnumerationPort for FakeEnumerations with fn list_issue_priorities(self) {
-  self.record("list_issue_priorities")
+  self.log.record("list_issue_priorities")
   [fake_enumeration(1, "Low"), fake_enumeration(2, "Normal")]
 }
 
 ///|
 impl EnumerationPort for FakeEnumerations with fn list_document_categories(self) {
-  self.record("list_document_categories")
+  self.log.record("list_document_categories")
   [fake_enumeration(3, "User documentation")]
 }
 
