@@ -130,7 +130,8 @@ pub fn ListQuery::new(
 }
 
 ///|
-fn ListInclude::to_wire(self : ListInclude) -> String {
+/// The name Redmine takes for this association in `include`.
+pub fn ListInclude::to_wire(self : ListInclude) -> String {
   match self {
     Attachments => "attachments"
     Relations => "relations"
@@ -138,7 +139,15 @@ fn ListInclude::to_wire(self : ListInclude) -> String {
 }
 
 ///|
-fn Include::to_wire(self : Include) -> String {
+/// Every association a listed issue can carry, each once,
+/// so a client can offer the whole vocabulary without spelling its words again.
+pub fn ListInclude::all() -> Array[ListInclude] {
+  [Attachments, Relations]
+}
+
+///|
+/// The name Redmine takes for this association in `include`.
+pub fn Include::to_wire(self : Include) -> String {
   match self {
     Children => "children"
     Attachments => "attachments"
@@ -148,6 +157,21 @@ fn Include::to_wire(self : Include) -> String {
     Watchers => "watchers"
     AllowedStatuses => "allowed_statuses"
   }
+}
+
+///|
+/// Every association a shown issue can carry, each once,
+/// so a client can offer the whole vocabulary without spelling its words again.
+pub fn Include::all() -> Array[Include] {
+  [
+    Journals,
+    Attachments,
+    Relations,
+    Children,
+    Changesets,
+    Watchers,
+    AllowedStatuses,
+  ]
 }
 
 ///|

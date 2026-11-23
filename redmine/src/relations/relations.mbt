@@ -20,7 +20,8 @@ pub extend Type with Eq::{equal, not_equal}
 pub extend Type with @debug.Debug::{to_repr}
 
 ///|
-fn Type::to_wire(self : Type) -> String {
+/// The word Redmine uses for this relation type in `relation_type`.
+pub fn Type::to_wire(self : Type) -> String {
   match self {
     Relates => "relates"
     Duplicates => "duplicates"
@@ -35,7 +36,9 @@ fn Type::to_wire(self : Type) -> String {
 }
 
 ///|
-fn Type::all() -> Array[Type] {
+/// Every relation type, each once,
+/// so a client can offer the whole vocabulary without spelling its words again.
+pub fn Type::all() -> Array[Type] {
   [
     Relates,
     Duplicates,

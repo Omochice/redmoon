@@ -131,9 +131,11 @@ pub(all) enum Include {
   Watchers
   AllowedStatuses
 }
+pub fn Include::all() -> Array[Self]
 pub fn Include::equal(Self, Self) -> Bool
 pub fn Include::not_equal(Self, Self) -> Bool
 pub fn Include::to_repr(Self) -> @debug.Repr
+pub fn Include::to_wire(Self) -> String
 
 #derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Issue {
@@ -208,9 +210,11 @@ pub(all) enum ListInclude {
   Attachments
   Relations
 }
+pub fn ListInclude::all() -> Array[Self]
 pub fn ListInclude::equal(Self, Self) -> Bool
 pub fn ListInclude::not_equal(Self, Self) -> Bool
 pub fn ListInclude::to_repr(Self) -> @debug.Repr
+pub fn ListInclude::to_wire(Self) -> String
 
 pub struct ListQuery {
   includes : Array[ListInclude]

@@ -20,7 +20,8 @@ pub extend Status with @json.FromJson::{from_json}
 pub extend Status with @debug.Debug::{to_repr}
 
 ///|
-fn Status::to_wire(self : Status) -> String {
+/// The word Redmine uses for this status in a version's `status`.
+pub fn Status::to_wire(self : Status) -> String {
   match self {
     Open => "open"
     Locked => "locked"
@@ -29,7 +30,9 @@ fn Status::to_wire(self : Status) -> String {
 }
 
 ///|
-fn Status::all() -> Array[Status] {
+/// Every version status, each once,
+/// so a client can offer the whole vocabulary without spelling its words again.
+pub fn Status::all() -> Array[Status] {
   [Open, Locked, Closed]
 }
 
@@ -81,7 +84,8 @@ pub extend Sharing with @json.FromJson::{from_json}
 pub extend Sharing with @debug.Debug::{to_repr}
 
 ///|
-fn Sharing::to_wire(self : Sharing) -> String {
+/// The word Redmine uses for this sharing in a version's `sharing`.
+pub fn Sharing::to_wire(self : Sharing) -> String {
   match self {
     None => "none"
     Descendants => "descendants"
@@ -92,7 +96,9 @@ fn Sharing::to_wire(self : Sharing) -> String {
 }
 
 ///|
-fn Sharing::all() -> Array[Sharing] {
+/// Every version sharing, each once,
+/// so a client can offer the whole vocabulary without spelling its words again.
+pub fn Sharing::all() -> Array[Sharing] {
   [None, Descendants, Hierarchy, Tree, System]
 }
 

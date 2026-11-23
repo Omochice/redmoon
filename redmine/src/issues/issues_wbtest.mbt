@@ -312,3 +312,18 @@ test "an issue with an attachment larger than 2 GiB is decoded" {
   let issue : Issue = @decode.decode(@wire.strip_nulls(@json.parse(text)))
   assert_eq(issue.attachments.unwrap()[0].filesize.to_int64(), 3000000000L)
 }
+
+///|
+test "every list include is listed under Redmine's name" {
+  let words = ListInclude::all().map(ListInclude::to_wire)
+  assert_eq(words, ["attachments", "relations"])
+}
+
+///|
+test "every show include is listed under Redmine's name" {
+  let words = Include::all().map(Include::to_wire)
+  assert_eq(words, [
+    "journals", "attachments", "relations", "children", "changesets", "watchers",
+    "allowed_statuses",
+  ])
+}
