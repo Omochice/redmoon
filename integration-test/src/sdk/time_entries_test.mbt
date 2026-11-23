@@ -1,43 +1,7 @@
 ///|
-/// Only the modules are read, because they are the only part of the project this test changes.
-#derive(FromJson)
-priv struct TimeEntriesProject {
-  enabled_modules : Array[@redmine.IdName]
-}
-
-///|
-/// Turns on the time tracking module of project 1 when it is off, since Redmine refuses time entries for a project without it.
-async fn ensure_time_tracking(redmine : @redmine.Redmine) -> Unit {
-  let json = redmine
-    |> @redmine.send(Get, ["projects", "1.json"], query=[
-      ("include", "enabled_modules"),
-    ])
-  guard json is { "project": project, .. } else {
-    fail("no project in \{json.stringify()}")
-  }
-  let project : TimeEntriesProject = @json.from_json(project)
-  let names = project.enabled_modules.map(fn(enabled) { enabled.name })
-  if names.contains("time_tracking") {
-    return
-  }
-  let body_names = names.map(fn(name) { Json::string(name) })
-  body_names.push(Json::string("time_tracking"))
-  let _ = @redmine.send(
-    redmine,
-    Put,
-    ["projects", "1.json"],
-    body=Json::object({
-      "project": Json::object({
-        "enabled_module_names": Json::array(body_names),
-      }),
-    }),
-  )
-}
-
-///|
 async test "a time entry is created, listed, shown, updated, and deleted" {
   let redmine = @livetest.redmine()
-  ensure_time_tracking(redmine)
+  @livetest.ensure_time_tracking(redmine)
   let activities = redmine |> @enumerations.time_entry_activities()
   assert_false(activities.is_empty())
   let activity_id = activities[0].id
@@ -52,6 +16,7 @@ async test "a time entry is created, listed, shown, updated, and deleted" {
         comments="time entries integration test",
       ),
     )
+  defer @livetest.cleanup(() => redmine |> @time_entries.delete(created.id))
   assert_eq(created.hours, 1.5)
   assert_eq(created.project.id, 1)
   assert_eq(created.activity.id, activity_id)

@@ -6,6 +6,12 @@ async test "redmine_enumerations reaches the real Redmine" {
     "redmine_enumerations",
     { "list_issue_priorities": {} },
   )
-  assert_eq(called.is_error, false)
-  assert_true(called.text.contains("Normal"))
+  assert_eq(called.is_error, false, msg=called.text)
+  guard @json.parse(called.text) is Array(priorities) else {
+    fail("not a listing: \{called.text}")
+  }
+  assert_true(
+    priorities.any(priority => priority is { "name": "Normal", .. }),
+    msg=called.text,
+  )
 }

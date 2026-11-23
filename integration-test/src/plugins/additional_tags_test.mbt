@@ -3,16 +3,15 @@ async test "an added tag is shown, listed, and found, and removing it leaves the
   let redmine = @livetest.redmine()
   let id = @livetest.create_probe_issue(redmine, "additional tags round trip")
   defer @livetest.delete_probe_issue(redmine, id)
-  let added = redmine |> @additional_tags.add(id, ["  Redmoon-Probe-Round  "])
-  assert_eq(added, ["Redmoon-Probe-Round"])
-  assert_eq(redmine |> @additional_tags.tags(id), ["Redmoon-Probe-Round"])
+  let tag = "Redmoon-Probe-Round-\{@async.now()}"
+  let added = redmine |> @additional_tags.add(id, ["  \{tag}  "])
+  assert_eq(added, [tag])
+  assert_eq(redmine |> @additional_tags.tags(id), [tag])
   let catalogue = redmine |> @additional_tags.list()
-  assert_true(
-    catalogue.any(tag => tag.name == "Redmoon-Probe-Round" && tag.count == 1),
-  )
-  let found = redmine |> @additional_tags.list_issues(["redmoon-probe-round"])
+  assert_true(catalogue.any(listed => listed.name == tag && listed.count == 1))
+  let found = redmine |> @additional_tags.list_issues([tag.to_lower()])
   assert_eq(found.map(issue => issue.id), [id])
-  let removed = redmine |> @additional_tags.remove(id, ["REDMOON-PROBE-ROUND"])
+  let removed = redmine |> @additional_tags.remove(id, [tag.to_upper()])
   assert_eq(removed, [])
 }
 
@@ -32,15 +31,15 @@ async test "list_issues leaves closed issues out unless asked for them" {
   let redmine = @livetest.redmine()
   let id = @livetest.create_probe_issue(redmine, "additional tags closed")
   defer @livetest.delete_probe_issue(redmine, id)
-  ignore(redmine |> @additional_tags.add(id, ["redmoon-probe-closed"]))
+  let tag = "redmoon-probe-closed-\{@async.now()}"
+  ignore(redmine |> @additional_tags.add(id, [tag]))
   ignore(
     @redmine.send(redmine, Put, ["issues", "\{id}.json"], body={
       "issue": { "status_id": 5 },
     }),
   )
-  assert_eq(redmine |> @additional_tags.list_issues(["redmoon-probe-closed"]), [])
-  let closed = redmine
-    |> @additional_tags.list_issues(["redmoon-probe-closed"], status_id=Closed)
+  assert_eq(redmine |> @additional_tags.list_issues([tag]), [])
+  let closed = redmine |> @additional_tags.list_issues([tag], status_id=Closed)
   assert_eq(closed.map(issue => issue.id), [id])
 }
 
@@ -52,21 +51,17 @@ async test "a member may attach an existing tag but a new one is reported as uns
   defer @livetest.delete_probe_issue(redmine, holder)
   let target = @livetest.create_probe_issue(redmine, "additional tags target")
   defer @livetest.delete_probe_issue(redmine, target)
-  ignore(redmine |> @additional_tags.add(holder, ["redmoon-probe-shared"]))
-  assert_eq(
-    colleague |> @additional_tags.add(target, ["redmoon-probe-shared"]),
-    ["redmoon-probe-shared"],
-  )
-  try
-    colleague |> @additional_tags.add(target, ["redmoon-probe-brand-new"])
-  catch {
-    Decode(message~) =>
-      assert_true(message.contains("`redmoon-probe-brand-new`"))
+  let shared = "redmoon-probe-shared-\{@async.now()}"
+  let brand_new = "redmoon-probe-brand-new-\{@async.now()}"
+  ignore(redmine |> @additional_tags.add(holder, [shared]))
+  assert_eq(colleague |> @additional_tags.add(target, [shared]), [shared])
+  try colleague |> @additional_tags.add(target, [brand_new]) catch {
+    Decode(message~) => assert_true(message.contains("`\{brand_new}`"))
     _ => fail("expected Decode")
   } noraise {
     _ => fail("expected the dropped write to be reported")
   }
-  assert_eq(redmine |> @additional_tags.tags(target), ["redmoon-probe-shared"])
+  assert_eq(redmine |> @additional_tags.tags(target), [shared])
 }
 
 ///|
@@ -90,10 +85,9 @@ async test "a member who may create tags adds a name no issue carries yet" {
   let tagger = @livetest.as_tagger()
   let id = @livetest.create_probe_issue(redmine, "additional tags create")
   defer @livetest.delete_probe_issue(redmine, id)
-  assert_eq(tagger |> @additional_tags.add(id, ["redmoon-probe-created"]), [
-    "redmoon-probe-created",
-  ])
-  assert_eq(redmine |> @additional_tags.tags(id), ["redmoon-probe-created"])
+  let tag = "redmoon-probe-created-\{@async.now()}"
+  assert_eq(tagger |> @additional_tags.add(id, [tag]), [tag])
+  assert_eq(redmine |> @additional_tags.tags(id), [tag])
 }
 
 ///|
