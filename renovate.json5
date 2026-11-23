@@ -27,7 +27,7 @@
     {
       description: "The workspace's own modules resolve to the local members, not to the registry",
       matchDatasources: ["custom.mooncakes"],
-      matchPackageNames: ["omochice/**"],
+      matchPackageNames: ["omochice/integration-test", "omochice/redmine", "omochice/redmine-plugins", "omochice/redmoon"],
       enabled: false,
     },
   ],
