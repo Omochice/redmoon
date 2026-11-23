@@ -168,9 +168,11 @@ async fn download_attachment(
     })
   catch {
     FileError(message~) => local_failure([message])
+    // A pattern cannot match `RedmineError` as a whole, so each of its cases is named.
     (@redmine.Response(..) as error)
     | (@redmine.Decode(..) as error)
-    | (@redmine.Transport(..) as error) => failure_of(error)
+    | (@redmine.Transport(..) as error)
+    | (@redmine.InvalidArgument(..) as error) => failure_of(error)
     other => raise other
   } noraise {
     _ => success(saved.unwrap())
