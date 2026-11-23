@@ -59,8 +59,6 @@ fn path_schema(description : String) -> @schema.Schema[String] {
 }
 
 ///|
-/// The words come from the SDK so that a variant it gains is offered here
-/// without being spelled a second time.
 fn[T] wire_choice(
   variants : Array[T],
   to_wire : (T) -> String,
