@@ -31,6 +31,8 @@ jobs:
 
       - name: Verify the build-info source is committed in its None form
         run: nix develop --command task build-info:verify
+      - name: Verify the paging helper copies are identical
+        run: nix develop --command task paging:verify
 
       - run: nix develop --command moon version --all
       - run: nix develop --command task check

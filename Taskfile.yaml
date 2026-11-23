@@ -77,6 +77,12 @@ tasks:
     cmds:
       - bash .github/scripts/build-info.sh verify
 
+  paging:verify:
+    desc: Fail unless redmine-plugins' copy of the paging helper matches the one in redmine
+    cmds:
+      - cmp redmine/src/internal/paging/paging.mbt redmine-plugins/src/internal/paging/paging.mbt
+      - cmp redmine/src/internal/paging/paging_wbtest.mbt redmine-plugins/src/internal/paging/paging_wbtest.mbt
+
   redmine:up:
     desc: Start the throwaway Redmine and wait until /login answers
     cmds:
