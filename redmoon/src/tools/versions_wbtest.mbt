@@ -174,6 +174,40 @@ async test "update maps every argument, setting the ones Redmine can empty" {
 }
 
 ///|
+async test "update clears the fields Redmine can empty when they are null" {
+  let fake = FakeVersions::new()
+  let called = call_tool(versions_tools(fake), "redmine_versions", {
+    "update": {
+      "id": 7,
+      "description": null,
+      "due_date": null,
+      "wiki_page_title": null,
+    },
+  })
+  assert_eq(called.text, "{\"ok\":true}")
+  assert_eq(fake.updated, [
+    (
+      7,
+      @versions.Update::new(
+        description=Clear,
+        due_date=Clear,
+        wiki_page_title=Clear,
+      ),
+    ),
+  ])
+}
+
+///|
+async test "create rejects null for the fields only update can clear" {
+  for field in ["description", "due_date", "wiki_page_title"] {
+    let arguments : Map[String, Json] = { "project_id": 1, "name": "Sprint" }
+    arguments[field] = Json::null()
+    let text = rejected_version({ "create": Json::object(arguments) })
+    assert_true(text.contains("invalid arguments: create.\{field}"), msg=text)
+  }
+}
+
+///|
 async test "versions: delete answers ok" {
   let fake = FakeVersions::new()
   let called = call_tool(versions_tools(fake), "redmine_versions", {
@@ -384,7 +418,7 @@ async test "tools/list advertises the versions tool in full mode" {
   inspect(
     listed.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_versions","description":"Create, read, update, and delete Redmine project versions (milestones).\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."}},"required":["project_id"],"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"create":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"name":{"type":"string","maxLength":60,"pattern":"\\S","description":"Name of the version, unique within its project."},"description":{"type":"string","maxLength":255,"description":"Free text shown on the version's page."},"status":{"type":"string","enum":["open","locked","closed"],"description":"`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it."},"due_date":{"type":"string","format":"date","description":"Day the version is due, as an ISO date (`YYYY-MM-DD`)."},"sharing":{"type":"string","enum":["none","descendants","hierarchy","tree","system"],"description":"Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project."},"wiki_page_title":{"type":"string","maxLength":255,"description":"Title of the wiki page in the same project that the version links to."}},"required":["project_id","name"],"additionalProperties":false},"update":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"name":{"type":"string","maxLength":60,"pattern":"\\S","description":"Name of the version, unique within its project."},"description":{"type":"string","maxLength":255,"description":"Free text shown on the version's page."},"status":{"type":"string","enum":["open","locked","closed"],"description":"`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it."},"due_date":{"type":"string","format":"date","description":"Day the version is due, as an ISO date (`YYYY-MM-DD`)."},"sharing":{"type":"string","enum":["none","descendants","hierarchy","tree","system"],"description":"Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project."},"wiki_page_title":{"type":"string","maxLength":255,"description":"Title of the wiki page in the same project that the version links to."}},"required":["id"],"additionalProperties":false},"delete":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_versions","description":"Create, read, update, and delete Redmine project versions (milestones).\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."}},"required":["project_id"],"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"create":{"type":"object","properties":{"project_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"string","pattern":"^\\S+$"}],"description":"Numeric project id, or the project identifier from a Redmine URL (the <identifier> in /projects/<identifier>/...)."},"name":{"type":"string","maxLength":60,"pattern":"\\S","description":"Name of the version, unique within its project."},"description":{"type":"string","maxLength":255,"description":"Free text shown on the version's page."},"status":{"type":"string","enum":["open","locked","closed"],"description":"`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it."},"due_date":{"type":"string","format":"date","description":"Day the version is due, as an ISO date (`YYYY-MM-DD`)."},"sharing":{"type":"string","enum":["none","descendants","hierarchy","tree","system"],"description":"Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project."},"wiki_page_title":{"type":"string","maxLength":255,"description":"Title of the wiki page in the same project that the version links to."}},"required":["project_id","name"],"additionalProperties":false},"update":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"name":{"type":"string","maxLength":60,"pattern":"\\S","description":"Name of the version, unique within its project."},"description":{"anyOf":[{"type":"string","maxLength":255},{"type":"null"}],"description":"Free text shown on the version's page; `null` empties it."},"status":{"type":"string","enum":["open","locked","closed"],"description":"`open` accepts new issues, `locked` refuses them while keeping the version listed, and `closed` ends it."},"due_date":{"anyOf":[{"type":"string","format":"date"},{"type":"null"}],"description":"Day the version is due, as an ISO date (`YYYY-MM-DD`); `null` clears it."},"sharing":{"type":"string","enum":["none","descendants","hierarchy","tree","system"],"description":"Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project."},"wiki_page_title":{"anyOf":[{"type":"string","maxLength":255},{"type":"null"}],"description":"Title of the wiki page in the same project that the version links to; `null` unlinks it."}},"required":["id"],"additionalProperties":false},"delete":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
 }

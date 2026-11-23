@@ -1,7 +1,7 @@
 ///|
 struct FakeTimeEntries {
   log : CallLog
-  lists : Array[@time_entries.ListQuery]
+  lists : Array[(@time_entries.ListQuery, Int32?)]
   shows : Array[Int32]
   creates : Array[@time_entries.Create]
   updates : Array[(Int32, @time_entries.Update)]
@@ -38,9 +38,13 @@ fn fake_time_entry(id : Int32) -> @time_entries.Entry {
 }
 
 ///|
-impl TimeEntryPort for FakeTimeEntries with fn list_time_entries(self, query) {
+impl TimeEntryPort for FakeTimeEntries with fn list_time_entries(
+  self,
+  query,
+  limit,
+) {
   self.log.record("list")
-  self.lists.push(query)
+  self.lists.push((query, limit))
   [fake_time_entry(1)]
 }
 
@@ -86,7 +90,7 @@ fn time_entries_tools(
 }
 
 ///|
-async test "list maps every filter onto the query" {
+async test "list maps every filter onto the query and passes the limit" {
   let fake = FakeTimeEntries::new()
   let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "list": {
@@ -95,29 +99,46 @@ async test "list maps every filter onto the query" {
       "spent_on": "2026-08-01",
       "from": "2026-07-01",
       "to": "2026-07-31",
+      "limit": 50,
     },
   })
   assert_eq(called.is_error, false)
   assert_eq(
     fake.lists[0],
-    @time_entries.ListQuery::new(
-      project_id=1,
-      user_id=5,
-      spent_on="2026-08-01",
-      from="2026-07-01",
-      to="2026-07-31",
+    (
+      @time_entries.ListQuery::new(
+        project_id=1,
+        user_id=5,
+        spent_on="2026-08-01",
+        from="2026-07-01",
+        to="2026-07-31",
+      ),
+      Some(50),
     ),
   )
   assert_true(called.text.contains("\"hours\":1.5"))
 }
 
 ///|
-async test "list with no filters leaves every query field unset" {
+async test "list with no filters leaves every query field and the limit unset" {
   let fake = FakeTimeEntries::new()
   let _ = call_tool(time_entries_tools(fake), "redmine_time_entries", {
     "list": {},
   })
-  assert_eq(fake.lists[0], @time_entries.ListQuery::new())
+  assert_eq(fake.lists[0], (@time_entries.ListQuery::new(), None))
+}
+
+///|
+async test "list rejects a limit below one before reaching the port" {
+  let fake = FakeTimeEntries::new()
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
+    "list": { "limit": 0 },
+  })
+  assert_eq(
+    called.text,
+    "{\"status\":0,\"errors\":[\"invalid arguments: list.limit: must be at least 1\"]}",
+  )
+  assert_true(fake.lists.is_empty())
 }
 
 ///|
@@ -246,6 +267,36 @@ async test "update maps every argument onto the changes" {
       ),
     ),
   ])
+}
+
+///|
+async test "update detaches the issue and empties the comments when they are null" {
+  let fake = FakeTimeEntries::new()
+  let called = call_tool(time_entries_tools(fake), "redmine_time_entries", {
+    "update": { "id": 7, "issue_id": null, "comments": null },
+  })
+  assert_eq(called.text, "{\"ok\":true}")
+  assert_eq(fake.updates, [
+    (7, @time_entries.Update::new(issue_id=Clear, comments=Clear)),
+  ])
+}
+
+///|
+async test "create rejects null for the fields only update can clear" {
+  let fake = FakeTimeEntries::new()
+  let tools = time_entries_tools(fake)
+  for field in ["issue_id", "comments"] {
+    let arguments : Map[String, Json] = { "hours": 1, "project_id": 1 }
+    arguments[field] = Json::null()
+    let called = call_tool(tools, "redmine_time_entries", {
+      "create": Json::object(arguments),
+    })
+    assert_true(
+      called.text.contains("invalid arguments: create.\{field}"),
+      msg=called.text,
+    )
+  }
+  assert_true(fake.creates.is_empty())
 }
 
 ///|
@@ -412,7 +463,7 @@ async test "tools/list advertises the full time entry tool" {
   inspect(
     advertised.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_time_entries","description":"Create, read, update, and delete Redmine time entries.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"type":"integer","minimum":1,"description":"Project whose entries to list."},"user_id":{"type":"integer","minimum":1,"description":"User who logged the entries."},"spent_on":{"type":"string","format":"date","description":"Single day the time was spent on, as an ISO date (`YYYY-MM-DD`)."},"from":{"type":"string","format":"date","description":"First day of the period, as an ISO date (`YYYY-MM-DD`)."},"to":{"type":"string","format":"date","description":"Last day of the period, as an ISO date (`YYYY-MM-DD`)."}},"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"create":{"type":"object","properties":{"hours":{"type":"number","minimum":0,"description":"Hours spent, as a decimal number such as `1.5`."},"issue_id":{"type":"integer","minimum":1,"description":"Issue the time was spent on; Redmine takes the project from it."},"project_id":{"type":"integer","minimum":1,"description":"Project the time was spent on, for time not tied to an issue."},"spent_on":{"type":"string","format":"date","description":"Day the time was spent, as an ISO date (`YYYY-MM-DD`); today by default."},"activity_id":{"type":"integer","minimum":1,"description":"Activity to log the time under, by the id `redmine_enumerations` lists with `list_time_entry_activities`."},"comments":{"type":"string","maxLength":1024,"description":"Comment shown with the entry, at most 1024 characters."}},"required":["hours"],"additionalProperties":false,"anyOf":[{"required":["issue_id"]},{"required":["project_id"]}]},"update":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"hours":{"type":"number","minimum":0,"description":"Hours spent, as a decimal number such as `1.5`."},"issue_id":{"type":"integer","minimum":1,"description":"Issue the time was spent on; Redmine takes the project from it."},"project_id":{"type":"integer","minimum":1,"description":"Project the time was spent on, for time not tied to an issue."},"spent_on":{"type":"string","format":"date","description":"Day the time was spent, as an ISO date (`YYYY-MM-DD`); today by default."},"activity_id":{"type":"integer","minimum":1,"description":"Activity to log the time under, by the id `redmine_enumerations` lists with `list_time_entry_activities`."},"comments":{"type":"string","maxLength":1024,"description":"Comment shown with the entry, at most 1024 characters."}},"required":["id"],"additionalProperties":false},"delete":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_time_entries","description":"Create, read, update, and delete Redmine time entries.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"type":"integer","minimum":1,"description":"Project whose entries to list."},"user_id":{"type":"integer","minimum":1,"description":"User who logged the entries."},"spent_on":{"type":"string","format":"date","description":"Single day the time was spent on, as an ISO date (`YYYY-MM-DD`)."},"from":{"type":"string","format":"date","description":"First day of the period, as an ISO date (`YYYY-MM-DD`)."},"to":{"type":"string","format":"date","description":"Last day of the period, as an ISO date (`YYYY-MM-DD`)."},"limit":{"type":"integer","minimum":1}},"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false},"create":{"type":"object","properties":{"hours":{"type":"number","minimum":0,"description":"Hours spent, as a decimal number such as `1.5`."},"issue_id":{"type":"integer","minimum":1,"description":"Issue the time was spent on; Redmine takes the project from it."},"project_id":{"type":"integer","minimum":1,"description":"Project the time was spent on, for time not tied to an issue."},"spent_on":{"type":"string","format":"date","description":"Day the time was spent, as an ISO date (`YYYY-MM-DD`); today by default."},"activity_id":{"type":"integer","minimum":1,"description":"Activity to log the time under, by the id `redmine_enumerations` lists with `list_time_entry_activities`."},"comments":{"type":"string","maxLength":1024,"description":"Comment shown with the entry, at most 1024 characters."}},"required":["hours"],"additionalProperties":false,"anyOf":[{"required":["issue_id"]},{"required":["project_id"]}]},"update":{"type":"object","properties":{"id":{"type":"integer","minimum":1},"hours":{"type":"number","minimum":0,"description":"Hours spent, as a decimal number such as `1.5`."},"issue_id":{"anyOf":[{"type":"integer","minimum":1},{"type":"null"}],"description":"Issue the time was spent on; Redmine takes the project from it. `null` detaches the entry from its issue and leaves it on its project."},"project_id":{"type":"integer","minimum":1,"description":"Project the time was spent on, for time not tied to an issue."},"spent_on":{"type":"string","format":"date","description":"Day the time was spent, as an ISO date (`YYYY-MM-DD`); today by default."},"activity_id":{"type":"integer","minimum":1,"description":"Activity to log the time under, by the id `redmine_enumerations` lists with `list_time_entry_activities`."},"comments":{"anyOf":[{"type":"string","maxLength":1024},{"type":"null"}],"description":"Comment shown with the entry, at most 1024 characters; `null` empties it."}},"required":["id"],"additionalProperties":false},"delete":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
 }
@@ -425,7 +476,7 @@ async test "tools/list advertises the readonly time entry tool" {
   inspect(
     advertised.stringify(),
     content=(
-      #|{"tools":[{"name":"redmine_time_entries","description":"List and show Redmine time entries.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"type":"integer","minimum":1,"description":"Project whose entries to list."},"user_id":{"type":"integer","minimum":1,"description":"User who logged the entries."},"spent_on":{"type":"string","format":"date","description":"Single day the time was spent on, as an ISO date (`YYYY-MM-DD`)."},"from":{"type":"string","format":"date","description":"First day of the period, as an ISO date (`YYYY-MM-DD`)."},"to":{"type":"string","format":"date","description":"Last day of the period, as an ISO date (`YYYY-MM-DD`)."}},"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
+      #|{"tools":[{"name":"redmine_time_entries","description":"List and show Redmine time entries.\nPass exactly one key, the operation name, whose value is an object of that operation's arguments: `{\"<operation>\": {...}}`.","inputSchema":{"type":"object","properties":{"list":{"type":"object","properties":{"project_id":{"type":"integer","minimum":1,"description":"Project whose entries to list."},"user_id":{"type":"integer","minimum":1,"description":"User who logged the entries."},"spent_on":{"type":"string","format":"date","description":"Single day the time was spent on, as an ISO date (`YYYY-MM-DD`)."},"from":{"type":"string","format":"date","description":"First day of the period, as an ISO date (`YYYY-MM-DD`)."},"to":{"type":"string","format":"date","description":"Last day of the period, as an ISO date (`YYYY-MM-DD`)."},"limit":{"type":"integer","minimum":1}},"additionalProperties":false},"show":{"type":"object","properties":{"id":{"type":"integer","minimum":1}},"required":["id"],"additionalProperties":false}},"minProperties":1,"maxProperties":1,"additionalProperties":false}}]}
     ),
   )
 }

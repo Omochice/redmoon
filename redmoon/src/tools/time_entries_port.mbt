@@ -1,9 +1,11 @@
 ///|
 /// The Redmine operations behind `redmine_time_entries`.
 pub(open) trait TimeEntryPort {
-  async fn list_time_entries(Self, query : @time_entries.ListQuery) -> Array[
-    @time_entries.Entry,
-  ] raise @redmine.RedmineError
+  async fn list_time_entries(
+    Self,
+    query : @time_entries.ListQuery,
+    limit : Int32?,
+  ) -> Array[@time_entries.Entry] raise @redmine.RedmineError
   async fn show_time_entry(Self, id : Int32) -> @time_entries.Entry raise @redmine.RedmineError
   async fn create_time_entry(Self, time_entry : @time_entries.Create) -> @time_entries.Entry raise @redmine.RedmineError
   async fn update_time_entry(
@@ -18,8 +20,9 @@ pub(open) trait TimeEntryPort {
 pub impl TimeEntryPort for @redmine.Redmine with fn list_time_entries(
   self,
   query,
+  limit,
 ) {
-  self |> @time_entries.list(query)
+  self |> @time_entries.list(query, limit?)
 }
 
 ///|

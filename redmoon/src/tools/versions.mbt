@@ -35,10 +35,15 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
     "Name of the version, unique within its project.",
   )
   let name = @schema.optional("name", name_schema)
+  let description_schema = @schema.string(max_length=255)
   let description = @schema.optional(
     "description",
-    @schema.string(max_length=255).describe(
-      "Free text shown on the version's page.",
+    description_schema.describe("Free text shown on the version's page."),
+  )
+  let clear_description = @schema.optional(
+    "description",
+    clearable(
+      description_schema, "Free text shown on the version's page; `null` empties it.",
     ),
   )
   let status = @schema.optional(
@@ -53,16 +58,30 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
       "Day the version is due, as an ISO date (`YYYY-MM-DD`).",
     ),
   )
+  let clear_due_date = @schema.optional(
+    "due_date",
+    clearable(
+      @schema.iso_date(),
+      "Day the version is due, as an ISO date (`YYYY-MM-DD`); `null` clears it.",
+    ),
+  )
   let sharing = @schema.optional(
     "sharing",
     version_sharing().describe(
       "Which other projects can assign issues to the version: `none`, the project's `descendants`, its `hierarchy` (ancestors and descendants), its whole `tree`, or `system` for every project.",
     ),
   )
+  let wiki_page_title_schema = @schema.string(max_length=255)
   let wiki_page_title = @schema.optional(
     "wiki_page_title",
-    @schema.string(max_length=255).describe(
+    wiki_page_title_schema.describe(
       "Title of the wiki page in the same project that the version links to.",
+    ),
+  )
+  let clear_wiki_page_title = @schema.optional(
+    "wiki_page_title",
+    clearable(
+      wiki_page_title_schema, "Title of the wiki page in the same project that the version links to; `null` unlinks it.",
     ),
   )
   let create_name = @schema.required("name", name_schema)
@@ -112,28 +131,22 @@ fn versions_input(mode : Mode) -> @schema.Schema[VersionAction] {
         [
           id.as_member(),
           name.as_member(),
-          description.as_member(),
+          clear_description.as_member(),
           status.as_member(),
-          due_date.as_member(),
+          clear_due_date.as_member(),
           sharing.as_member(),
-          wiki_page_title.as_member(),
+          clear_wiki_page_title.as_member(),
         ],
         v => {
           VersionAction::Update(
             v.get(id),
             @versions.Update::new(
               name?=v.get(name),
-              description?=v
-                .get(description)
-                .map(value => @redmine.Clearable::Set(value)),
+              description?=v.get(clear_description),
               status?=v.get(status),
-              due_date?=v
-                .get(due_date)
-                .map(value => @redmine.Clearable::Set(value)),
+              due_date?=v.get(clear_due_date),
               sharing?=v.get(sharing),
-              wiki_page_title?=v
-                .get(wiki_page_title)
-                .map(value => @redmine.Clearable::Set(value)),
+              wiki_page_title?=v.get(clear_wiki_page_title),
             ),
           )
         },

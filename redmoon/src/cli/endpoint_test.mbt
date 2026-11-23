@@ -88,3 +88,21 @@ test "an accepted endpoint is accepted by the SDK" {
     ignore(@redmine.new(endpoint=canonical, api_key="k"))
   }
 }
+
+///|
+test "an invalid endpoint is rejected without echoing what it carries" {
+  for
+    raw in [
+      "https//alice:s3cret@host", "ht!tp://alice:s3cret@host", "ftp://host/?token=s3cret",
+    ] {
+    try @cli.canonicalize_endpoint(raw) catch {
+      e =>
+        inspect(
+          e,
+          content="invalid endpoint URL: expected http(s)://host[:port][/path]",
+        )
+    } noraise {
+      _ => fail("\{raw} was accepted")
+    }
+  }
+}

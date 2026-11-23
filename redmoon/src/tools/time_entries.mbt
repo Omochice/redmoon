@@ -1,6 +1,6 @@
 ///|
 priv enum TimeEntryAction {
-  List(@time_entries.ListQuery)
+  List(@time_entries.ListQuery, limit~ : Int32?)
   Show(Int32)
   Create(@time_entries.Create)
   Update(Int32, @time_entries.Update)
@@ -46,6 +46,7 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
         spent_on.as_member(),
         from.as_member(),
         to.as_member(),
+        list_limit.as_member(),
       ],
       v => {
         TimeEntryAction::List(
@@ -56,6 +57,7 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
             from?=v.get(from),
             to?=v.get(to),
           ),
+          limit=v.get(list_limit),
         )
       },
     )
@@ -90,9 +92,10 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
       "Activity to log the time under, by the id `redmine_enumerations` lists with `list_time_entry_activities`.",
     ),
   )
+  let comments_schema = @schema.string(max_length=1024)
   let comments = @schema.optional(
     "comments",
-    @schema.string(max_length=1024).describe(
+    comments_schema.describe(
       "Comment shown with the entry, at most 1024 characters.",
     ),
   )
@@ -125,6 +128,19 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
   }
   let update_input = {
     let hours = @schema.optional("hours", hours_schema)
+    let issue_id = @schema.optional(
+      "issue_id",
+      clearable(
+        record_id(),
+        "Issue the time was spent on; Redmine takes the project from it. `null` detaches the entry from its issue and leaves it on its project.",
+      ),
+    )
+    let comments = @schema.optional(
+      "comments",
+      clearable(
+        comments_schema, "Comment shown with the entry, at most 1024 characters; `null` empties it.",
+      ),
+    )
     @schema.record(
       [
         id.as_member(),
@@ -140,15 +156,11 @@ fn time_entries_input(mode : Mode) -> @schema.Schema[TimeEntryAction] {
           v.get(id),
           @time_entries.Update::new(
             hours?=v.get(hours),
-            issue_id?=v
-              .get(issue_id)
-              .map(value => @redmine.Clearable::Set(value)),
+            issue_id?=v.get(issue_id),
             project_id?=v.get(project_id),
             spent_on?=v.get(spent_on),
             activity_id?=v.get(activity_id),
-            comments?=v
-              .get(comments)
-              .map(value => @redmine.Clearable::Set(value)),
+            comments?=v.get(comments),
           ),
         )
       },
@@ -175,7 +187,8 @@ pub fn time_entries_tool(port : &TimeEntryPort, mode : Mode) -> @mcp.Tool {
     input=time_entries_input(mode),
     handler=async fn(action) {
       match action {
-        List(query) => respond(() => port.list_time_entries(query))
+        List(query, limit~) =>
+          respond(() => port.list_time_entries(query, limit))
         Show(id) => respond(() => port.show_time_entry(id))
         Create(time_entry) => respond(() => port.create_time_entry(time_entry))
         Update(id, time_entry) =>
