@@ -234,7 +234,9 @@ test "update body clears with null, except the assignee which needs a blank stri
 
 ///|
 test "include values use Redmine's names and drop repeats" {
-  let names = [Journals, AllowedStatuses, Children, Journals].map(Include::name)
+  let names = [Journals, AllowedStatuses, Children, Journals].map(
+    Include::to_wire,
+  )
   assert_eq(include_value(names), "journals,allowed_statuses,children")
 }
 

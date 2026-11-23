@@ -70,3 +70,19 @@ test "an update body sends null for a cleared field" {
     "{\"version\":{\"description\":null,\"due_date\":null,\"wiki_page_title\":null}}",
   )
 }
+
+///|
+test "every version status is listed and round-trips through its wire name" {
+  assert_eq(Status::all(), [Open, Locked, Closed])
+  for status in Status::all() {
+    assert_eq(Status::from_wire(status.to_wire()), Some(status))
+  }
+}
+
+///|
+test "every version sharing is listed and round-trips through its wire name" {
+  assert_eq(Sharing::all(), [None, Descendants, Hierarchy, Tree, System])
+  for sharing in Sharing::all() {
+    assert_eq(Sharing::from_wire(sharing.to_wire()), Some(sharing))
+  }
+}

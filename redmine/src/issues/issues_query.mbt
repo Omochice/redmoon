@@ -130,7 +130,7 @@ pub fn ListQuery::new(
 }
 
 ///|
-fn ListInclude::name(self : ListInclude) -> String {
+fn ListInclude::to_wire(self : ListInclude) -> String {
   match self {
     Attachments => "attachments"
     Relations => "relations"
@@ -138,7 +138,7 @@ fn ListInclude::name(self : ListInclude) -> String {
 }
 
 ///|
-fn Include::name(self : Include) -> String {
+fn Include::to_wire(self : Include) -> String {
   match self {
     Children => "children"
     Attachments => "attachments"
@@ -186,7 +186,7 @@ fn push_list_includes(
   includes : Array[ListInclude],
 ) -> Unit {
   if !includes.is_empty() {
-    pairs.push(("include", include_value(includes.map(ListInclude::name))))
+    pairs.push(("include", include_value(includes.map(ListInclude::to_wire))))
   }
 }
 

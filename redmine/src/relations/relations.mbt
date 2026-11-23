@@ -35,19 +35,25 @@ fn Type::to_wire(self : Type) -> String {
 }
 
 ///|
+fn Type::all() -> Array[Type] {
+  [
+    Relates,
+    Duplicates,
+    Duplicated,
+    Blocks,
+    Blocked,
+    Precedes,
+    Follows,
+    CopiedTo,
+    CopiedFrom,
+  ]
+}
+
+///|
 fn Type::from_wire(wire : String) -> Type? {
-  match wire {
-    "relates" => Some(Relates)
-    "duplicates" => Some(Duplicates)
-    "duplicated" => Some(Duplicated)
-    "blocks" => Some(Blocks)
-    "blocked" => Some(Blocked)
-    "precedes" => Some(Precedes)
-    "follows" => Some(Follows)
-    "copied_to" => Some(CopiedTo)
-    "copied_from" => Some(CopiedFrom)
-    _ => None
-  }
+  Type::all()
+  .iter()
+  .find_first(relation_type => relation_type.to_wire() == wire)
 }
 
 ///|

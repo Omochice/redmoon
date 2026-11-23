@@ -20,7 +20,7 @@ pub extend Status with @json.FromJson::{from_json}
 pub extend Status with @debug.Debug::{to_repr}
 
 ///|
-pub impl ToJson for Status with fn to_json(self) -> Json {
+fn Status::to_wire(self : Status) -> String {
   match self {
     Open => "open"
     Locked => "locked"
@@ -29,15 +29,28 @@ pub impl ToJson for Status with fn to_json(self) -> Json {
 }
 
 ///|
+fn Status::all() -> Array[Status] {
+  [Open, Locked, Closed]
+}
+
+///|
+fn Status::from_wire(wire : String) -> Status? {
+  Status::all().iter().find_first(status => status.to_wire() == wire)
+}
+
+///|
+pub impl ToJson for Status with fn to_json(self) -> Json {
+  ToJson::to_json(self.to_wire())
+}
+
+///|
 pub impl @json.FromJson for Status with fn from_json(json, path) {
   guard json is String(wire) else {
     raise @json.JsonDecodeError((path, "Status::from_json: expected string"))
   }
-  match wire {
-    "open" => Open
-    "locked" => Locked
-    "closed" => Closed
-    _ =>
+  match Status::from_wire(wire) {
+    Some(status) => status
+    None =>
       raise @json.JsonDecodeError(
         (path, "Status::from_json: unknown version status `\{wire}`"),
       )
@@ -68,7 +81,7 @@ pub extend Sharing with @json.FromJson::{from_json}
 pub extend Sharing with @debug.Debug::{to_repr}
 
 ///|
-pub impl ToJson for Sharing with fn to_json(self) -> Json {
+fn Sharing::to_wire(self : Sharing) -> String {
   match self {
     None => "none"
     Descendants => "descendants"
@@ -79,17 +92,28 @@ pub impl ToJson for Sharing with fn to_json(self) -> Json {
 }
 
 ///|
+fn Sharing::all() -> Array[Sharing] {
+  [None, Descendants, Hierarchy, Tree, System]
+}
+
+///|
+fn Sharing::from_wire(wire : String) -> Sharing? {
+  Sharing::all().iter().find_first(sharing => sharing.to_wire() == wire)
+}
+
+///|
+pub impl ToJson for Sharing with fn to_json(self) -> Json {
+  ToJson::to_json(self.to_wire())
+}
+
+///|
 pub impl @json.FromJson for Sharing with fn from_json(json, path) {
   guard json is String(wire) else {
     raise @json.JsonDecodeError((path, "Sharing::from_json: expected string"))
   }
-  match wire {
-    "none" => None
-    "descendants" => Descendants
-    "hierarchy" => Hierarchy
-    "tree" => Tree
-    "system" => System
-    _ =>
+  match Sharing::from_wire(wire) {
+    Some(sharing) => sharing
+    None =>
       raise @json.JsonDecodeError(
         (path, "Sharing::from_json: unknown version sharing `\{wire}`"),
       )
