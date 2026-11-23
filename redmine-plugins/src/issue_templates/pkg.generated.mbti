@@ -26,7 +26,7 @@ pub(all) struct GlobalTemplate {
   updated_on : String
 }
 pub fn GlobalTemplate::equal(Self, Self) -> Bool
-pub fn GlobalTemplate::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn GlobalTemplate::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn GlobalTemplate::not_equal(Self, Self) -> Bool
 pub fn GlobalTemplate::to_json(Self) -> @json.Json
 pub fn GlobalTemplate::to_repr(Self) -> @debug.Repr
@@ -47,7 +47,7 @@ pub(all) struct ProjectTemplate {
   updated_on : String
 }
 pub fn ProjectTemplate::equal(Self, Self) -> Bool
-pub fn ProjectTemplate::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ProjectTemplate::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ProjectTemplate::not_equal(Self, Self) -> Bool
 pub fn ProjectTemplate::to_json(Self) -> @json.Json
 pub fn ProjectTemplate::to_repr(Self) -> @debug.Repr
@@ -59,7 +59,7 @@ pub(all) struct Templates {
   project : Array[ProjectTemplate]
 }
 pub fn Templates::equal(Self, Self) -> Bool
-pub fn Templates::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Templates::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Templates::not_equal(Self, Self) -> Bool
 pub fn Templates::to_json(Self) -> @json.Json
 pub fn Templates::to_repr(Self) -> @debug.Repr

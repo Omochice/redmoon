@@ -31,7 +31,7 @@ pub(all) struct Attachment {
   created_on : String
 }
 pub fn Attachment::equal(Self, Self) -> Bool
-pub fn Attachment::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Attachment::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Attachment::not_equal(Self, Self) -> Bool
 pub fn Attachment::to_json(Self) -> @json.Json
 pub fn Attachment::to_repr(Self) -> @debug.Repr
@@ -39,7 +39,7 @@ pub fn Attachment::to_repr(Self) -> @debug.Repr
 #derive(Eq, @debug.Debug)
 pub(all) struct ByteSize(Int64)
 pub fn ByteSize::equal(Self, Self) -> Bool
-pub fn ByteSize::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ByteSize::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ByteSize::not_equal(Self, Self) -> Bool
 pub fn ByteSize::to_int64(Self) -> Int64
 pub fn ByteSize::to_json(Self) -> @json.Json

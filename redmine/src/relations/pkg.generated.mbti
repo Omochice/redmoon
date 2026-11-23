@@ -28,7 +28,7 @@ pub(all) struct Relation {
   delay : Int32?
 }
 pub fn Relation::equal(Self, Self) -> Bool
-pub fn Relation::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Relation::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Relation::not_equal(Self, Self) -> Bool
 pub fn Relation::to_json(Self) -> @json.Json
 pub fn Relation::to_repr(Self) -> @debug.Repr
@@ -46,7 +46,7 @@ pub(all) enum Type {
   CopiedFrom
 }
 pub fn Type::equal(Self, Self) -> Bool
-pub fn Type::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Type::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Type::not_equal(Self, Self) -> Bool
 pub fn Type::to_json(Self) -> @json.Json
 pub fn Type::to_repr(Self) -> @debug.Repr

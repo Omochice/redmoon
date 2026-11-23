@@ -41,7 +41,7 @@ pub(all) struct Child {
   subject : String
 }
 pub fn Child::equal(Self, Self) -> Bool
-pub fn Child::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Child::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Child::not_equal(Self, Self) -> Bool
 pub fn Child::to_json(Self) -> @json.Json
 pub fn Child::to_repr(Self) -> @debug.Repr
@@ -75,7 +75,7 @@ pub(all) struct CustomField {
   multiple : Bool?
 }
 pub fn CustomField::equal(Self, Self) -> Bool
-pub fn CustomField::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CustomField::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CustomField::not_equal(Self, Self) -> Bool
 pub fn CustomField::to_json(Self) -> @json.Json
 pub fn CustomField::to_repr(Self) -> @debug.Repr
@@ -170,7 +170,7 @@ pub(all) struct Issue {
   allowed_statuses : Array[Status]?
 }
 pub fn Issue::equal(Self, Self) -> Bool
-pub fn Issue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Issue::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Issue::not_equal(Self, Self) -> Bool
 pub fn Issue::to_json(Self) -> @json.Json
 pub fn Issue::to_repr(Self) -> @debug.Repr
@@ -185,7 +185,7 @@ pub(all) struct Journal {
   details : Array[JournalDetail]
 }
 pub fn Journal::equal(Self, Self) -> Bool
-pub fn Journal::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Journal::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Journal::not_equal(Self, Self) -> Bool
 pub fn Journal::to_json(Self) -> @json.Json
 pub fn Journal::to_repr(Self) -> @debug.Repr
@@ -198,7 +198,7 @@ pub(all) struct JournalDetail {
   new_value : String?
 }
 pub fn JournalDetail::equal(Self, Self) -> Bool
-pub fn JournalDetail::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn JournalDetail::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn JournalDetail::not_equal(Self, Self) -> Bool
 pub fn JournalDetail::to_json(Self) -> @json.Json
 pub fn JournalDetail::to_repr(Self) -> @debug.Repr
@@ -234,7 +234,7 @@ pub(all) struct Parent {
   id : Int32
 }
 pub fn Parent::equal(Self, Self) -> Bool
-pub fn Parent::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Parent::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Parent::not_equal(Self, Self) -> Bool
 pub fn Parent::to_json(Self) -> @json.Json
 pub fn Parent::to_repr(Self) -> @debug.Repr
@@ -264,7 +264,7 @@ pub(all) struct Relation {
   delay : Int32?
 }
 pub fn Relation::equal(Self, Self) -> Bool
-pub fn Relation::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Relation::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Relation::not_equal(Self, Self) -> Bool
 pub fn Relation::to_json(Self) -> @json.Json
 pub fn Relation::to_repr(Self) -> @debug.Repr
@@ -285,7 +285,7 @@ pub(all) struct Status {
   is_closed : Bool?
 }
 pub fn Status::equal(Self, Self) -> Bool
-pub fn Status::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Status::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Status::not_equal(Self, Self) -> Bool
 pub fn Status::to_json(Self) -> @json.Json
 pub fn Status::to_repr(Self) -> @debug.Repr

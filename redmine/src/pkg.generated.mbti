@@ -45,7 +45,7 @@ pub(all) enum CustomFieldValue {
   Multiple(Array[String])
 }
 pub fn CustomFieldValue::equal(Self, Self) -> Bool
-pub fn CustomFieldValue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CustomFieldValue::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CustomFieldValue::not_equal(Self, Self) -> Bool
 pub fn CustomFieldValue::to_json(Self) -> @json.Json
 pub fn CustomFieldValue::to_repr(Self) -> @debug.Repr
@@ -58,7 +58,7 @@ pub(all) struct IdName {
   name : String
 }
 pub fn IdName::equal(Self, Self) -> Bool
-pub fn IdName::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IdName::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn IdName::not_equal(Self, Self) -> Bool
 pub fn IdName::to_json(Self) -> @json.Json
 pub fn IdName::to_repr(Self) -> @debug.Repr

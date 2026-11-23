@@ -43,7 +43,7 @@ pub(all) struct CustomField {
   value : @redmine.CustomFieldValue?
 }
 pub fn CustomField::equal(Self, Self) -> Bool
-pub fn CustomField::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CustomField::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CustomField::not_equal(Self, Self) -> Bool
 pub fn CustomField::to_json(Self) -> @json.Json
 pub fn CustomField::to_repr(Self) -> @debug.Repr
@@ -63,7 +63,7 @@ pub(all) struct Entry {
   custom_fields : Array[CustomField]?
 }
 pub fn Entry::equal(Self, Self) -> Bool
-pub fn Entry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Entry::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Entry::not_equal(Self, Self) -> Bool
 pub fn Entry::to_json(Self) -> @json.Json
 pub fn Entry::to_repr(Self) -> @debug.Repr
@@ -73,7 +73,7 @@ pub(all) struct Issue {
   id : Int32
 }
 pub fn Issue::equal(Self, Self) -> Bool
-pub fn Issue::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Issue::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Issue::not_equal(Self, Self) -> Bool
 pub fn Issue::to_json(Self) -> @json.Json
 pub fn Issue::to_repr(Self) -> @debug.Repr

@@ -44,7 +44,7 @@ pub(all) enum Sharing {
   System
 }
 pub fn Sharing::equal(Self, Self) -> Bool
-pub fn Sharing::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Sharing::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Sharing::not_equal(Self, Self) -> Bool
 pub fn Sharing::to_json(Self) -> @json.Json
 pub fn Sharing::to_repr(Self) -> @debug.Repr
@@ -58,7 +58,7 @@ pub(all) enum Status {
   Closed
 }
 pub fn Status::equal(Self, Self) -> Bool
-pub fn Status::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Status::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Status::not_equal(Self, Self) -> Bool
 pub fn Status::to_json(Self) -> @json.Json
 pub fn Status::to_repr(Self) -> @debug.Repr
@@ -93,7 +93,7 @@ pub(all) struct Version {
   updated_on : String
 }
 pub fn Version::equal(Self, Self) -> Bool
-pub fn Version::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Version::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Version::not_equal(Self, Self) -> Bool
 pub fn Version::to_json(Self) -> @json.Json
 pub fn Version::to_repr(Self) -> @debug.Repr
