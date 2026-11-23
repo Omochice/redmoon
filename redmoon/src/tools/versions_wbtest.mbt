@@ -1,25 +1,13 @@
 ///|
 struct FakeVersions {
-  calls : Array[String]
+  log : CallLog
   created : Array[(String, @versions.Create)]
   updated : Array[(Int32, @versions.Update)]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeVersions::new(failure? : @redmine.RedmineError) -> FakeVersions {
-  { calls: [], created: [], updated: [], failure, }
-}
-
-///|
-fn FakeVersions::record(
-  self : FakeVersions,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), created: [], updated: [], }
 }
 
 ///|
@@ -40,13 +28,13 @@ fn fake_version(name : String) -> @versions.Version {
 
 ///|
 impl VersionPort for FakeVersions with fn list_versions(self, project) {
-  self.record("list \{project_label(project)}")
+  self.log.record("list \{project_label(project)}")
   [fake_version("v1")]
 }
 
 ///|
 impl VersionPort for FakeVersions with fn show_version(self, id) {
-  self.record("show \{id}")
+  self.log.record("show \{id}")
   fake_version("v1")
 }
 
@@ -56,20 +44,20 @@ impl VersionPort for FakeVersions with fn create_version(
   project,
   attributes,
 ) {
-  self.record("create \{project_label(project)}")
+  self.log.record("create \{project_label(project)}")
   self.created.push((project_label(project), attributes))
   fake_version(attributes.name)
 }
 
 ///|
 impl VersionPort for FakeVersions with fn update_version(self, id, attributes) {
-  self.record("update \{id}")
+  self.log.record("update \{id}")
   self.updated.push((id, attributes))
 }
 
 ///|
 impl VersionPort for FakeVersions with fn delete_version(self, id) {
-  self.record("delete \{id}")
+  self.log.record("delete \{id}")
 }
 
 ///|
@@ -91,7 +79,7 @@ async test "list and show reach their port methods" {
   )
   let shown = call_tool(tools, "redmine_versions", { "show": { "id": 7 } })
   assert_true(shown.text.contains("\"name\":\"v1\""))
-  assert_eq(fake.calls, ["list demo", "show 7"])
+  assert_eq(fake.log.calls, ["list demo", "show 7"])
 }
 
 ///|
@@ -192,7 +180,7 @@ async test "versions: delete answers ok" {
     "delete": { "id": 7 },
   })
   assert_eq(called.text, "{\"ok\":true}")
-  assert_eq(fake.calls, ["delete 7"])
+  assert_eq(fake.log.calls, ["delete 7"])
 }
 
 ///|
@@ -254,7 +242,7 @@ async test "versions: readonly mode makes the write actions unknown" {
     called.text,
     "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `delete`, one of `list` and `show`\"]}",
   )
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|
@@ -280,7 +268,7 @@ async fn rejected_version(arguments : Json) -> String {
   let fake = FakeVersions::new()
   let called = call_tool(versions_tools(fake), "redmine_versions", arguments)
   assert_eq(called.is_error, true, msg="accepted \{arguments.stringify()}")
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
   called.text
 }
 

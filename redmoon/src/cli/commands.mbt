@@ -92,7 +92,10 @@ pub async fn run_serve(
     endpoint=credential.endpoint,
     api_key=credential.api_key,
   ) catch {
-    _ => raise Message("invalid endpoint URL: \{credential.endpoint}")
+    // `resolve_api_key` already ran this endpoint through the same SDK check,
+    // so this cannot fail.
+    // The handler exists only to turn the SDK error into a CLI one.
+    _ => raise invalid_endpoint(credential.endpoint)
   }
   build_server(redmine, read_only, plugins).serve_stdio() catch {
     error => raise Message("\{error}")

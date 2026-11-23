@@ -233,7 +233,7 @@ async test "wiki create and update send the text_path file" {
     "update": { "project_id": 1, "title": "Page", "text_path": "/tmp/p" },
   })
   assert_eq(updated.text, "{\"ok\":true}")
-  assert_eq(fake.calls, [
+  assert_eq(fake.log.calls, [
     "create demo Page body\n - -", "update 1 Page body\n - - -",
   ])
   assert_eq(files.closed, 2)
@@ -273,7 +273,7 @@ async test "wiki create and update need exactly one of text and text_path" {
       ),
     )
   }
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
   assert_eq(files.closed, 0)
 }
 
@@ -292,7 +292,7 @@ async test "a blank wiki text_path file is refused after reading, since Redmine 
         called.text,
         failure_text("invalid arguments: \{action}.text: must not be blank"),
       )
-      assert_eq(fake.calls, [])
+      assert_eq(fake.log.calls, [])
       assert_eq(files.closed, 1)
     }
   }
@@ -306,7 +306,7 @@ async test "a wiki text_path that cannot be read is refused" {
     "update": { "project_id": 1, "title": "Page", "text_path": "/tmp/p" },
   })
   assert_eq(called.text, failure_text("/tmp/p is not valid UTF-8"))
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|

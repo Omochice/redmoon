@@ -1,29 +1,17 @@
 ///|
 struct FakeAgile {
-  calls : Array[String]
+  log : CallLog
   updated : Array[(Int32, @agile.Update)]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeAgile::new(failure? : @redmine.RedmineError) -> FakeAgile {
-  { calls: [], updated: [], failure, }
-}
-
-///|
-fn FakeAgile::record(
-  self : FakeAgile,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), updated: [], }
 }
 
 ///|
 impl AgilePort for FakeAgile with fn get_agile_data(self, issue_id) {
-  self.record("get \{issue_id}")
+  self.log.record("get \{issue_id}")
   {
     id: 9,
     issue_id,
@@ -39,7 +27,7 @@ impl AgilePort for FakeAgile with fn update_agile_data(
   issue_id,
   attributes,
 ) {
-  self.record("update \{issue_id}")
+  self.log.record("update \{issue_id}")
   self.updated.push((issue_id, attributes))
 }
 
@@ -59,7 +47,7 @@ async test "get reaches the port and answers the agile data" {
     called.text,
     "{\"id\":9,\"issue_id\":42,\"story_points\":3,\"position\":2}",
   )
-  assert_eq(fake.calls, ["get 42"])
+  assert_eq(fake.log.calls, ["get 42"])
 }
 
 ///|
@@ -126,7 +114,7 @@ async test "readonly mode makes update unknown" {
     called.text,
     "{\"status\":0,\"errors\":[\"invalid arguments: unknown action `update`, one of `get`\"]}",
   )
-  assert_eq(fake.calls, [])
+  assert_eq(fake.log.calls, [])
 }
 
 ///|

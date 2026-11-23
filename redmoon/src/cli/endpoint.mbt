@@ -8,13 +8,18 @@ fn default_port(scheme : String) -> String? {
 }
 
 ///|
+fn invalid_endpoint(endpoint : String) -> CliError {
+  Message("invalid endpoint URL: \{endpoint}")
+}
+
+///|
 /// Maps equivalent endpoint URLs to one keyring account: lower-case scheme and
 /// host, no query, no fragment, no default port, no trailing slash.
 ///
 /// # Raises
 /// `Message` when `raw` carries credentials or is not an endpoint the SDK accepts.
 pub fn canonicalize_endpoint(raw : String) -> String raise CliError {
-  let invalid = Message("invalid endpoint URL: \{raw}")
+  let invalid = invalid_endpoint(raw)
   guard raw.find("://") is Some(scheme_end) else { raise invalid }
   let scheme = raw[:scheme_end].to_lower().to_owned()
   guard scheme != "" &&

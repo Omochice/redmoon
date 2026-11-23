@@ -1,14 +1,13 @@
 ///|
 struct FakeIssueTemplates {
-  calls : Array[String]
-  failure : @redmine.RedmineError?
+  log : CallLog
 }
 
 ///|
 fn FakeIssueTemplates::new(
   failure? : @redmine.RedmineError,
 ) -> FakeIssueTemplates {
-  { calls: [], failure, }
+  { log: CallLog::new(failure?), }
 }
 
 ///|
@@ -38,10 +37,7 @@ impl IssueTemplatePort for FakeIssueTemplates with fn list_issue_templates(
   project,
   tracker_id,
 ) {
-  self.calls.push("list \{project_label(project)} tracker \{tracker_id}")
-  if self.failure is Some(error) {
-    raise error
-  }
+  self.log.record("list \{project_label(project)} tracker \{tracker_id}")
   fake_templates()
 }
 
@@ -62,7 +58,7 @@ async test "list reaches the port with the project and answers the templates" {
       "list": { "project_id": 1, "tracker_id": 2 },
     }),
   )
-  assert_eq(fake.calls, ["list demo tracker 1", "list 1 tracker 2"])
+  assert_eq(fake.log.calls, ["list demo tracker 1", "list 1 tracker 2"])
 }
 
 ///|

@@ -1,24 +1,12 @@
 ///|
 struct FakeMemberships {
-  calls : Array[String]
+  log : CallLog
   listed : Array[(@redmine.ProjectRef, Int32?)]
-  failure : @redmine.RedmineError?
 }
 
 ///|
 fn FakeMemberships::new(failure? : @redmine.RedmineError) -> FakeMemberships {
-  { calls: [], listed: [], failure, }
-}
-
-///|
-fn FakeMemberships::record(
-  self : FakeMemberships,
-  call : String,
-) -> Unit raise @redmine.RedmineError {
-  self.calls.push(call)
-  if self.failure is Some(error) {
-    raise error
-  }
+  { log: CallLog::new(failure?), listed: [], }
 }
 
 ///|
@@ -28,7 +16,7 @@ impl MembershipPort for FakeMemberships with fn list_memberships(
   limit,
 ) {
   self.listed.push((project, limit))
-  self.record("list")
+  self.log.record("list")
   [
     {
       id: 7,

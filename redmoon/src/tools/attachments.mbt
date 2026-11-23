@@ -17,15 +17,6 @@ priv enum AttachTarget {
 const DEFAULT_MAX_SIZE : Int64 = 524288000L
 
 ///|
-/// Core encodes `Int64` as a JSON string, which would advertise the `max_size` default as one.
-priv struct ByteLimit(Int64)
-
-///|
-impl ToJson for ByteLimit with fn to_json(self) {
-  Json::number(self.0.to_double())
-}
-
-///|
 fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
   let id = @schema.required("id", record_id())
   let download_path = @schema.required(
@@ -34,13 +25,15 @@ fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       "Destination file path for the saved content. An absolute path is recommended, because a relative one resolves against the working directory of the server process. The file must not already exist.",
     ),
   )
-  let byte_limit = @schema.integer64(min=1).map(n => ByteLimit(n))
+  // `ByteSize` rather than a bare `Int64`, because core encodes `Int64` as a JSON string,
+  // which would advertise the `max_size` default as one.
+  let byte_limit = @schema.integer64(min=1).map(n => @attachments.ByteSize(n))
   let max_size = @schema.optional_or(
     "max_size",
     byte_limit.describe(
       "Maximum number of bytes to write, \{DEFAULT_MAX_SIZE} (500 MiB) by default. The download is refused, and nothing is saved, when the attachment turns out to be larger. Read `filesize` from `show` to choose a tighter limit.",
     ),
-    ByteLimit(DEFAULT_MAX_SIZE),
+    @attachments.ByteSize(DEFAULT_MAX_SIZE),
   )
   let read = [
     (
@@ -51,7 +44,9 @@ fn attachments_input(mode : Mode) -> @schema.Schema[AttachmentAction] {
       "download",
       @schema.record(
         [id.as_member(), download_path.as_member(), max_size.as_member()],
-        v => Download(v.get(id), v.get(download_path), v.get(max_size).0),
+        v => {
+          Download(v.get(id), v.get(download_path), v.get(max_size).to_int64())
+        },
       ),
     ),
   ]
@@ -173,9 +168,11 @@ async fn download_attachment(
     })
   catch {
     FileError(message~) => local_failure([message])
+    // A pattern cannot match `RedmineError` as a whole, so each of its cases is named.
     (@redmine.Response(..) as error)
     | (@redmine.Decode(..) as error)
-    | (@redmine.Transport(..) as error) => failure_of(error)
+    | (@redmine.Transport(..) as error)
+    | (@redmine.InvalidArgument(..) as error) => failure_of(error)
     other => raise other
   } noraise {
     _ => success(saved.unwrap())
