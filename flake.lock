@@ -87,11 +87,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1794733075,
-        "narHash": "sha256-o1guvVstZNvfXVlzak/x4gk4VQcpgaO4vNJbitjPdxA=",
+        "lastModified": 1795433192,
+        "narHash": "sha256-09TDJOqV8H5gnURpxfve2Y2ZI7KPcqUIfQIIpq09G0g=",
         "owner": "moonbit-community",
         "repo": "moonbit-overlay",
-        "rev": "a0e830b32d60bcc59d18853e39e0b3fa5081f033",
+        "rev": "dd4b15dc1801c954b571322598a943c577b5bca1",
         "type": "github"
       },
       "original": {
@@ -103,11 +103,11 @@
     "mooncake-index": {
       "flake": false,
       "locked": {
-        "lastModified": 1795282418,
-        "narHash": "sha256-ejNVU4jVOmcPYn4kQ8ofjtieHANpBp3QLvm7wcAMQCo=",
+        "lastModified": 1795450406,
+        "narHash": "sha256-7Q40uuEwDYYpRsU44WcTnd8epbmCPBmF18w1vLzrooE=",
         "ref": "refs/heads/main",
-        "rev": "391215e477fb242468f20087103501d004a3c5bb",
-        "revCount": 25392,
+        "rev": "9828c7a734093116b7b69795530a8c80a6bbab8b",
+        "revCount": 25750,
         "type": "git",
         "url": "https://mooncakes.io/git/index"
       },
@@ -118,11 +118,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1794554816,
-        "narHash": "sha256-PqJ89Z/qwQa2fB2C0j/GjiviARAtBzVPDUxnbIY6EPA=",
+        "lastModified": 1795371335,
+        "narHash": "sha256-oa2P5WZer1A4wuhatl92JyHHEjrrOdIyuvTuI5LUi9Q=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "e126e9e73c335158ff8279ac14d5f4afec153716",
+        "rev": "619c39f6eac5d1ed6b8f073a9414baf7034b2356",
         "type": "github"
       },
       "original": {
@@ -140,11 +140,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1794711312,
-        "narHash": "sha256-ymhtjYkFEd8XurEi+k5HCvr/6yyftOzPInKoS57wy+k=",
+        "lastModified": 1795227807,
+        "narHash": "sha256-51l9F61cmA8XSdJs8xcXJ9OYP8JGdGf2bRux1GJ1LIQ=",
         "owner": "Omochice",
         "repo": "nur-packages",
-        "rev": "7e7ee03c9eb274e523ac8b8fa3c7f6a4bcfb74c4",
+        "rev": "25a5fc678f1d8a09052cf1c460c52b29767e2840",
         "type": "github"
       },
       "original": {
@@ -188,11 +188,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791885023,
-        "narHash": "sha256-C3alQ2MEt0zVrUSho5NUDo3jmhbff72++bfwoqT9Omo=",
+        "lastModified": 1795173499,
+        "narHash": "sha256-J8IYl3oEdctyvBgWr+/L01MY5Xm0TU4WXwZDccN5jjk=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+        "rev": "a0a97e31a897a3537eea5c49df4f8adaa83b3b37",
         "type": "github"
       },
       "original": {
@@ -229,11 +229,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791885023,
-        "narHash": "sha256-C3alQ2MEt0zVrUSho5NUDo3jmhbff72++bfwoqT9Omo=",
+        "lastModified": 1795173499,
+        "narHash": "sha256-J8IYl3oEdctyvBgWr+/L01MY5Xm0TU4WXwZDccN5jjk=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+        "rev": "a0a97e31a897a3537eea5c49df4f8adaa83b3b37",
         "type": "github"
       },
       "original": {

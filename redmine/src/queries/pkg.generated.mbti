@@ -21,7 +21,7 @@ pub(all) struct Query {
   project_id : Int32?
 }
 pub fn Query::equal(Self, Self) -> Bool
-pub fn Query::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Query::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Query::not_equal(Self, Self) -> Bool
 pub fn Query::to_json(Self) -> @json.Json
 pub fn Query::to_repr(Self) -> @debug.Repr

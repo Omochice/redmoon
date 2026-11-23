@@ -8,7 +8,7 @@ priv enum TagAction {
     Array[String],
     project_id~ : Int32?,
     status_id~ : @issues.StatusFilter?,
-    limit~ : Int32?
+    limit~ : Int32?,
   )
   ListWikiPages(@redmine.ProjectRef, String)
 }

@@ -33,7 +33,7 @@ pub(all) struct Match {
   datetime : String
 }
 pub fn Match::equal(Self, Self) -> Bool
-pub fn Match::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Match::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Match::not_equal(Self, Self) -> Bool
 pub fn Match::to_json(Self) -> @json.Json
 pub fn Match::to_repr(Self) -> @debug.Repr

@@ -24,7 +24,7 @@ pub(all) struct AgileData {
   position : Int32?
 }
 pub fn AgileData::equal(Self, Self) -> Bool
-pub fn AgileData::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn AgileData::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn AgileData::not_equal(Self, Self) -> Bool
 pub fn AgileData::to_json(Self) -> @json.Json
 pub fn AgileData::to_repr(Self) -> @debug.Repr

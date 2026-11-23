@@ -36,7 +36,7 @@ pub(all) struct Page {
   attachments : Array[@attachments.Attachment]?
 }
 pub fn Page::equal(Self, Self) -> Bool
-pub fn Page::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Page::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Page::not_equal(Self, Self) -> Bool
 pub fn Page::to_json(Self) -> @json.Json
 pub fn Page::to_repr(Self) -> @debug.Repr
@@ -50,7 +50,7 @@ pub(all) struct PageSummary {
   parent : Parent?
 }
 pub fn PageSummary::equal(Self, Self) -> Bool
-pub fn PageSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn PageSummary::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn PageSummary::not_equal(Self, Self) -> Bool
 pub fn PageSummary::to_json(Self) -> @json.Json
 pub fn PageSummary::to_repr(Self) -> @debug.Repr
@@ -60,7 +60,7 @@ pub(all) struct Parent {
   title : String
 }
 pub fn Parent::equal(Self, Self) -> Bool
-pub fn Parent::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Parent::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Parent::not_equal(Self, Self) -> Bool
 pub fn Parent::to_json(Self) -> @json.Json
 pub fn Parent::to_repr(Self) -> @debug.Repr
