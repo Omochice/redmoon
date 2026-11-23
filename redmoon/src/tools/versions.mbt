@@ -9,22 +9,12 @@ priv enum VersionAction {
 
 ///|
 fn version_status() -> @schema.Schema[@versions.Status] {
-  @schema.choice([
-    ("open", @versions.Status::Open),
-    ("locked", Locked),
-    ("closed", Closed),
-  ])
+  wire_choice(@versions.Status::all(), @versions.Status::to_wire)
 }
 
 ///|
 fn version_sharing() -> @schema.Schema[@versions.Sharing] {
-  @schema.choice([
-    ("none", @versions.Sharing::None),
-    ("descendants", Descendants),
-    ("hierarchy", Hierarchy),
-    ("tree", Tree),
-    ("system", System),
-  ])
+  wire_choice(@versions.Sharing::all(), @versions.Sharing::to_wire)
 }
 
 ///|

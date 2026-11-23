@@ -57,3 +57,13 @@ let list_limit : @schema.Field[Int32?] = @schema.optional(
 fn path_schema(description : String) -> @schema.Schema[String] {
   @schema.not_blank().describe(description)
 }
+
+///|
+/// The words come from the SDK so that a variant it gains is offered here
+/// without being spelled a second time.
+fn[T] wire_choice(
+  variants : Array[T],
+  to_wire : (T) -> String,
+) -> @schema.Schema[T] {
+  @schema.choice(variants.map(variant => (to_wire(variant), variant)))
+}
