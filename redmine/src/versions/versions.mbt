@@ -30,8 +30,7 @@ pub fn Status::to_wire(self : Status) -> String {
 }
 
 ///|
-/// Every version status, each once,
-/// so a client can offer the whole vocabulary without spelling its words again.
+/// Every version status.
 pub fn Status::all() -> Array[Status] {
   [Open, Locked, Closed]
 }
@@ -96,8 +95,7 @@ pub fn Sharing::to_wire(self : Sharing) -> String {
 }
 
 ///|
-/// Every version sharing, each once,
-/// so a client can offer the whole vocabulary without spelling its words again.
+/// Every version sharing.
 pub fn Sharing::all() -> Array[Sharing] {
   [None, Descendants, Hierarchy, Tree, System]
 }

@@ -36,8 +36,7 @@ pub fn Type::to_wire(self : Type) -> String {
 }
 
 ///|
-/// Every relation type, each once,
-/// so a client can offer the whole vocabulary without spelling its words again.
+/// Every relation type.
 pub fn Type::all() -> Array[Type] {
   [
     Relates,

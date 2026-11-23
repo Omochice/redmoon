@@ -139,8 +139,7 @@ pub fn ListInclude::to_wire(self : ListInclude) -> String {
 }
 
 ///|
-/// Every association a listed issue can carry, each once,
-/// so a client can offer the whole vocabulary without spelling its words again.
+/// Every association a listed issue can carry.
 pub fn ListInclude::all() -> Array[ListInclude] {
   [Attachments, Relations]
 }
@@ -160,8 +159,7 @@ pub fn Include::to_wire(self : Include) -> String {
 }
 
 ///|
-/// Every association a shown issue can carry, each once,
-/// so a client can offer the whole vocabulary without spelling its words again.
+/// Every association a shown issue can carry.
 pub fn Include::all() -> Array[Include] {
   [
     Journals,
