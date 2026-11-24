@@ -6,7 +6,7 @@ import {
   "moonbitlang/core/json",
   "omochice/redmine",
   "omochice/redmine/internal/core",
-  "omochice/redmine/internal/decode",
+  "omochice/redmine/decode",
   "omochice/redmine/internal/wire",
 }
 

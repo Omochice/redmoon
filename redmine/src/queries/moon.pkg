@@ -10,7 +10,7 @@ import {
 } for "test"
 
 import {
-  "omochice/redmine/internal/decode",
+  "omochice/redmine/decode",
   "omochice/redmine/internal/wire",
 } for "wbtest"
 

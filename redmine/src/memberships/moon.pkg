@@ -11,7 +11,7 @@ import {
 
 import {
   "moonbitlang/core/json",
-  "omochice/redmine/internal/decode",
+  "omochice/redmine/decode",
   "omochice/redmine/internal/wire",
 } for "wbtest"
 
