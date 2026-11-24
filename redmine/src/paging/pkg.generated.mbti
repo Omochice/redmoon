@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "omochice/redmine/internal/paging"
+package "omochice/redmine/paging"
 
 import {
   "moonbitlang/core/json",

@@ -2,8 +2,8 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "omochice/redmine",
-  "omochice/redmine/internal/decode",
-  "omochice/redmine/internal/paging",
+  "omochice/redmine/decode",
+  "omochice/redmine/paging",
   "omochice/redmine/internal/wire",
 }
 
