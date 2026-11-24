@@ -4,7 +4,7 @@ import {
   "omochice/redmine",
   "omochice/redmine/attachments",
   "omochice/redmine/decode",
-  "omochice/redmine/internal/paging",
+  "omochice/redmine/paging",
   "omochice/redmine/internal/wire",
   "omochice/redmine/relations",
 }

@@ -69,6 +69,7 @@ fn total_count_of(json : Json) -> Int32 raise @redmine.RedmineError {
 ///|
 /// Lists a paged resource whose response is `{"<key>": [...], "total_count": n}`.
 /// With `limit`, at most that many items are returned.
+/// Raises `RedmineError` on a non-2xx answer, an unreadable 2xx answer, or a transport failure.
 pub async fn[T : @json.FromJson] list_all(
   redmine : @redmine.Redmine,
   segments : Array[String],
