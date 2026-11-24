@@ -4,8 +4,8 @@ import {
   "omochice/redmine",
   "omochice/redmine/issues",
   "omochice/redmine/wiki",
-  "omochice/redmine-plugins/internal/decode",
-  "omochice/redmine-plugins/internal/paging",
+  "omochice/redmine/decode",
+  "omochice/redmine/paging",
 }
 
 import {

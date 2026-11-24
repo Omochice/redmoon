@@ -1,4 +1,12 @@
 ///|
+test "the envelope is unwrapped" {
+  let value : Int32 = decode_field({ "row": 3 }, "row") catch {
+    _ => fail("decode")
+  }
+  assert_eq(value, 3)
+}
+
+///|
 test "a shape mismatch raises Decode naming the JSON path" {
   try decode_field({ "issues": [{ "id": "x" }] }, "issues") catch {
     Decode(message~) =>
