@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (refined by [ADR-029](./adr-029-testing-strategy.md), which replaces its `internal/livetest` with the `integration-test/` module, and by [ADR-030](./adr-030-additional-tags-issue-tags.md), which adds `internal/paging` beside `internal/decode`)
+Accepted (refined by [ADR-029](./adr-029-testing-strategy.md), which replaces its `internal/livetest` with the `integration-test/` module, and by [ADR-030](./adr-030-additional-tags-issue-tags.md), which adds `internal/paging` beside `internal/decode`, and by [ADR-045](./adr-045-design-evolution-from-adr-026.md), which replaces both with public packages of `omochice/redmine`)
 
 ## Context
 
