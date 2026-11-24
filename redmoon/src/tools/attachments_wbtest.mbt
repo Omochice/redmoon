@@ -16,17 +16,15 @@ struct FakeAttachments {
 ///|
 fn FakeAttachments::new(
   failure? : @redmine.RedmineError,
-  content~ : Bytes = b"hello",
   declared_size~ : Int64 = 5,
-  content_type~ : String = "text/plain",
   update_failure? : @redmine.RedmineError,
   wiki_failure? : @redmine.RedmineError,
 ) -> FakeAttachments {
   {
     failure,
-    content,
+    content: b"hello",
     declared_size,
-    content_type: Some(content_type),
+    content_type: Some("text/plain"),
     uploads: [],
     updates: [],
     update_failure,

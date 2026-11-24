@@ -20,3 +20,5 @@ import {
 preferred_target = "native"
 
 source = "src"
+
+warnings = "+unused_optional_argument+unused_default_value"
