@@ -1,4 +1,4 @@
-FROM redmine:7.0.3@sha256:eff65d7d651d8b07784cbaf37aec5aa74c1ccea3b834e8157e7043c003bdbf70
+FROM redmine:7.0.3@sha256:c3c9da0407e99b2a47af9e0af7b06bce1a3cfec16def1c14cd1fae61e3fa0770
 
 # Pinned to a master commit rather than the v1.2.2 tag because the Redmine 7 icon fix landed after v1.2.2 and no tag carries it yet.
 # The list_templates API that redmoon uses answers the same on both.
