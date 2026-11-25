@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0](https://github.com/Omochice/redmoon/compare/v1.0.0...v1.1.0) (2026-11-25)
+
+
+### Features
+
+* attach a file to a wiki page with redmine_attachments ([#96](https://github.com/Omochice/redmoon/issues/96)) ([d0d75f8](https://github.com/Omochice/redmoon/commit/d0d75f86a70e44bb36b03a5236874357f6b4ad97))
+* clear version and time entry fields, and cap time entry lists ([#106](https://github.com/Omochice/redmoon/issues/106)) ([3f10bb0](https://github.com/Omochice/redmoon/commit/3f10bb0f3a6ac77c5488923e09fcba452b43ec43))
+* expose the wire words and variants of the SDK's word enums ([#108](https://github.com/Omochice/redmoon/issues/108)) ([2aac26c](https://github.com/Omochice/redmoon/commit/2aac26c8b42113ba3e013babd7298da9828e6c86))
+* offer response decoding and paging as public SDK packages ([#111](https://github.com/Omochice/redmoon/issues/111)) ([9bb9410](https://github.com/Omochice/redmoon/commit/9bb9410237e3ab9c31a186f01f6f6c8aa364e397))
+
 ## [1.0.0](https://github.com/Omochice/redmoon/compare/v0.5.0...v1.0.0) (2026-11-06)
 
 
