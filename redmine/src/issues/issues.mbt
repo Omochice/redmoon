@@ -59,7 +59,7 @@ pub async fn show(
   let query = if includes.is_empty() {
     []
   } else {
-    [("include", include_value(includes.map(Include::name)))]
+    [("include", include_value(includes.map(Include::to_wire)))]
   }
   let json = redmine |> @redmine.send(Get, ["issues", "\{id}.json"], query~)
   @decode.decode_field(json, "issue")

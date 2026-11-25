@@ -14,10 +14,7 @@ priv enum IssueAction {
 ///|
 fn list_includes() -> @schema.Schema[Array[@issues.ListInclude]] {
   @schema.array(
-    @schema.choice([
-      ("attachments", @issues.ListInclude::Attachments),
-      ("relations", @issues.ListInclude::Relations),
-    ]),
+    wire_choice(@issues.ListInclude::all(), @issues.ListInclude::to_wire),
   ).describe(
     "Associations Redmine omits unless asked for. A listed issue carries only these two; `journals` are available through `show`.",
   )
@@ -25,17 +22,7 @@ fn list_includes() -> @schema.Schema[Array[@issues.ListInclude]] {
 
 ///|
 fn show_includes() -> @schema.Schema[Array[@issues.Include]] {
-  @schema.array(
-    @schema.choice([
-      ("journals", @issues.Include::Journals),
-      ("attachments", @issues.Include::Attachments),
-      ("relations", @issues.Include::Relations),
-      ("children", @issues.Include::Children),
-      ("changesets", @issues.Include::Changesets),
-      ("watchers", @issues.Include::Watchers),
-      ("allowed_statuses", @issues.Include::AllowedStatuses),
-    ]),
-  ).describe(
+  @schema.array(wire_choice(@issues.Include::all(), @issues.Include::to_wire)).describe(
     "Associations Redmine omits unless asked for. `journals` are the comments and the field-change history.",
   )
 }

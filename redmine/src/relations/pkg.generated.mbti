@@ -45,11 +45,13 @@ pub(all) enum Type {
   CopiedTo
   CopiedFrom
 }
+pub fn Type::all() -> Array[Self]
 pub fn Type::equal(Self, Self) -> Bool
 pub fn Type::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Type::not_equal(Self, Self) -> Bool
 pub fn Type::to_json(Self) -> @json.Json
 pub fn Type::to_repr(Self) -> @debug.Repr
+pub fn Type::to_wire(Self) -> String
 pub impl @json.FromJson for Type
 pub impl @json.ToJson for Type
 

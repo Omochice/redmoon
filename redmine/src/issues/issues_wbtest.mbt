@@ -234,7 +234,9 @@ test "update body clears with null, except the assignee which needs a blank stri
 
 ///|
 test "include values use Redmine's names and drop repeats" {
-  let names = [Journals, AllowedStatuses, Children, Journals].map(Include::name)
+  let names = [Journals, AllowedStatuses, Children, Journals].map(
+    Include::to_wire,
+  )
   assert_eq(include_value(names), "journals,allowed_statuses,children")
 }
 
@@ -309,4 +311,19 @@ test "an issue with an attachment larger than 2 GiB is decoded" {
     #|"attachments":[{"id":4,"filename":"big.iso","filesize":3000000000,"content_type":"application/octet-stream","content_url":"http://localhost:3000/attachments/download/4/big.iso","author":{"id":1,"name":"Redmine Admin"},"created_on":"2026-10-15T17:56:29Z"}]}
   let issue : Issue = @decode.decode(@wire.strip_nulls(@json.parse(text)))
   assert_eq(issue.attachments.unwrap()[0].filesize.to_int64(), 3000000000L)
+}
+
+///|
+test "every list include is listed under Redmine's name" {
+  let words = ListInclude::all().map(ListInclude::to_wire)
+  assert_eq(words, ["attachments", "relations"])
+}
+
+///|
+test "every show include is listed under Redmine's name" {
+  let words = Include::all().map(Include::to_wire)
+  assert_eq(words, [
+    "journals", "attachments", "relations", "children", "changesets", "watchers",
+    "allowed_statuses",
+  ])
 }

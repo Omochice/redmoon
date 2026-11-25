@@ -57,3 +57,11 @@ let list_limit : @schema.Field[Int32?] = @schema.optional(
 fn path_schema(description : String) -> @schema.Schema[String] {
   @schema.not_blank().describe(description)
 }
+
+///|
+fn[T] wire_choice(
+  variants : Array[T],
+  to_wire : (T) -> String,
+) -> @schema.Schema[T] {
+  @schema.choice(variants.map(variant => (to_wire(variant), variant)))
+}

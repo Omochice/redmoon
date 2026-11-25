@@ -43,11 +43,13 @@ pub(all) enum Sharing {
   Tree
   System
 }
+pub fn Sharing::all() -> Array[Self]
 pub fn Sharing::equal(Self, Self) -> Bool
 pub fn Sharing::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Sharing::not_equal(Self, Self) -> Bool
 pub fn Sharing::to_json(Self) -> @json.Json
 pub fn Sharing::to_repr(Self) -> @debug.Repr
+pub fn Sharing::to_wire(Self) -> String
 pub impl @json.FromJson for Sharing
 pub impl @json.ToJson for Sharing
 
@@ -57,11 +59,13 @@ pub(all) enum Status {
   Locked
   Closed
 }
+pub fn Status::all() -> Array[Self]
 pub fn Status::equal(Self, Self) -> Bool
 pub fn Status::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Status::not_equal(Self, Self) -> Bool
 pub fn Status::to_json(Self) -> @json.Json
 pub fn Status::to_repr(Self) -> @debug.Repr
+pub fn Status::to_wire(Self) -> String
 pub impl @json.FromJson for Status
 pub impl @json.ToJson for Status
 

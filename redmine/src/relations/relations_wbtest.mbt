@@ -15,8 +15,8 @@ test "the create body carries delay when given" {
 }
 
 ///|
-test "a relation type round-trips through its wire name" {
-  let all = [
+test "every relation type is listed and round-trips through its wire name" {
+  assert_eq(Type::all(), [
     Relates,
     Duplicates,
     Duplicated,
@@ -26,8 +26,8 @@ test "a relation type round-trips through its wire name" {
     Follows,
     CopiedTo,
     CopiedFrom,
-  ]
-  for relation_type in all {
+  ])
+  for relation_type in Type::all() {
     assert_eq(Type::from_wire(relation_type.to_wire()), Some(relation_type))
   }
   assert_eq(Type::from_wire("parent"), None)

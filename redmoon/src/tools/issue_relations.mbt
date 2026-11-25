@@ -8,17 +8,7 @@ priv enum RelationAction {
 
 ///|
 fn relation_type_schema() -> @schema.Schema[@relations.Type] {
-  @schema.choice([
-    ("relates", @relations.Type::Relates),
-    ("duplicates", @relations.Type::Duplicates),
-    ("duplicated", @relations.Type::Duplicated),
-    ("blocks", @relations.Type::Blocks),
-    ("blocked", @relations.Type::Blocked),
-    ("precedes", @relations.Type::Precedes),
-    ("follows", @relations.Type::Follows),
-    ("copied_to", @relations.Type::CopiedTo),
-    ("copied_from", @relations.Type::CopiedFrom),
-  ])
+  wire_choice(@relations.Type::all(), @relations.Type::to_wire)
 }
 
 ///|
