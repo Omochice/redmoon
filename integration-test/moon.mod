@@ -9,7 +9,7 @@ license = "Zlib"
 
 import {
   "Omochice/mcp@0.6.0",
-  "moonbitlang/async@0.22.9",
+  "moonbitlang/async@0.22.11",
   // x-release-please-start-version
   "omochice/redmine@1.0.0",
   "omochice/redmine-plugins@1.0.0",
